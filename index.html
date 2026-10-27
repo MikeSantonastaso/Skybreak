@@ -354,7 +354,7 @@ svg.webs { display: block; width: 100%; height: auto; }
           </div>
         </div>
         <div id="pane-survival" class="col" role="tabpanel" aria-labelledby="tab-survival" hidden>
-          <p class="note lede">How long can you last? Wave 1 is one fighter, wave 2 is two, and so on, with newer jets and aces mixed in as the waves climb. After every wave pick one piece of gear or a field repair. Hull carries over between waves. Credits and skill points pay out for every wave you survive.</p>
+          <p class="note lede">How long can you last? Wave 1 is one fighter, wave 2 is two, and so on, with newer jets, aces and new kinds of fighter mixed in as the waves climb. After every wave pick one piece of gear or a field repair. Hull, missiles and the missile cooldown carry over between waves. Credits and skill points pay out for every wave you survive.</p>
           <div>
             <div class="label"><span>Location</span></div>
             <div class="eras" id="survList"></div>
@@ -512,7 +512,7 @@ const STAT_FMT = {
   regen: v => r1(v) + ' hull/s after 4 s without a hit', repair: v => pc(v) + ' hull repaired after each mission', vamp: v => '+' + r1(v) + ' hull per kill',
   thrust: v => '+' + pc(v) + ' thrust', speed: v => (v < 0 ? '' : '+') + pc(v) + ' top speed', drag: v => pc(v) + ' less speed lost in hard turns', ab: v => '+' + pc(v) + ' afterburner thrust',
   dmg: v => '+' + pc(v) + ' gun damage', rof: v => '+' + pc(v) + ' rate of fire', crit: v => '+' + pc(v) + ' critical hit chance', critDmg: v => '+' + pc(v / 2.5) + ' critical damage', spread: v => pc(v) + ' tighter bullet spread',
-  mslDmg: v => '+' + pc(v) + ' missile and rocket damage', msl: v => '+' + plural(v, 'missile', 'missiles'), lock: v => pc(v) + ' faster lock-on', reload: v => pc(v) + ' faster missile reload', seeker: v => '+' + pc(v) + ' missile agility', flares: v => '+' + plural(v, 'flare', 'flares'),
+  mslDmg: v => '+' + pc(v) + ' missile and rocket damage', msl: v => '+' + plural(v, 'missile', 'missiles'), lock: v => pc(v) + ' faster lock-on', reload: v => pc(v) + ' shorter missile cooldown', seeker: v => '+' + pc(v) + ' missile agility', flares: v => '+' + plural(v, 'flare', 'flares'),
   control: v => '+' + pc(v) + ' roll and pitch rate', gmax: v => '+' + pc(v) + ' G limit', dodge: v => pc(v) + ' of enemy bullets miss you', rerolls: v => '+' + plural(v, 'gear reroll', 'gear rerolls') + ' per sortie',
   credits: v => '+' + pc(v) + ' credits', req: v => '+' + pc(v) + ' requisition from missions', startReq: v => '+' + r1(v) + ' requisition at launch', luck: v => pc(v) + ' chance a gear roll is rare or better', discount: v => pc(v) + ' off depot prices', startItems: v => '+' + plural(v, 'random gear pick', 'random gear picks') + ' at launch',
 };
@@ -537,7 +537,7 @@ const WEB_DEF = [
     r2: [['fastlock', 'Fast lock', { lock: 0.08 }], ['rails', 'Rail reload', { reload: 0.1 }]],
     r3: [['flarebox', 'Flare dispensers', { flares: 4 }], ['pylon', 'Extra pylons', { msl: 1, mslDmg: 0.05 }], ['proxfuse', 'Proximity fuse', { seeker: 0.06 }]],
     r4: [['warhead', 'Warhead upgrade', { mslDmg: 0.05 }], ['datalink', 'Datalink', { lock: 0.05 }]],
-    key: ['foxthree', 'Fox three', { msl: 2, lock: 0.25, seeker: 0.15 }, 'Two more missiles and a seeker that rarely lets go.'] },
+    key: ['foxthree', 'Fox three', { msl: 1, reload: 0.15, lock: 0.25, seeker: 0.15 }, 'Another missile, a shorter cooldown and a seeker that rarely lets go.'] },
   { r1: ['controls', 'Control surfaces', { control: 0.03 }],
     r2: [['gsuit', 'G-suit', { gmax: 0.03 }], ['aware', 'Situational awareness', { dodge: 0.02 }]],
     r3: [['vectoring', 'Thrust vectoring', { control: 0.03 }], ['instinct', 'Ace instincts', { rerolls: 1 }], ['breathing', 'Combat breathing', { gmax: 0.03 }]],
@@ -609,12 +609,15 @@ const ITEMS = [
   { id: 'wep', name: 'Emergency power', r: 'common', d: '+20% thrust and +6% top speed.' },
   { id: 'mech', name: 'Onboard mechanic', r: 'common', d: 'Repairs 1 hull per second in combat.' },
   { id: 'trophy', name: 'Trophy hunter', r: 'common', d: 'Every kill repairs 10 hull.' },
+  { id: 'rearm', name: 'Ordnance crew', r: 'common', d: 'Missile cooldown 20% shorter.' },
   { id: 'boom', name: 'Explosive rounds', r: 'rare', d: 'Hits burst for 40% damage to anything within 30 m.' },
   { id: 'pod', name: 'Gun pods', r: 'rare', d: 'An extra pair of guns under the wings.' },
   { id: 'tail', name: 'Tail gunner', r: 'rare', d: 'A rear gunner shoots at enemies behind you.' },
   { id: 'wing', name: 'Wingman', r: 'rare', d: 'An allied fighter flies every mission with you.' },
   { id: 'rocket', name: 'Rocket rails', r: 'rare', d: 'Fires a homing rocket at the enemy nearest your nose every 5 s.' },
   { id: 'ghost', name: 'Lucky charm', r: 'rare', d: '15% of enemy hits miss you entirely.' },
+  { id: 'rack', name: 'Ready rack', r: 'rare', d: 'One more missile on the rails.' },
+  { id: 'scav', name: 'Gun-kill bounty', r: 'rare', d: 'Every gun kill takes another 4 s off the missile cooldown.' },
   { id: 'chain', name: 'Arc rounds', r: 'legendary', d: 'Every 5th hit arcs to 2 nearby enemies for double damage.' },
   { id: 'phoenix', name: 'Phoenix', r: 'legendary', d: 'Once per sortie, survive being shot down with half hull and a shockwave.' },
   { id: 'glass', name: 'Glass cannon', r: 'legendary', d: '+80% gun damage, -35% max hull.' },
@@ -644,7 +647,7 @@ const WAVES = MAP_COLS - 1;
 const GUN20 = { rof: 26, dmg: 4, speed: 1050, spread: 0.004, range: 1300, color: 0xffe4a0, len: 16, sound: 900 };
 const PLANES = {
   f5: { id: 'f5', name: 'F-5E Tiger II', short: 'F-5E', role: 'Light fighter', price: 0,
-    blurb: 'Small, cheap and quick on the roll. Only two missiles, so the gun does most of the work.',
+    blurb: 'Small, cheap and quick on the roll. Only one missile on the rails, so the gun does most of the work.',
     size: 1.05, cockpit: 'jet', eye: [0.85, -3.6], hp: 100, missiles: 2, lockTime: 1.0, lockRange: 2600,
     flight: { minSpeed: 62, maxSpeed: 320, corner: 145, gmax: 10, thrust: 28, pitch: 1.5, roll: 4.8, yaw: 0.45 },
     gun: Object.assign({}, GUN20, { rof: 22, dmg: 4.4, offsets: [[-0.45, 0.25, -6], [0.45, 0.25, -6]] }),
@@ -656,7 +659,7 @@ const PLANES = {
     gun: Object.assign({}, GUN20, { rof: 32, dmg: 3.7, offsets: [[-1.0, 0.45, -3]] }),
     livery: [0x8e979f, 0xc2272d] },
   f14: { id: 'f14', name: 'F-14B Tomcat', short: 'F-14B', role: 'Interceptor', price: 5000,
-    blurb: 'Swing wings sweep back as you speed up. Fastest jet here, six missiles and the longest lock range.',
+    blurb: 'Swing wings sweep back as you speed up. Fastest jet here, three missiles on the rails and the longest lock range.',
     size: 1.4, cockpit: 'jet', eye: [1.25, -6.2], hp: 150, missiles: 6, lockTime: 0.9, lockRange: 4500,
     flight: { minSpeed: 62, maxSpeed: 375, corner: 158, gmax: 9.5, thrust: 35, pitch: 1.4, roll: 4.0, yaw: 0.4 },
     gun: Object.assign({}, GUN20, { rof: 28, dmg: 4.2, offsets: [[-0.9, -0.2, -6]] }),
@@ -683,6 +686,15 @@ const ENEMY_JETS = {
   su35: { name: 'Su-35', size: 1.5, hp: 64, flight: { minSpeed: 60, maxSpeed: 350, corner: 145, gmax: 10, thrust: 34, pitch: 1.7, roll: 4.8, yaw: 0.6 }, livery: [0x5d6f7c, 0x2b3a44] },
   su57: { name: 'Su-57', size: 1.45, hp: 74, flight: { minSpeed: 62, maxSpeed: 360, corner: 145, gmax: 10.5, thrust: 36, pitch: 1.75, roll: 5.0, yaw: 0.6 }, livery: [0x6f7c86, 0x9fb6c4] },
 };
+
+// Variants change how a fighter flies and fights, on top of its airframe. from: the survival wave it first turns up in, depth: the sortie column.
+const VARIANTS = {
+  fast: { name: 'Interceptor', tag: 'FAST', from: 3, depth: 2, speed: 1.28, thrust: 1.5, hp: 0.7, turn: 0.95, intro: 'interceptors are fast and fragile, and hit and run' },
+  heavy: { name: 'Heavy fighter', tag: 'HEAVY', from: 4, depth: 2, speed: 0.86, thrust: 0.9, hp: 2.2, armor: 0.25, turn: 0.8, gunDmg: 1.35, intro: 'heavy fighters are armored and hit hard' },
+  ghost: { name: 'Ghost', tag: 'GHOST', from: 5, depth: 4, speed: 1.05, thrust: 1.1, hp: 0.9, turn: 1.05, noLock: true, missiles: 0, seen: 1500, intro: "ghosts can't be locked, but carry no missiles" },
+  hunter: { name: 'Hunter', tag: 'HUNTER', from: 7, depth: 5, speed: 1, thrust: 1.05, hp: 0.9, turn: 0.95, missiles: 4, standoff: 750, intro: 'hunters fire missiles from long range' },
+};
+const VARIANT_ORDER = ['fast', 'heavy', 'ghost', 'hunter'];
 
 const LOCS = {
   arctic: { id: 'arctic', name: 'Arctic Circle', threat: 1, enemy: 'mig21',
@@ -1502,6 +1514,7 @@ function phoenixBlast() {
   flashMsg('PHOENIX', 'Back in the fight', 2); slowmoT = 1.2; hurtT = 0;
 }
 const missiles = [];
+let missileHit = false; // set while a missile deals its damage, so kills can tell guns from missiles
 const missileGeo = cyl(0.14, 0.14, 3, 8), missileMat = new THREE.MeshPhongMaterial({ color: 0xe8e8e2, flatShading: true }), enemyMissileMat = new THREE.MeshPhongMaterial({ color: 0xc9c2a8, flatShading: true });
 // o: turn (rad/s cap), max (m/s), g (airframe G limit), lead (0 pure pursuit .. 1 full lead), life (s)
 function fireMissile(p, target, dmg, o) {
@@ -1558,7 +1571,7 @@ function updateMissiles(dt) {
       for (const e of enemies) {
         if (!e.alive || e.dying) continue;
         const r = e.heavy ? 22 * (e.boss ? 1 : 0.6) : m.fuse;
-        if (e.pos.distanceToSquared(m.pos) < r * r) { e.damage(m.dmg, m.owner); done = true; break; }
+        if (e.pos.distanceToSquared(m.pos) < r * r) { missileHit = true; e.damage(m.dmg, m.owner); missileHit = false; done = true; break; }
       }
     } else {
       for (const a of [player].concat(allies)) {
@@ -1722,9 +1735,21 @@ function itemMods() {
     splash: 0.4 * n('boom'), pods: n('pod'), tail: n('tail'), wingmen: n('wing'),
     rockets: n('rocket') + n('swarm'), salvo: n('swarm') ? 3 : 1,
     ghost: 1 - Math.pow(0.85, n('ghost')) * (1 - Math.min(0.4, ws('dodge'))), chain: n('chain'),
+    mslCd: Math.pow(0.8, n('rearm')), rack: n('rack'), gunRearm: MSL_KILL_REFUND + 4 * n('scav'),
   };
 }
 function refreshMods() { run.mods = itemMods(); }
+// Missiles are a special, like a grenade: a few on the rails, each refilling on a long cooldown, so the gun does the steady work.
+// A plane's listed missiles set how many charges it carries. Gun kills knock time off the cooldown.
+const MSL_COOLDOWN = 24, MSL_MIN_COOLDOWN = 6, MSL_KILL_REFUND = 2;
+function missileSpec(base, m) {
+  if (!base) return { missiles: 0, reload: MSL_COOLDOWN };
+  m = m || {};
+  return {
+    missiles: Math.ceil(base / 2.5) + Math.round(ws('msl')) + (m.rack || 0),
+    reload: Math.max(MSL_MIN_COOLDOWN, MSL_COOLDOWN * Math.max(0.35, 1 - ws('reload')) * (m.mslCd || 1)),
+  };
+}
 function playerStats() {
   const m = run.mods, b = run.bonus, e = era;
   return {
@@ -1734,7 +1759,7 @@ function playerStats() {
     hp: Math.max(30, Math.round((e.hp + ws('hull') + m.hp + b.hp) * (1 + ws('hullPct')) * m.hpMul)), shield: e.shield, armor: Math.min(0.5, ws('armor')),
     dmg: e.gun.dmg * (1 + ws('dmg')) * m.dmg * b.dmg, rof: e.gun.rof * (1 + ws('rof')) * m.rof,
     spread: e.gun.spread * Math.max(0.35, 1 - ws('spread')), crit: ws('crit'), critMul: 2.5 + ws('critDmg'),
-    missiles: e.missiles ? e.missiles + Math.round(ws('msl')) : 0, lockTime: e.lockTime * Math.max(0.35, 1 - ws('lock')), reload: 7 * Math.max(0.35, 1 - ws('reload')),
+    ...missileSpec(e.missiles, m), lockTime: e.lockTime * Math.max(0.35, 1 - ws('lock')),
     mslDmg: 1 + ws('mslDmg'), seeker: 1 + ws('seeker'),
   };
 }
@@ -1801,7 +1826,7 @@ function startSurvival() {
   initAudio();
   clearCombat();
   run = { survival: true, wave: 0, hull: 0, req: 0, items: {}, bonus: { thrust: 1, dmg: 1, hp: 0 }, kills: 0, cleared: 0, points: 0,
-    rerolls: Math.round(ws('rerolls')), phoenixUsed: 0, hitCount: 0, over: false, heat: 0, bossDown: false, victoryT: 0, deathT: 0, mission: null, note: '' };
+    rerolls: Math.round(ws('rerolls')), phoenixUsed: 0, hitCount: 0, over: false, heat: 0, seen: {}, bossDown: false, victoryT: 0, deathT: 0, mission: null, note: '' };
   refreshMods();
   for (let i = 0; i < Math.round(ws('startItems')); i++) addItem(randomItem().id);
   run.hull = maxHull();
@@ -1813,6 +1838,7 @@ function nextWave() {
   startMission('survival', { c: Math.min((run.wave - 1) * 0.45, 12) }, {});
 }
 // Wave w: w fighters. Every third is a newer jet (two steps newer from wave 8), and from wave 5 one in four is an ace.
+// From wave 3 about half of the rest are variants, from whichever kinds have turned up by then; a new kind always shows on its first wave.
 function survivalWave(w, skill) {
   const base = SURV_TIERS.indexOf(era.enemy.model), out = [];
   const aces = Math.floor((w - 1) / 4), ups = Math.floor(w / 3);
@@ -1823,11 +1849,23 @@ function survivalWave(w, skill) {
       out.push({ model: SURV_TIERS[Math.min(t, SURV_TIERS.length - 1)], up: true, skill: Math.min(skill + 0.08 * step + (t >= SURV_TIERS.length ? 0.1 : 0), 1) });
     } else out.push({ model: era.enemy.model, skill: skill * rand(0.85, 1.1) });
   }
+  const pool = VARIANT_ORDER.filter(v => VARIANTS[v].from <= w), plain = out.filter(s => !s.ace);
+  const nv = w >= 3 ? Math.min(plain.length, Math.floor((w - 1) / 2)) : 0;
+  shuffle(plain);
+  for (let i = 0; i < nv; i++) plain[i].variant = i === 0 && VARIANTS[pool[pool.length - 1]].from === w ? pool[pool.length - 1] : pool[Math.floor(Math.random() * pool.length)];
   // shuffle so the tough ones turn up among the first and later reinforcements alike
-  for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; }
-  return out;
+  return shuffle(out);
 }
-function spawnSpec(s) { spawnEnemy(s.skill, !!s.ace, null, s.model); }
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+// a short line naming the variants in a wave, plus a word on any the player has not met this run
+function variantNote(list) {
+  const n = {}; for (const s of list) if (s.variant) n[s.variant] = (n[s.variant] || 0) + 1;
+  const ks = VARIANT_ORDER.filter(v => n[v]);
+  if (!ks.length) return { line: '', intro: '' };
+  const fresh = ks.filter(v => !run.seen[v]); fresh.forEach(v => { run.seen[v] = true; });
+  return { line: ks.map(v => n[v] + ' ' + VARIANTS[v].tag.toLowerCase()).join(', '), intro: fresh.length ? 'New: ' + fresh.map(v => VARIANTS[v].intro).join('; ') : '' };
+}
+function spawnSpec(s) { spawnEnemy(s.skill, !!s.ace, null, s.model, s.variant); }
 function survivalWaveDone() {
   const max = player.maxHp;
   run.hull = clamp(Math.max(player.hp, 1) + max * ws('repair'), 1, max);
@@ -1877,7 +1915,7 @@ function startRun() {
   initAudio();
   clearCombat();
   run = { map: genMap(), col: -1, row: -1, hull: 0, req: 0, items: {}, bonus: { thrust: 1, dmg: 1, hp: 0 }, kills: 0, cleared: 0,
-    pointsMissions: 0, pointsElite: 0, points: 0, rerolls: Math.round(ws('rerolls')), phoenixUsed: 0, hitCount: 0, over: false, heat: selHeat(),
+    pointsMissions: 0, pointsElite: 0, points: 0, rerolls: Math.round(ws('rerolls')), phoenixUsed: 0, hitCount: 0, over: false, heat: selHeat(), seen: {},
     bossDown: false, victoryT: 0, deathT: 0, mission: null, note: '' };
   refreshMods();
   run.req = Math.round(ws('startReq'));
@@ -1903,19 +1941,28 @@ function startMission(type, node, opts) {
   camQ.copy(player.quat);
   const depth = node.c;
   run.mission = { type, node, opts: opts || {}, depth, t: 0, done: false, doneT: 0, bombers: 0, bombersDown: 0, bombersEscaped: 0 };
-  run.missiles = st.missiles; run.flares = 24 + Math.round(ws('flares')); run.flareCd = 0; run.warnT = 0; run.reloadT = 0; run.rocketCd = 2; run.tailCd = 0;
+  // a sortie mission starts with full rails; survival keeps whatever was left and how far the cooldown had run
+  if (run.survival && run.wave > 1) run.missiles = Math.min(run.missiles, st.missiles);
+  else { run.missiles = st.missiles; run.reloadT = 0; }
+  run.flares = 24 + Math.round(ws('flares')); run.flareCd = 0; run.warnT = 0; run.rocketCd = 2; run.tailCd = 0;
   run.bossDown = false; run.victoryT = 0; run.deathT = 0;
   for (let i = 0; i < run.mods.wingmen; i++) spawnAlly(i);
   const heat = run.heat, skill = Math.min(0.2 + era.loc.threat * 0.06 + depth * 0.08 + heat * 0.05, 0.97);
-  let sub = '';
+  let sub = '', vnote = { line: '', intro: '' };
   if (type === 'patrol') {
     const n = 2 + Math.floor(depth * 0.7) + (Math.random() < 0.5 ? 1 : 0) + Math.floor(heat / 2);
-    for (let i = 0; i < n; i++) spawnEnemy(skill * rand(0.85, 1.1), false);
+    const specs = [];
+    for (let i = 0; i < n; i++) specs.push({ skill: skill * rand(0.85, 1.1), variant: sortieVariant(depth, heat) });
+    vnote = variantNote(specs);
+    specs.forEach(spawnSpec);
     sub = n + ' fighters on patrol';
   } else if (type === 'elite') {
     spawnEnemy(Math.min(skill + 0.3, 1), true, 'fighter');
     if (depth >= 4) spawnEnemy(Math.min(skill + 0.3, 1), true, 'boomer');
-    for (let i = 0; i < 2 + Math.floor(heat / 3); i++) spawnEnemy(Math.min(skill + 0.1, 1), false);
+    const specs = [];
+    for (let i = 0; i < 2 + Math.floor(heat / 3); i++) specs.push({ skill: Math.min(skill + 0.1, 1), variant: sortieVariant(depth + 1, heat) });
+    vnote = variantNote(specs);
+    specs.forEach(spawnSpec);
     sub = 'Ace squadron. Expect a real fight';
   } else if (type === 'intercept') {
     const nb = 3 + Math.floor(depth / 2);
@@ -1927,6 +1974,7 @@ function startMission(type, node, opts) {
     run.mission.queue = survivalWave(run.wave, skill);
     run.mission.spawnT = 0;
     const tough = run.mission.queue.filter(s => s.ace || s.up).length;
+    vnote = variantNote(run.mission.queue);
     for (let i = 0; i < SURV_LIVE && run.mission.queue.length; i++) spawnSpec(run.mission.queue.shift());
     sub = plural(run.wave, 'fighter', 'fighters') + ' inbound' + (tough ? ', ' + tough + ' of them tougher than the rest' : '');
   } else if (type === 'boss') {
@@ -1940,7 +1988,9 @@ function startMission(type, node, opts) {
   $('hud').hidden = false;
   $('touch').hidden = !isTouch;
   $('shieldRow').hidden = !era.shield;
-  flashMsg(type === 'survival' ? 'WAVE ' + run.wave : NODE_INFO[type].label.toUpperCase(), sub + (mouseMode() && !isTouch && !document.pointerLockElement ? ' · click to capture the mouse' : ''), 2.6);
+  if (vnote.line) sub += ' · ' + vnote.line;
+  if (vnote.intro) sub += '. ' + vnote.intro;
+  flashMsg(type === 'survival' ? 'WAVE ' + run.wave : NODE_INFO[type].label.toUpperCase(), sub + (mouseMode() && !isTouch && !document.pointerLockElement ? ' · click to capture the mouse' : ''), vnote.intro ? 5 : 2.6);
   beep(660, 0.12, 0.12); setTimeout(() => beep(880, 0.16, 0.12), 140);
 }
 function objectiveText(alive) {
@@ -1951,35 +2001,44 @@ function objectiveText(alive) {
   return alive + (alive === 1 ? ' hostile' : ' hostiles') + ' remaining';
 }
 
-function enemyStats(skill, ace, model) {
-  const es = era.enemy, j = model ? ENEMY_JETS[model] : es, f = j.flight, turn = 0.75 + 0.25 * skill + (ace ? 0.12 : 0);
+// a sortie fighter's odds of being a variant climb with the column and the heat
+function sortieVariant(depth, heat) {
+  const pool = VARIANT_ORDER.filter(v => VARIANTS[v].depth <= depth);
+  if (!pool.length || Math.random() > Math.min(0.12 * (depth - 1) + 0.05 * heat, 0.5)) return null;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+function enemyStats(skill, ace, model, variant) {
+  const es = era.enemy, j = model ? ENEMY_JETS[model] : es, f = j.flight, v = VARIANTS[variant] || {};
+  const turn = (0.75 + 0.25 * skill + (ace ? 0.12 : 0)) * (v.turn || 1);
   const depth = run.mission ? run.mission.depth : 0;
   return {
-    size: j.size, minSpeed: f.minSpeed, maxSpeed: f.maxSpeed * es.speedMul * (ace ? 1.05 : 1), corner: f.corner,
-    gmax: f.gmax * (ace ? 1 : 0.75 + 0.25 * skill), thrust: f.thrust, pitch: f.pitch * turn, roll: f.roll * turn, yaw: f.yaw * turn,
-    hp: j.hp * (ace ? 3 : 1) * (1 + depth * 0.06) * heatHp(run.heat),
+    size: j.size, minSpeed: f.minSpeed, maxSpeed: f.maxSpeed * es.speedMul * (ace ? 1.05 : 1) * (v.speed || 1), corner: f.corner * (v.speed || 1),
+    gmax: f.gmax * (ace ? 1 : 0.75 + 0.25 * skill), thrust: f.thrust * (v.thrust || 1), pitch: f.pitch * turn, roll: f.roll * turn, yaw: f.yaw * turn,
+    hp: j.hp * (ace ? 3 : 1) * (v.hp || 1) * (1 + depth * 0.06) * heatHp(run.heat), armor: v.armor || 0,
   };
 }
 function initPilot(e, skill, kind) {
   e.skill = skill; e.kind = kind; e.state = kind === 'boomer' ? 'climb' : 'attack'; e.stateT = 0; e.burstT = 0;
   e.jink = new V3(); e.jinkT = 0; e.throttle = 0.85; e.target = null; e.targetT = 0;
   e.mslCd = rand(6, 12); e.missiles = e.ally ? 2 : (e.ace ? 3 : (era.loc.threat >= 2 || Math.random() < 0.5 ? 1 : 0));
+  if (e.vdef && e.vdef.missiles != null) { e.missiles = e.vdef.missiles; if (e.missiles) e.mslCd = rand(3, 6); }
 }
-function spawnEnemy(skill, ace, kind, model) {
+function spawnEnemy(skill, ace, kind, model, variant) {
   model = model || era.enemy.model;
+  if (ace) variant = null;
   kind = kind || (run.mission.depth >= 1 && Math.random() < 0.3 ? 'boomer' : 'fighter');
   // spawn ahead of the player so fights open with a merge
   const a = Math.atan2(player.fwd.z, player.fwd.x) + rand(-0.9, 0.9), d = rand(1700, 2500);
   const x = clamp(player.pos.x + Math.cos(a) * d, -ARENA, ARENA), z = clamp(player.pos.z + Math.sin(a) * d, -ARENA, ARENA);
   const y = Math.max(groundAt(x, z) + 400, player.pos.y + (kind === 'boomer' ? rand(300, 600) : rand(-150, 250)));
-  const mesh = planeMesh(model, ace ? 'ace' : model);
-  const e = new Plane(enemyStats(skill, ace, model), mesh, 1);
+  const mesh = planeMesh(model, ace ? 'ace' : variant || model);
+  const e = new Plane(enemyStats(skill, ace, model, variant), mesh, 1);
   e.pos.set(x, y, z);
   const look = tv.copy(player.pos).add(tv2.set(rand(-500, 500), rand(-100, 100), rand(-500, 500)));
   e.quat.setFromRotationMatrix(mm.lookAt(e.pos, look, Y_AXIS));
   e.axes();
   e.vel.copy(e.fwd).multiplyScalar(e.speed);
-  e.ace = ace;
+  e.ace = ace; e.variant = variant || null; e.vdef = VARIANTS[variant] || null;
   initPilot(e, skill, kind);
   enemies.push(e);
 }
@@ -2053,6 +2112,7 @@ function onPlaneDown(p, from) {
       popText(p.boss ? 'Boss down' : p.bomber ? 'Bomber down' : p.ace ? 'Ace down' : 'Splash one');
       if (run.mods.vamp && player.alive && !player.dying) player.hp = Math.min(player.maxHp, player.hp + run.mods.vamp);
       if (run.mods.slowmo) slowmoT = 1.2;
+      if (!missileHit && player.s.missiles && run.missiles < player.s.missiles) run.reloadT += run.mods.gunRearm;
     } else popText('Wingman got one');
   }
   if (p.bomber) run.mission.bombersDown++;
@@ -2085,6 +2145,8 @@ function aiControl(e, dt) {
     // after a head-on merge, extend and come back for another pass instead of circling
     if (e.state === 'attack' && dist < 240 && e.fwd.dot(dirT) > 0 && t.fwd.dot(dirT) < 0) { e.state = 'extend'; e.stateT = rand(2.5, 4); }
     if (e.state === 'attack' && dist < 90) { e.state = 'extend'; e.stateT = rand(1.5, 2.5); }
+    // hunters open the range again whenever they still have missiles to throw
+    if (e.vdef && e.vdef.standoff && e.state === 'attack' && e.missiles > 0 && dist < e.vdef.standoff && !tailed) { e.state = 'extend'; e.stateT = rand(2.5, 3.5); }
   } else if (e.state !== 'extend') { e.state = 'extend'; e.stateT = 3; }
   if (e.state === 'evade' && e.stateT <= 0) e.state = 'attack';
   if (e.state === 'extend' && e.stateT <= 0) { e.state = e.kind === 'boomer' ? 'climb' : 'attack'; e.stateT = 0; }
@@ -2115,8 +2177,9 @@ function aiControl(e, dt) {
   e.boost = (e.state === 'attack' && dist > 700) ? 1.25 : e.state === 'climb' ? 1.15 : 1;
 
   e.mslCd -= dt;
-  if (e.state === 'attack' && t && e.missiles > 0 && e.mslCd <= 0 && dist > 500 && dist < 3000 && e.fwd.dot(dirT) > 0.93) {
-    e.mslCd = rand(9, 16);
+  const hunter = e.vdef && e.vdef.standoff;
+  if (e.state === 'attack' && t && e.missiles > 0 && e.mslCd <= 0 && dist > 500 && dist < (hunter ? 3800 : 3000) && e.fwd.dot(dirT) > (hunter ? 0.9 : 0.93)) {
+    e.mslCd = hunter ? rand(6, 9) : rand(9, 16);
     if (!(t === player && Math.random() < era.stealth)) {
       e.missiles--;
       fireMissile(e, t, e.ally ? 60 : (26 + 4 * era.loc.threat) * heatDmg(run.heat), e.ally ? null : { turn: 2.0, max: 640, g: 62, lead: 1, life: 7, fuse: 20 });
@@ -2149,10 +2212,11 @@ function steer(e, desired, c) {
   }
   if (e.aoa > (e.s.stallAoa || STALL_AOA) * 0.9) c.pitch = Math.min(c.pitch, 0);
 }
+const lockable = e => !(e.vdef && e.vdef.noLock);
 function noseTarget(range, cone) {
   let best = null, bestA = cone;
   for (const e of enemies) {
-    if (!validTarget(e)) continue;
+    if (!validTarget(e) || !lockable(e)) continue;
     if (e.pos.distanceTo(player.pos) > range) continue;
     const a = player.fwd.angleTo(tv.subVectors(e.pos, player.pos).normalize());
     if (a < bestA) { bestA = a; best = e; }
@@ -2207,7 +2271,8 @@ function updatePlaying(dt) {
     const regen = mods.regen + (player.lastHitT > 4 ? ws('regen') : 0);
     if (regen) player.hp = Math.min(player.maxHp, player.hp + regen * dt);
     if (st.missiles) {
-      if (run.missiles < st.missiles) { run.reloadT += dt; if (run.reloadT >= st.reload) { run.reloadT = 0; run.missiles++; } }
+      if (run.missiles < st.missiles) { run.reloadT += dt; if (run.reloadT >= st.reload) { run.reloadT -= st.reload; run.missiles++; beep(990, 0.08, 0.06); if (run.missiles >= st.missiles) run.reloadT = 0; } }
+      else run.reloadT = 0;
       const best = noseTarget(era.lockRange, 0.33);
       if (best !== lockTarget) { lockTarget = best; lockT = 0; locked = false; }
       if (lockTarget) {
@@ -2216,6 +2281,7 @@ function updatePlaying(dt) {
         if (!locked && lockBeepT <= 0) { lockBeepT = 0.18; beep(880, 0.05, 0.06); }
       }
       if (missileRequest && run.missiles > 0) { fireMissile(player, locked ? lockTarget : null, 75 * st.mslDmg, { turn: 3.6 * st.seeker, g: 120 * st.seeker }); run.missiles--; popText(locked ? 'Fox two' : 'Fox two, no lock'); }
+      else if (missileRequest) { popText('Missile rearming · ' + Math.ceil(st.reload - run.reloadT) + ' s'); beep(330, 0.08, 0.06); }
     }
     missileRequest = false;
     if (mods.rockets) {
@@ -2283,7 +2349,7 @@ function updatePlaying(dt) {
         const es = era.enemy;
         if (e.ally) { fireGun(e, era.gun, era.gun.dmg * 0.9, era.gun.spread * 2, era.gun.color); e.gunCd = 1 / (era.gun.rof * 0.6); }
         else {
-          fireGun(e, es.gun, es.dmg * (e.ace ? 1.4 : 1) * depthMul, (era.gun.spread * (2.5 - 1.5 * e.skill) + 0.014 * (1.25 - e.skill)) * (e.target === player ? 1 + era.stealth : 1), es.color || 0xff9a6b);
+          fireGun(e, es.gun, es.dmg * (e.ace ? 1.4 : 1) * (e.vdef && e.vdef.gunDmg || 1) * depthMul, (era.gun.spread * (2.5 - 1.5 * e.skill) + 0.014 * (1.25 - e.skill)) * (e.target === player ? 1 + era.stealth : 1), es.color || 0xff9a6b);
           e.gunCd = 1 / (es.rof * (e.ace ? 1.3 : 1));
         }
       }
@@ -2417,7 +2483,7 @@ function drawHud(dt) {
   if (!player || !run || !run.mission || !(state === 'playing' || state === 'paused')) return;
   const live = player.alive && !player.dying;
   $('hud').classList.toggle('in-cockpit', camMode === 1 && live);
-  const amber = '#ffb547', paper = '#ebe4d2', red = '#ff5b4a';
+  const amber = '#ffb547', paper = '#ebe4d2', red = '#ff5b4a', ghostCol = '#9fb4c4';
   hud.lineWidth = 1.6; hud.font = '600 11px "Chakra Petch", sans-serif'; hud.textAlign = 'center';
 
   // DOM readouts
@@ -2434,7 +2500,7 @@ function drawHud(dt) {
   hEls.thr.textContent = player.throttle > 1.001 ? 'AB' : Math.round(player.throttle * 100);
   hEls.g.textContent = Math.max(0, player.g).toFixed(1);
   let wp = '<div>GUNS <b>' + era.short.toUpperCase() + '</b></div>';
-  if (player.s.missiles) wp += '<div>MISSILES <b>' + run.missiles + '/' + player.s.missiles + '</b></div><div>' + (lockTarget ? (locked ? '<b>LOCKED</b>' : 'LOCKING…') : 'NO TARGET') + '</div>';
+  if (player.s.missiles) wp += '<div>MISSILES <b>' + run.missiles + '/' + player.s.missiles + '</b>' + (run.missiles < player.s.missiles ? ' · ' + Math.ceil(player.s.reload - run.reloadT) + 's' : '') + '</div><div>' + (lockTarget ? (locked ? '<b>LOCKED</b>' : 'LOCKING…') : 'NO TARGET') + '</div>';
   if (run.mods.rockets) wp += '<div>ROCKETS <b>' + (run.rocketCd <= 0 ? 'READY' : Math.ceil(run.rocketCd) + 's') + '</b></div>';
   wp += '<div>FLARES <b>' + run.flares + '</b></div>';
   if (allies.length) wp += '<div>WINGMEN <b>' + allies.filter(a => a.alive && !a.dying).length + '</b></div>';
@@ -2503,7 +2569,9 @@ function drawHud(dt) {
   const sorted = enemies.filter(e => e.alive && !e.dying).sort((a, b) => a.pos.distanceToSquared(player.pos) - b.pos.distanceToSquared(player.pos));
   for (const e of sorted) {
     const d = e.pos.distanceTo(player.pos);
-    const col = e.ace ? red : amber;
+    // ghosts only show up on the HUD and radar up close
+    if (e.vdef && e.vdef.seen && d > e.vdef.seen) continue;
+    const col = e.ace ? red : e.vdef && e.vdef.noLock ? ghostCol : amber;
     tv.copy(e.pos).applyMatrix4(camInv);
     const p = project(e.pos);
     const onScreen = tv.z < 0 && p.x > 0 && p.x < W && p.y > 0 && p.y < H;
@@ -2513,7 +2581,7 @@ function drawHud(dt) {
       const b = (x, y, dx, dy) => { hud.beginPath(); hud.moveTo(x + dx * s * 0.45, y); hud.lineTo(x, y); hud.lineTo(x, y + dy * s * 0.45); hud.stroke(); };
       b(p.x - s, p.y - s, 1, 1); b(p.x + s, p.y - s, -1, 1); b(p.x - s, p.y + s, 1, -1); b(p.x + s, p.y + s, -1, -1);
       hud.fillStyle = col;
-      hud.fillText((d >= 1000 ? (d / 1000).toFixed(1) + 'km' : Math.round(d) + 'm') + (e.boss ? ' BOSS' : e.bomber ? ' BOMBER' : e.ace ? ' ACE' : ''), p.x, p.y + s + 14);
+      hud.fillText((d >= 1000 ? (d / 1000).toFixed(1) + 'km' : Math.round(d) + 'm') + (e.boss ? ' BOSS' : e.bomber ? ' BOMBER' : e.ace ? ' ACE' : e.vdef ? ' ' + e.vdef.tag : ''), p.x, p.y + s + 14);
       // health tick
       hud.fillStyle = 'rgba(0,0,0,0.5)'; hud.fillRect(p.x - s, p.y - s - 7, s * 2, 3);
       hud.fillStyle = col; hud.fillRect(p.x - s, p.y - s - 7, s * 2 * (e.hp / e.maxHp), 3);
@@ -2584,11 +2652,12 @@ function drawHud(dt) {
   const heading = Math.atan2(player.fwd.x, -player.fwd.z);
   const rr = 3000;
   for (const e of sorted.concat(allies.filter(a => a.alive && !a.dying))) {
+    if (e.vdef && e.vdef.seen && e.pos.distanceTo(player.pos) > e.vdef.seen) continue;
     const dx = e.pos.x - player.pos.x, dz = e.pos.z - player.pos.z;
     const east = dx, north = -dz, sh = Math.sin(heading), ch = Math.cos(heading);
     const ahead = east * sh + north * ch, rt = east * ch - north * sh;
     const dd = Math.min(Math.hypot(ahead, rt) / rr * R, R - 3), a2 = Math.atan2(ahead, rt);
-    hud.fillStyle = e.ally ? '#8fd69a' : e.ace ? red : amber;
+    hud.fillStyle = e.ally ? '#8fd69a' : e.ace ? red : e.vdef && e.vdef.noLock ? ghostCol : amber;
     hud.fillRect(cx + Math.cos(a2) * dd - 2.5, cy - Math.sin(a2) * dd - 2.5, 5, 5);
   }
   for (const m of missiles) {
@@ -3319,7 +3388,7 @@ function drawGauges() {
     // right display: flight data
     c.fillStyle = bg; c.fillRect(684, 30, 300, 260); c.strokeStyle = '#444'; c.lineWidth = 6; c.strokeRect(684, 30, 300, 260);
     c.fillStyle = ink; c.font = '700 26px "Chakra Petch", sans-serif';
-    const lines = [['SPD', Math.round(spd)], ['ALT', Math.round(alt)], ['HDG', String(Math.round(heading)).padStart(3, '0')], ['G', p.g.toFixed(1)], ['THR', p.throttle > 1.001 ? 'AB' : Math.round(p.throttle * 100) + '%'], ['HULL', Math.round(hullF * 100) + '%'], ['MSL', run.missiles + '/' + p.s.missiles + '  FLR ' + run.flares]];
+    const lines = [['SPD', Math.round(spd)], ['ALT', Math.round(alt)], ['HDG', String(Math.round(heading)).padStart(3, '0')], ['G', p.g.toFixed(1)], ['THR', p.throttle > 1.001 ? 'AB' : Math.round(p.throttle * 100) + '%'], ['HULL', Math.round(hullF * 100) + '%'], ['MSL', run.missiles + '/' + p.s.missiles + (run.missiles < p.s.missiles ? ' ' + Math.ceil(p.s.reload - run.reloadT) + 's' : '') + ' FLR ' + run.flares]];
     lines.forEach(([k, v], i) => { c.textAlign = 'left'; c.fillText(k, 704, 66 + i * 33); c.textAlign = 'right'; c.fillText(String(v), 964, 66 + i * 33); });
   }
   gaugeTex.needsUpdate = true;
@@ -3404,7 +3473,7 @@ buildWorld();
 toHangar();
 loadManifest();
 requestAnimationFrame(frame);
-window.__skybreak = { get fps() { return fpsAvg; }, get state() { return state; }, get player() { return player; }, get enemies() { return enemies; }, get allies() { return allies; }, get run() { return run; }, startRun, startSurvival, endRun, showMap, addItem, enterNode,
+window.__skybreak = { get fps() { return fpsAvg; }, get state() { return state; }, get player() { return player; }, get enemies() { return enemies; }, get allies() { return allies; }, get run() { return run; }, startRun, startSurvival, nextWave, survivalWave, endRun, showMap, addItem, enterNode,
   go(type, col) { const n = { c: col || 2, r: 0, rows: 1, type, next: [] }; startMission(type, n, {}); },
   nudge(dx, dy) { nudgeAim(dx, dy); }, setAim(y, p) { aimYaw = y; aimPitch = p; updateAimDir(); }, cam(m) { camMode = m; },
   setup(loc, plane) { save.locs[loc] = true; save.planes[plane] = true; save.loc = loc; save.plane = plane; composeEra(); buildWorld(); setupShowcase(); renderHangar(); },
