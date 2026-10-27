@@ -28,3 +28,17 @@ A browser prototype of a roguelike jet dogfighting game. Pick a location, a heat
 A gamepad and touch controls also work. Progress is saved in your browser.
 
 Built with [three.js](https://threejs.org/) r128, loaded from cdnjs. `assets.js` is the asset library: procedural paint textures, the paint schemes, and every aircraft and boss model.
+
+## Aircraft models
+
+The five player jets use detailed glTF models from Sketchfab, listed in `assets/manifest.json`. The game loads them after the hangar appears, and falls back to the built-in models if a file is missing. Each model was shrunk for the web: textures cut to 1024 px, meshes compressed, and landing gear and the F-5's open canopy removed. The manifest also sets each model's facing and where its afterburner flames sit. A sky photo (`.hdr`) can be listed the same way under `skies`, keyed by location.
+
+| Jet | Model | Author | License |
+| --- | --- | --- | --- |
+| F-5E | [F-5E (DCS World)](https://sketchfab.com/3d-models/f-5e-dcs-world-9edaba003c1c4c96911b44a7d0c67016) | KojfDiscord | [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/) |
+| F-16C | [Lockheed Martin F-16E/F Fighting Falcon](https://sketchfab.com/3d-models/lockheed-martin-f-16ef-fighting-falcon-d54c72e055a647ad9173e01548e50db3) | andertan | [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/) |
+| F-14B | [F-14 Tomcat - Fighter Jet - Free](https://sketchfab.com/3d-models/f-14-tomcat-fighter-jet-free-497f77c311b5411d9b567d8707a81c33) | bohmerang | [CC BY-NC-SA 4.0](http://creativecommons.org/licenses/by-nc-sa/4.0/) |
+| F/A-18E | [Boeing F/A-18F Super Hornet - Free](https://sketchfab.com/3d-models/boeing-fa-18f-super-hornet-free-447caa975f534554a83f70f0877b73fb) | bohmerang | [CC BY-NC-SA 4.0](http://creativecommons.org/licenses/by-nc-sa/4.0/) |
+| F-35C | [F-35A Lightning II](https://sketchfab.com/3d-models/f-35a-lightning-ii-a06d6113cfb44a0aa7b8f17106aca9c4) | shangus930 | [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/) |
+
+The modified model files in `assets/jets/` are shared under the same license as their originals. The F-14 and F/A-18 models are non-commercial only, so swap them out before the game is ever sold.

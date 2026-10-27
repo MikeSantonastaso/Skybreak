@@ -456,11 +456,73 @@ window.SkyAssets = function (THREE) {
     });
     return m;
   }
+  // ---------- imported models ----------
+  // A detailed model (a glTF scene) can stand in for any jet. It is turned nose to -Z, scaled to the built
+  // model's length and centred on it; the engine flames, nav lights and missiles still come from the spec.
+  const custom = {};
+  function useModel(id, root, opt) {
+    custom[id] = { root, opt: opt || {} };
+    for (const k in templates) if (k.split('|')[0] === id) delete templates[k];
+  }
+  function jetParts(spec, M, stores) {
+    const full = buildJet(spec, M), g = new THREE.Group();
+    for (const o of full.children.slice()) if (o.name === 'flame' || (o.name === 'msl' && stores) || o.material === navR || o.material === navG || o.material === nozzleGlow) g.add(o);
+    return g;
+  }
+  // the vertex furthest out to the right, in the jet's own space
+  function wingtip(holder) {
+    holder.updateMatrixWorld(true);
+    const v = new THREE.Vector3(), best = new THREE.Vector3(-Infinity, 0, 0);
+    holder.traverse(o => {
+      if (!o.isMesh) return;
+      const pos = o.geometry.attributes.position, a = pos.array;
+      // compressed models store positions as normalized integers
+      const k = !pos.normalized ? 1 : a instanceof Int16Array ? 1 / 32767 : a instanceof Uint16Array ? 1 / 65535 : a instanceof Int8Array ? 1 / 127 : 1 / 255;
+      for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i).multiplyScalar(k).applyMatrix4(o.matrixWorld); if (v.x > best.x) best.copy(v); }
+    });
+    return [best.x - 0.12, best.y, best.z];
+  }
+  function buildCustom(id, p, tinted) {
+    const { root, opt } = custom[id], spec = JETS[id];
+    const holder = new THREE.Group(), body = root.clone(true);
+    holder.add(body);
+    holder.rotation.set(opt.rotX || 0, opt.rotY || 0, opt.rotZ || 0);
+    holder.updateMatrixWorld(true);
+    let box = new THREE.Box3().setFromObject(holder);
+    const z0 = spec.fus[0][0], z1 = spec.fus[spec.fus.length - 1][0];
+    holder.scale.setScalar((opt.length || z1 - z0) / Math.max(box.max.z - box.min.z, 1e-4));
+    holder.updateMatrixWorld(true);
+    box = new THREE.Box3().setFromObject(holder);
+    holder.position.set(-(box.min.x + box.max.x) / 2, -(box.min.y + box.max.y) / 2 + (opt.y || 0), (z0 + z1) / 2 - (box.min.z + box.max.z) / 2);
+    // paint other than the model's own becomes a tint over its textures
+    const tint = tinted ? new THREE.Color(p.c[0]).multiplyScalar(1.3) : null;
+    body.traverse(o => {
+      if (!o.isMesh) return;
+      o.castShadow = o.receiveShadow = true;
+      const mats = [].concat(o.material).map(m => {
+        const c = m.clone();
+        if (c.isMeshStandardMaterial) { if (envMap) c.envMap = envMap; allStd.push(c); }
+        if (tint && c.color && !c.transparent) c.color.copy(tint);
+        return c;
+      });
+      o.material = mats.length === 1 ? mats[0] : mats;
+    });
+    const g = new THREE.Group();
+    // flames sit on the model's own nozzles (opt.nozzles, same form as the spec), nav lights on its real wingtips;
+    // a model that carries its own missiles and tanks skips the built-in ones
+    g.add(holder, jetParts({ ...spec, nozzles: opt.nozzles || spec.nozzles, tip: wingtip(holder) }, materialsFor(p), opt.stores !== false));
+    return g;
+  }
+
   // paint: a skin id or object for player jets, or an ENEMY_PAINT key
   function planeMesh(model, paint, livery) {
     const p = typeof paint === 'string' && ENEMY_PAINT[paint] ? ENEMY_PAINT[paint] : resolvePaint(paint || 'factory', livery || [0x9aa3ad, 0x2c3e66]);
     const key = model + '|' + p.pattern + p.c.join(',') + p.accent;
-    if (!templates[key]) templates[key] = buildJet(JETS[model], materialsFor(p));
+    if (!templates[key]) {
+      // an imported model keeps its own paint for factory and enemy schemes; skins and the ace scheme tint it
+      const own = !paint || paint === 'factory' || (typeof paint === 'string' && ENEMY_PAINT[paint] && paint !== 'ace');
+      templates[key] = custom[model] ? buildCustom(model, p, !own) : buildJet(JETS[model], materialsFor(p));
+    }
     return collectParts(templates[key].clone(true));
   }
   function bossMesh(kind, color, accent) {
@@ -515,5 +577,5 @@ window.SkyAssets = function (THREE) {
   const cloud = new THREE.CanvasTexture(puffCanvas(128, 3, false));
   const smoke = new THREE.CanvasTexture(puffCanvas(64, 5, true));
 
-  return { TILE, SKINS, SKIN_BY_ID, ENEMY_PAINT, JETS, BOSS_TURRETS, planeMesh, bossMesh, swatch, setEnvMap, cyl, glassMat, textures: { detail, waterNormal, cloud, smoke } };
+  return { TILE, SKINS, SKIN_BY_ID, ENEMY_PAINT, JETS, BOSS_TURRETS, planeMesh, bossMesh, useModel, hasModel: id => !!custom[id], swatch, setEnvMap, cyl, glassMat, textures: { detail, waterNormal, cloud, smoke } };
 };
