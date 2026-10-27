@@ -335,6 +335,7 @@ svg.webs { display: block; width: 100%; height: auto; }
   <div class="panel">
     <div class="tabs" role="tablist" aria-label="Hangar sections">
       <button class="tab" role="tab" id="tab-sortie" aria-controls="pane-sortie">Sortie</button>
+      <button class="tab" role="tab" id="tab-survival" aria-controls="pane-survival">Survival</button>
       <button class="tab" role="tab" id="tab-hangar" aria-controls="pane-hangar">Hangar</button>
       <button class="tab" role="tab" id="tab-skills" aria-controls="pane-skills">Skills<b id="ptsBadge"></b></button>
     </div>
@@ -351,6 +352,14 @@ svg.webs { display: block; width: 100%; height: auto; }
             <div class="heat" id="heatList"></div>
             <p class="note heatnote" id="heatNote"></p>
           </div>
+        </div>
+        <div id="pane-survival" class="col" role="tabpanel" aria-labelledby="tab-survival" hidden>
+          <p class="note lede">How long can you last? Wave 1 is one fighter, wave 2 is two, and so on, with newer jets and aces mixed in as the waves climb. After every wave pick one piece of gear or a field repair. Hull carries over between waves. Credits and skill points pay out for every wave you survive.</p>
+          <div>
+            <div class="label"><span>Location</span></div>
+            <div class="eras" id="survList"></div>
+          </div>
+          <p class="note" id="survNote"></p>
         </div>
         <div id="pane-hangar" class="col" role="tabpanel" aria-labelledby="tab-hangar" hidden>
           <div>
@@ -467,13 +476,13 @@ const Y_AXIS = new V3(0, 1, 0);
 
 // ================= save data =================
 const SAVE_KEY = 'skybreak-save-v3';
-const defaultSave = () => ({ points: 0, credits: 0, best: 0, totalKills: 0, runs: 0, tree: {}, skills: {}, locs: { arctic: true }, bosses: {}, heatWon: {}, selHeat: {},
+const defaultSave = () => ({ points: 0, credits: 0, best: 0, totalKills: 0, runs: 0, tree: {}, skills: {}, locs: { arctic: true }, bosses: {}, heatWon: {}, selHeat: {}, survBest: {},
   planes: { f5: true }, skins: { factory: true }, skin: {}, loc: 'arctic', plane: 'f5', pullBack: true, ctl: 'mouse' });
 let save = defaultSave();
 try {
   const s = JSON.parse(localStorage.getItem(SAVE_KEY));
   const obj = (k, base) => Object.assign({}, base || {}, s[k] || {});
-  if (s) save = Object.assign(defaultSave(), s, { tree: obj('tree'), skills: obj('skills'), locs: obj('locs', { arctic: true }), bosses: obj('bosses'), heatWon: obj('heatWon'), selHeat: obj('selHeat'),
+  if (s) save = Object.assign(defaultSave(), s, { tree: obj('tree'), skills: obj('skills'), locs: obj('locs', { arctic: true }), bosses: obj('bosses'), heatWon: obj('heatWon'), selHeat: obj('selHeat'), survBest: obj('survBest'),
     planes: obj('planes', { f5: true }), skins: obj('skins', { factory: true }), skin: obj('skin') });
   else {
     // carry skill points and the record over from the era version; each boss it beat pays for some hangar credit
@@ -624,6 +633,7 @@ const NODE_INFO = {
   airfield: { label: 'Airfield', desc: 'Repair or overhaul' },
   signal: { label: 'Signal', desc: 'Unknown' },
   boss: { label: 'Boss', desc: '' },
+  survival: { label: 'Wave', desc: '' },
 };
 const COMBAT = ['patrol', 'elite', 'intercept', 'boss'];
 const WAVES = MAP_COLS - 1;
@@ -1784,6 +1794,85 @@ function reachable() {
 }
 function advanceTo(node) { node.done = true; run.col = node.c; run.row = node.r; }
 
+// ---------------- survival: wave N is N fighters, gear between waves ----------------
+const SURV_LIVE = 8; // fighters in the air at once; the rest of the wave joins as they fall
+const SURV_TIERS = ['mig21', 'mig29', 'su27', 'su35', 'su57'];
+function startSurvival() {
+  initAudio();
+  clearCombat();
+  run = { survival: true, wave: 0, hull: 0, req: 0, items: {}, bonus: { thrust: 1, dmg: 1, hp: 0 }, kills: 0, cleared: 0, points: 0,
+    rerolls: Math.round(ws('rerolls')), phoenixUsed: 0, hitCount: 0, over: false, heat: 0, bossDown: false, victoryT: 0, deathT: 0, mission: null, note: '' };
+  refreshMods();
+  for (let i = 0; i < Math.round(ws('startItems')); i++) addItem(randomItem().id);
+  run.hull = maxHull();
+  nextWave();
+}
+function nextWave() {
+  run.wave++;
+  // enemy toughness climbs with the wave; depth feeds hull, damage and pilot skill like it does on the sortie map
+  startMission('survival', { c: Math.min((run.wave - 1) * 0.45, 12) }, {});
+}
+// Wave w: w fighters. Every third is a newer jet (two steps newer from wave 8), and from wave 5 one in four is an ace.
+function survivalWave(w, skill) {
+  const base = SURV_TIERS.indexOf(era.enemy.model), out = [];
+  const aces = Math.floor((w - 1) / 4), ups = Math.floor(w / 3);
+  for (let i = 0; i < w; i++) {
+    if (i < aces) out.push({ model: era.enemy.model, ace: true, skill: Math.min(skill + 0.25, 1) });
+    else if (i < aces + ups) {
+      const step = w >= 8 && i % 2 ? 2 : 1, t = base + step;
+      out.push({ model: SURV_TIERS[Math.min(t, SURV_TIERS.length - 1)], up: true, skill: Math.min(skill + 0.08 * step + (t >= SURV_TIERS.length ? 0.1 : 0), 1) });
+    } else out.push({ model: era.enemy.model, skill: skill * rand(0.85, 1.1) });
+  }
+  // shuffle so the tough ones turn up among the first and later reinforcements alike
+  for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; }
+  return out;
+}
+function spawnSpec(s) { spawnEnemy(s.skill, !!s.ace, null, s.model); }
+function survivalWaveDone() {
+  const max = player.maxHp;
+  run.hull = clamp(Math.max(player.hp, 1) + max * ws('repair'), 1, max);
+  run.cleared = run.wave;
+  leaveCombat();
+  const minRarity = run.wave % 5 === 0 ? 'rare' : null;
+  let picks = rollItems(3, minRarity);
+  const render = () => {
+    const heal = Math.round(maxHull() * 0.4);
+    showChoice({
+      title: 'Wave ' + run.wave + ' cleared',
+      sub: 'Hull ' + Math.round(run.hull) + ' / ' + maxHull() + '. Pick one before wave ' + (run.wave + 1) + ', which brings ' + (run.wave + 1) + ' fighters.' + (minRarity ? ' Every fifth wave the gear is rare or better.' : ''),
+      cards: picks.map(it => Object.assign(itemCard(it), { onPick: nextPick(() => addItem(it.id)) }))
+        .concat([{ k: 'Ground crew', t: 'Field repair', d: 'Repair ' + heal + ' hull.', disabled: run.hull >= maxHull(), onPick: nextPick(() => { run.hull = Math.min(maxHull(), run.hull + heal); }) }]),
+      buttons: [
+        run.rerolls > 0 && { label: 'Reroll (' + run.rerolls + ' left)', onClick: () => { run.rerolls--; picks = rollItems(3, minRarity); render(); } },
+        { label: 'End here and bank it', onClick: () => endRun('bail') },
+      ].filter(Boolean),
+    });
+  };
+  render();
+}
+const nextPick = f => () => { f(); nextWave(); };
+function endSurvival(reason) {
+  run.over = true;
+  const loc = era.loc.id, waves = run.cleared;
+  const hadSkins = new Set(A.SKINS.filter(skinOwned).map(sk => sk.id));
+  const prev = save.survBest[loc] || 0, record = waves > prev;
+  const pts = Math.floor(waves / 2);
+  const credits = Math.round((run.kills * 12 + waves * 30) * (0.8 + 0.2 * era.loc.threat) * (1 + ws('credits')));
+  save.points += pts; save.credits += credits; save.runs++; save.totalKills += run.kills;
+  if (record) save.survBest[loc] = waves;
+  const fresh = A.SKINS.filter(sk => skinOwned(sk) && !hadSkins.has(sk.id));
+  persist();
+  $('dbTitle').textContent = reason === 'bail' ? 'Survival banked' : 'Shot down';
+  const gear = ITEMS.filter(it => run.items[it.id]).map(it => it.name + (run.items[it.id] > 1 ? ' ×' + run.items[it.id] : ''));
+  $('dbSub').textContent = 'You survived ' + plural(waves, 'wave', 'waves') + ' over ' + era.name + ' in the ' + era.plane.short + '.' +
+    (record ? (prev ? ' New best here, up from ' + prev + '.' : ' New best here.') : ' Best here is ' + prev + '.') +
+    (fresh.length ? ' New paint: ' + fresh.map(sk => sk.name).join(', ') + '.' : '') + (gear.length ? ' Gear: ' + gear.join(', ') + '.' : '');
+  $('dbStats').innerHTML = [['Waves', waves], ['Kills', run.kills], ['Credits', '+' + credits.toLocaleString()], ['Skill points', '+' + pts]].map(([l, v]) => '<div><b>' + v + '</b><span>' + l + '</span></div>').join('');
+  $('dbPts').textContent = 'One skill point for every two waves. You now have ' + save.points + ' skill points and ' + save.credits.toLocaleString() + ' credits.';
+  leaveCombat();
+  state = 'debrief'; showScreen('debrief');
+}
+
 function startRun() {
   initAudio();
   clearCombat();
@@ -1834,6 +1923,12 @@ function startMission(type, node, opts) {
     run.mission.bombers = nb;
     for (let i = 0; i < 1 + Math.floor(depth / 2) + Math.floor(heat / 2); i++) spawnEnemy(skill, false);
     sub = nb + ' bombers crossing west to east. Stop them before they reach the hills';
+  } else if (type === 'survival') {
+    run.mission.queue = survivalWave(run.wave, skill);
+    run.mission.spawnT = 0;
+    const tough = run.mission.queue.filter(s => s.ace || s.up).length;
+    for (let i = 0; i < SURV_LIVE && run.mission.queue.length; i++) spawnSpec(run.mission.queue.shift());
+    sub = plural(run.wave, 'fighter', 'fighters') + ' inbound' + (tough ? ', ' + tough + ' of them tougher than the rest' : '');
   } else if (type === 'boss') {
     spawnBoss(depth);
     for (let i = 0; i < era.boss.escorts + Math.floor(heat / 2); i++) spawnEnemy(Math.min(skill, 0.9) * rand(0.9, 1.05), false);
@@ -1845,23 +1940,24 @@ function startMission(type, node, opts) {
   $('hud').hidden = false;
   $('touch').hidden = !isTouch;
   $('shieldRow').hidden = !era.shield;
-  flashMsg(NODE_INFO[type].label.toUpperCase(), sub + (mouseMode() && !isTouch && !document.pointerLockElement ? ' · click to capture the mouse' : ''), 2.6);
+  flashMsg(type === 'survival' ? 'WAVE ' + run.wave : NODE_INFO[type].label.toUpperCase(), sub + (mouseMode() && !isTouch && !document.pointerLockElement ? ' · click to capture the mouse' : ''), 2.6);
   beep(660, 0.12, 0.12); setTimeout(() => beep(880, 0.16, 0.12), 140);
 }
 function objectiveText(alive) {
   const m = run.mission;
   if (m.type === 'intercept') { const left = enemies.filter(e => e.bomber && e.alive && !e.dying).length; return 'Bombers: ' + m.bombersDown + ' down · ' + m.bombersEscaped + ' escaped · ' + left + ' left'; }
   if (m.type === 'boss') return 'Destroy the ' + era.boss.name.toLowerCase();
+  if (m.type === 'survival') { const q = m.queue.length; return (alive + q) + (alive + q === 1 ? ' hostile' : ' hostiles') + ' left' + (q ? ' · ' + q + ' still inbound' : ''); }
   return alive + (alive === 1 ? ' hostile' : ' hostiles') + ' remaining';
 }
 
-function enemyStats(skill, ace) {
-  const es = era.enemy, f = es.flight, turn = 0.75 + 0.25 * skill + (ace ? 0.12 : 0);
+function enemyStats(skill, ace, model) {
+  const es = era.enemy, j = model ? ENEMY_JETS[model] : es, f = j.flight, turn = 0.75 + 0.25 * skill + (ace ? 0.12 : 0);
   const depth = run.mission ? run.mission.depth : 0;
   return {
-    size: es.size, minSpeed: f.minSpeed, maxSpeed: f.maxSpeed * es.speedMul * (ace ? 1.05 : 1), corner: f.corner,
+    size: j.size, minSpeed: f.minSpeed, maxSpeed: f.maxSpeed * es.speedMul * (ace ? 1.05 : 1), corner: f.corner,
     gmax: f.gmax * (ace ? 1 : 0.75 + 0.25 * skill), thrust: f.thrust, pitch: f.pitch * turn, roll: f.roll * turn, yaw: f.yaw * turn,
-    hp: es.hp * (ace ? 3 : 1) * (1 + depth * 0.06) * heatHp(run.heat),
+    hp: j.hp * (ace ? 3 : 1) * (1 + depth * 0.06) * heatHp(run.heat),
   };
 }
 function initPilot(e, skill, kind) {
@@ -1869,14 +1965,15 @@ function initPilot(e, skill, kind) {
   e.jink = new V3(); e.jinkT = 0; e.throttle = 0.85; e.target = null; e.targetT = 0;
   e.mslCd = rand(6, 12); e.missiles = e.ally ? 2 : (e.ace ? 3 : (era.loc.threat >= 2 || Math.random() < 0.5 ? 1 : 0));
 }
-function spawnEnemy(skill, ace, kind) {
+function spawnEnemy(skill, ace, kind, model) {
+  model = model || era.enemy.model;
   kind = kind || (run.mission.depth >= 1 && Math.random() < 0.3 ? 'boomer' : 'fighter');
   // spawn ahead of the player so fights open with a merge
   const a = Math.atan2(player.fwd.z, player.fwd.x) + rand(-0.9, 0.9), d = rand(1700, 2500);
   const x = clamp(player.pos.x + Math.cos(a) * d, -ARENA, ARENA), z = clamp(player.pos.z + Math.sin(a) * d, -ARENA, ARENA);
   const y = Math.max(groundAt(x, z) + 400, player.pos.y + (kind === 'boomer' ? rand(300, 600) : rand(-150, 250)));
-  const mesh = planeMesh(era.enemy.model, ace ? 'ace' : era.enemy.model);
-  const e = new Plane(enemyStats(skill, ace), mesh, 1);
+  const mesh = planeMesh(model, ace ? 'ace' : model);
+  const e = new Plane(enemyStats(skill, ace, model), mesh, 1);
   e.pos.set(x, y, z);
   const look = tv.copy(player.pos).add(tv2.set(rand(-500, 500), rand(-100, 100), rand(-500, 500)));
   e.quat.setFromRotationMatrix(mm.lookAt(e.pos, look, Y_AXIS));
@@ -2199,6 +2296,10 @@ function updatePlaying(dt) {
   updateMissiles(dt);
 
   // mission flow
+  if (m.queue && m.queue.length && live) {
+    m.spawnT -= dt;
+    if (m.spawnT <= 0 && enemies.filter(validTarget).length < SURV_LIVE) { spawnSpec(m.queue.shift()); m.spawnT = 1.2; }
+  }
   if (!m.done && live && m.t > 3) {
     const hostiles = enemies.filter(validTarget);
     let finished = false;
@@ -2207,10 +2308,12 @@ function updatePlaying(dt) {
         finished = true;
         if (hostiles.length) { hostiles.forEach(e => e.remove()); popText('The escorts turned for home'); }
       }
-    } else if (m.type !== 'boss') finished = hostiles.length === 0;
-    if (finished) { m.done = true; m.doneT = 2.4; slowmoT = 1.2; flashMsg('MISSION COMPLETE', m.type === 'intercept' ? m.bombersDown + ' of ' + m.bombers + ' bombers stopped' : '', 2.2); }
+    } else if (m.type === 'survival') finished = hostiles.length === 0 && !m.queue.length;
+    else if (m.type !== 'boss') finished = hostiles.length === 0;
+    if (finished && m.type === 'survival') { m.done = true; m.doneT = 2.4; slowmoT = 1.2; flashMsg('WAVE ' + run.wave + ' CLEARED', plural(run.wave + 1, 'fighter', 'fighters') + ' next', 2.2); }
+    else if (finished) { m.done = true; m.doneT = 2.4; slowmoT = 1.2; flashMsg('MISSION COMPLETE', m.type === 'intercept' ? m.bombersDown + ' of ' + m.bombers + ' bombers stopped' : '', 2.2); }
   }
-  if (m.done && !run.over) { m.doneT -= dt; if (m.doneT <= 0) completeMission(); }
+  if (m.done && !run.over) { m.doneT -= dt; if (m.doneT <= 0) (run.survival ? survivalWaveDone : completeMission)(); }
   if (run.victoryT > 0) { run.victoryT -= dt; if (run.victoryT <= 0 && !run.over) endRun('victory'); }
   if (!live && !run.bossDown && !m.done) {
     run.deathT += dt;
@@ -2319,9 +2422,9 @@ function drawHud(dt) {
 
   // DOM readouts
   const alive = enemies.filter(e => e.alive && !e.dying).length;
-  hEls.wave.textContent = NODE_INFO[run.mission.type].label.toUpperCase();
+  hEls.wave.textContent = run.survival ? 'WAVE ' + run.wave : NODE_INFO[run.mission.type].label.toUpperCase();
   hEls.en.textContent = objectiveText(alive);
-  hEls.kills.textContent = run.req + ' requisition · ' + run.kills + ' kills';
+  hEls.kills.textContent = run.survival ? run.kills + ' kills · best wave ' + (save.survBest[era.loc.id] || 0) : run.req + ' requisition · ' + run.kills + ' kills';
   const hf = player.hp / player.maxHp;
   hEls.hull.style.width = (hf * 100) + '%'; hEls.hull.style.background = hf < 0.3 ? red : '';
   hEls.hullN.textContent = Math.ceil(player.hp);
@@ -2702,6 +2805,7 @@ $('mapAbandon').addEventListener('click', () => {
 
 function endRun(reason) {
   if (!run || run.over) return;
+  if (run.survival) return endSurvival(reason);
   run.over = true;
   const victory = reason === 'victory', heat = run.heat, loc = era.loc.id;
   const hadSkins = new Set(A.SKINS.filter(skinOwned).map(sk => sk.id));
@@ -2733,7 +2837,7 @@ function endRun(reason) {
 }
 
 $('dbHangar').addEventListener('click', toHangar);
-$('dbAgain').addEventListener('click', startRun);
+$('dbAgain').addEventListener('click', () => (run && run.survival ? startSurvival() : startRun()));
 
 function toHangar() {
   clearCombat();
@@ -2831,7 +2935,7 @@ function setTab(t) {
   if (previewSkin) { previewSkin = null; setupShowcase(); }
   renderHangar();
 }
-['sortie', 'hangar', 'skills'].forEach((t, i, all) => {
+['sortie', 'survival', 'hangar', 'skills'].forEach((t, i, all) => {
   const b = $('tab-' + t);
   b.addEventListener('click', () => setTab(t));
   b.addEventListener('keydown', e => {
@@ -2843,17 +2947,20 @@ function setTab(t) {
 const KEYS_MOUSE = [['Mouse', 'Aim. The jet flies toward the circle. In the cockpit it moves the stick'], ['V (hold)', 'Free look'], ['W / S', 'Throttle. Keep holding W at 100% for afterburner'], ['A / D', 'Roll (overrides the aim)'], ['Q / E', 'Rudder'], ['↑ / ↓', 'Pitch override'], ['LMB · Space', 'Guns'], ['RMB · R', 'Missile, after lock-on'], ['F · MMB', 'Flares'], ['C', 'Chase / cockpit view'], ['P · Esc', 'Pause'], ['M', 'Mute']];
 const KEYS_DIRECT = [['W / S', 'Pitch (or ↑ ↓)'], ['A / D', 'Roll (or ← →)'], ['Q / E', 'Rudder'], ['Shift / X', 'Throttle. Hold Shift at 100% for afterburner'], ['Space · LMB', 'Guns'], ['R · RMB', 'Missile, after lock-on'], ['F', 'Flares'], ['V (hold) + mouse', 'Free look'], ['C', 'Chase / cockpit view'], ['P · Esc', 'Pause'], ['M', 'Mute']];
 function renderHangar() {
-  ['sortie', 'hangar', 'skills'].forEach(t => { $('tab-' + t).setAttribute('aria-selected', hangarTab === t ? 'true' : 'false'); $('tab-' + t).tabIndex = hangarTab === t ? 0 : -1; $('pane-' + t).hidden = hangarTab !== t; });
+  ['sortie', 'survival', 'hangar', 'skills'].forEach(t => { $('tab-' + t).setAttribute('aria-selected', hangarTab === t ? 'true' : 'false'); $('tab-' + t).tabIndex = hangarTab === t ? 0 : -1; $('pane-' + t).hidden = hangarTab !== t; });
   document.querySelector('#hangar .cols').classList.toggle('wide', hangarTab === 'skills');
   $('ptsBadge').textContent = save.points; $('ptsBadge').hidden = !save.points;
   const h = selHeat(), sk = A.SKIN_BY_ID[previewSkin || skinFor(era.plane.id)];
   $('heroName').textContent = era.plane.name;
-  $('heroSub').textContent = sk.name + (previewSkin ? ' · preview' : '') + ' · ' + era.loc.name + ' · heat ' + h;
+  $('heroSub').textContent = sk.name + (previewSkin ? ' · preview' : '') + ' · ' + era.loc.name + (hangarTab === 'survival' ? ' · survival' : ' · heat ' + h);
   $('wallet').innerHTML = [[save.credits.toLocaleString(), 'Credits'], [save.points, 'Skill points']].map(([v, l]) => '<div><b>' + v + '</b><span>' + l + '</span></div>').join('');
-  $('launchEra').textContent = era.short + ' · ' + era.name.toUpperCase() + (h ? ' · HEAT ' + h : '');
+  const surv = hangarTab === 'survival';
+  $('launch').querySelector('span').textContent = surv ? 'Launch survival' : 'Launch sortie';
+  $('launchEra').textContent = era.short + ' · ' + era.name.toUpperCase() + (surv ? ' · BEST WAVE ' + (save.survBest[save.loc] || 0) : h ? ' · HEAT ' + h : '');
   const tiers = LOC_ORDER.reduce((a, id) => a + heatWon(id) + 1, 0);
   $('record').innerHTML = [['Best run', save.best > WAVES ? 'Boss' : save.best], ['Kills', save.totalKills], ['Bosses', tiers + '/' + LOC_ORDER.length * (HEAT_MAX + 1)]].map(([l, v]) => '<div><b>' + v + '</b><span>' + l + '</span></div>').join('');
   if (hangarTab === 'sortie') renderSortie();
+  else if (hangarTab === 'survival') renderSurvival();
   else if (hangarTab === 'hangar') renderAircraft();
   else renderWeb();
   $('keysList').innerHTML = (mouseMode() ? KEYS_MOUSE : KEYS_DIRECT).map(([k, d]) => '<dt>' + k + '</dt><dd>' + d + '</dd>').join('');
@@ -2861,21 +2968,29 @@ function renderHangar() {
   $('optCtlKeys').checked = !mouseMode();
   $('optPull').checked = !!save.pullBack;
 }
-function renderSortie() {
-  const el = $('eraList'); el.innerHTML = '';
+function renderLocs(el, prefix, tag) {
+  el.innerHTML = '';
   LOC_ORDER.forEach((id, i) => {
     const L = LOCS[id], open = !!save.locs[id], prev = LOCS[LOC_ORDER[i - 1]], won = heatWon(id);
-    const b = document.createElement('button'); b.className = 'era' + (open ? '' : ' locked'); b.id = 'loc-' + id;
+    const b = document.createElement('button'); b.className = 'era' + (open ? '' : ' locked'); b.id = prefix + id;
     b.setAttribute('aria-pressed', era.loc.id === id ? 'true' : 'false');
     b.disabled = !open;
     let foot = '';
     if (!open) foot = '<span class="cost">Down the ' + prev.boss.name.toLowerCase() + ' to open</span>';
+    else if (tag) foot = tag(id);
     else if (won >= HEAT_MAX) foot = '<span class="tag">Mastered · heat 5 cleared</span>';
     else if (won >= 0) foot = '<span class="tag">Heat ' + won + ' cleared</span>';
     b.innerHTML = '<span class="yr">' + L.name + '</span><span class="nm">Threat ' + L.threat + ' · ' + ENEMY_JETS[L.enemy].name + 's</span><span class="bl">' + L.blurb + '</span>' + foot;
     b.addEventListener('click', () => selectLoc(id));
     el.appendChild(b);
   });
+}
+function renderSurvival() {
+  renderLocs($('survList'), 'sloc-', id => { const b = save.survBest[id] || 0; return '<span class="tag">' + (b ? 'Best: wave ' + b : 'Not flown yet') + '</span>'; });
+  $('survNote').textContent = 'You fly the ' + era.plane.name + ' with your skills from the web. Pick another jet in the Hangar tab.';
+}
+function renderSortie() {
+  renderLocs($('eraList'), 'loc-');
   const h = selHeat(), top = heatOpen(save.loc), hl = $('heatList'); hl.innerHTML = '';
   $('heatLoc').textContent = era.loc.name;
   for (let lv = 0; lv <= HEAT_MAX; lv++) {
@@ -3031,7 +3146,7 @@ $('web').addEventListener('keydown', e => {
 $('optPull').addEventListener('change', e => { save.pullBack = e.target.checked; persist(); });
 $('optCtlMouse').addEventListener('change', () => { save.ctl = 'mouse'; persist(); renderHangar(); });
 $('optCtlKeys').addEventListener('change', () => { save.ctl = 'keys'; persist(); renderHangar(); });
-$('launch').addEventListener('click', startRun);
+$('launch').addEventListener('click', () => (hangarTab === 'survival' ? startSurvival() : startRun()));
 let refundArm = false;
 $('refundBtn').addEventListener('click', () => {
   if (!refundArm) { refundArm = true; $('refundBtn').textContent = 'Click again to refund every rank'; setTimeout(() => { refundArm = false; $('refundBtn').textContent = 'Refund all points'; }, 3000); return; }
@@ -3289,7 +3404,7 @@ buildWorld();
 toHangar();
 loadManifest();
 requestAnimationFrame(frame);
-window.__skybreak = { get fps() { return fpsAvg; }, get state() { return state; }, get player() { return player; }, get enemies() { return enemies; }, get allies() { return allies; }, get run() { return run; }, startRun, endRun, showMap, addItem, enterNode,
+window.__skybreak = { get fps() { return fpsAvg; }, get state() { return state; }, get player() { return player; }, get enemies() { return enemies; }, get allies() { return allies; }, get run() { return run; }, startRun, startSurvival, endRun, showMap, addItem, enterNode,
   go(type, col) { const n = { c: col || 2, r: 0, rows: 1, type, next: [] }; startMission(type, n, {}); },
   nudge(dx, dy) { nudgeAim(dx, dy); }, setAim(y, p) { aimYaw = y; aimPitch = p; updateAimDir(); }, cam(m) { camMode = m; },
   setup(loc, plane) { save.locs[loc] = true; save.planes[plane] = true; save.loc = loc; save.plane = plane; composeEra(); buildWorld(); setupShowcase(); renderHangar(); },
