@@ -203,6 +203,24 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
 .pk .lv { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 8px; font-size: 12px; color: var(--paper); line-height: 1.3; }
 .pk .lv b { color: var(--amber); font-weight: 700; }
 .pk.locked .gn { color: var(--muted); }
+.grpset { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.grpset button { background: transparent; border: 1px solid rgba(235,228,210,0.18); color: var(--paper); padding: 5px 10px; font-size: 12px; }
+.grpset button[aria-pressed="true"] { border-color: var(--good); color: var(--good); }
+.pk .lv b.cur, .pk .lv b.cur + span { color: var(--good); }
+.pk .lv .dim { color: var(--muted); }
+.pk .acts { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; }
+.pk .acts button { flex: 1 1 auto; background: transparent; border: 1px solid rgba(235,228,210,0.2); color: var(--paper); padding: 6px 8px; font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; }
+.pk .acts button.go { border-color: var(--amber-dim); color: var(--amber); }
+.pk .acts button.on { border-color: var(--good); color: var(--good); }
+.pk .acts button.armed { border-color: var(--amber); box-shadow: 0 0 0 2px rgba(255,181,71,0.25); }
+.pk .acts button:disabled { opacity: 0.45; cursor: default; }
+.pk.eq { border-color: var(--good); background: rgba(143,214,154,0.06); }
+.slots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 640px) { .slots { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.slot { border: 1px dashed rgba(235,228,210,0.25); background: rgba(255,255,255,0.02); color: var(--paper); padding: 10px 8px; min-height: 64px; text-align: left; display: flex; flex-direction: column; gap: 3px; }
+.slot b { font-size: 13px; } .slot small { font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.slot.full { border-style: solid; border-color: var(--good); }
+.slot.locked { opacity: 0.5; }
 @media (max-width: 600px) {
   .hero .wallet { top: 54px; padding: 6px 14px 6px 30px; gap: 14px; }
   .hero .wallet b { font-size: 20px; }
@@ -298,10 +316,11 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
   <div id="stickZone"><div id="stickBase"></div><div id="stickKnob"></div></div>
   <div class="tbtns">
     <button id="tThrUp">THR +</button>
-    <button id="tMsl">SEC</button>
+    <button id="tMsl">SPL</button>
     <button id="tThrDn">THR −</button>
     <button id="tFire" class="fire">FIRE</button>
     <button id="tFlr">FLR</button>
+    <button id="tSwap">SWAP</button>
   </div>
 </div>
 
@@ -321,7 +340,7 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
     <div class="cols">
       <div class="col">
         <div id="pane-survival" class="col" role="tabpanel" aria-labelledby="tab-survival">
-          <p class="note lede">How long can you last? Wave 1 is one fighter, wave 2 is two, and so on, with newer jets, aces and new kinds of fighter mixed in as the waves climb. Every tenth wave brings the location's boss: down it to open the next location. Before wave 1 and after every wave, pick a perk or a field repair. Credits and medals pay out for every wave you survive.</p>
+          <p class="note lede">How long can you last? Wave 1 is one fighter, wave 2 is two, and so on, with newer jets, aces and new kinds of fighter mixed in as the waves climb. Every tenth wave brings the location's boss: down it to open the next location. After every wave, pick a field upgrade for the rest of the run, or a field repair. Credits and medals pay out for every wave you survive.</p>
           <div>
             <div class="label"><span>Location</span></div>
             <div class="eras" id="survList"></div>
@@ -340,7 +359,7 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
               <div class="coophead"><span>Room</span><b id="coopCodeShow"></b><button class="ghost" id="coopCopy">Copy invite link</button><button class="ghost" id="coopLeave">Leave room</button></div>
               <ul class="roster" id="coopRoster"></ul>
             </div>
-            <p class="note" id="coopNote">Fly survival together over the internet. One pilot hosts and shares the four-letter code. Enemies get tougher and more numerous for every pilot, friendly fire and friendly missile locks are on, and a pilot who goes down comes back after the wave with half hull and one perk level lost.</p>
+            <p class="note" id="coopNote">Fly survival together over the internet. One pilot hosts and shares the four-letter code. Enemies get tougher and more numerous for every pilot, friendly fire and friendly missile locks are on, and a pilot who goes down comes back after the wave with half hull and one field upgrade lost.</p>
           </div>
         </div>
         <div id="pane-hangar" class="col" role="tabpanel" aria-labelledby="tab-hangar" hidden>
@@ -355,16 +374,17 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
           </div>
         </div>
         <div id="pane-loadout" class="col" role="tabpanel" aria-labelledby="tab-loadout" hidden>
-          <p class="note lede">Fit guns to the hardpoints on your jet, up to its gun limit. Bays inside the airframe take cannons, pylons under the wings take gun pods. Every gun has weight: go past the factory fit and the jet turns and climbs a little slower, go lighter and it gets nimbler. Pods also add drag, and on the F-35 they give away its stealth. All the guns share one heat gauge, so more guns hit harder but overheat sooner. Then pick one secondary weapon.</p>
+          <p class="note lede">Fit guns to the hardpoints on your jet, up to its gun limit. Bays inside the airframe take cannons, pylons under the wings take gun pods. Every gun has weight: go past the factory fit and the jet turns and climbs a little slower, go lighter and it gets nimbler. Pods also add drag, and on the F-35 they give away its stealth. Every gun goes in the primary or the secondary fire group, and only one group fires at a time. Each group has its own heat gauge: swap with the mouse wheel, Tab or 1 / 2, and when one overheats you swap to the other automatically while it cools. Then pick one special.</p>
           <div class="lobox">
             <div class="lodiag" id="loDiag"></div>
             <div class="col" style="gap:10px">
               <div class="label" style="margin:0"><span id="loHp">Hardpoint</span><span id="loWeight"></span></div>
+              <div class="grpset" id="loGroup"></div>
               <div class="guns" id="loGuns"></div>
             </div>
           </div>
           <div>
-            <div class="label"><span>Secondary weapon · right mouse or R</span></div>
+            <div class="label"><span>Special · right mouse or R</span></div>
             <div class="guns" id="loSec"></div>
           </div>
           <div>
@@ -374,8 +394,9 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
           <button class="ghost" id="loStock">Back to the factory loadout</button>
         </div>
         <div id="pane-perks" class="col" role="tabpanel" aria-labelledby="tab-perks" hidden>
-          <p class="note lede">Perks are picked during a run. Before wave 1 and after every wave you choose one: a new perk for an empty slot, or the next level of a perk you already have, up to level III. Unlock more perks here with medals. You earn a medal for every two waves you survive and three for every boss.</p>
+          <p class="note lede">Equip perks into your slots before you fly. They work on every jet and stay for the whole run, so pick the ones you value most. You start with 3 slots, open a 4th by downing your first boss and a 5th by downing the bosses of 3 locations. Spend medals to unlock perks and to raise each one from tier I to V. You earn a medal for every wave you survive and three for every boss.</p>
           <p class="note" id="perkNote"></p>
+          <div class="slots" id="perkSlots"></div>
           <div class="perkgrid" id="perkShop"></div>
         </div>
       </div>
@@ -391,7 +412,7 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
           <label class="toggle"><input type="radio" name="ctl" id="optCtlMouse"> Mouse aim, War Thunder style. Point the mouse and the plane flies there.</label>
           <label class="toggle"><input type="radio" name="ctl" id="optCtlKeys"> Direct control with keyboard or gamepad</label>
           <label class="toggle"><input type="checkbox" id="optPull"> Pull back to climb in direct control (S or ↓ raises the nose)</label>
-          <p class="note">A gamepad works too: left stick flies, right stick is rudder, RT fires, LT fires the secondary, B drops flares, bumpers set throttle.</p>
+          <p class="note">A gamepad works too: left stick flies, right stick is rudder, RT fires, X swaps gun groups, LT fires the special, B drops flares, bumpers set throttle.</p>
           <button class="ghost" id="unlockBtn">Unlock everything (testing)</button>
           <button class="ghost" id="resetBtn">Reset all progress</button>
           <p class="note" id="credits" hidden></p>
@@ -456,7 +477,7 @@ const Y_AXIS = new V3(0, 1, 0);
 // ================= save data =================
 const SAVE_KEY = 'skybreak-save-v3';
 const defaultSave = () => ({ points: 0, credits: 0, totalKills: 0, runs: 0, locs: { arctic: true }, bosses: {}, survBest: {},
-  planes: { f5: true }, skins: { factory: true }, skin: {}, guns: {}, loadout: {}, secs: {}, secondary: {}, perks: {}, loc: 'arctic', plane: 'f5', pullBack: true, ctl: 'mouse' });
+  planes: { f5: true }, skins: { factory: true }, skin: {}, guns: {}, loadout: {}, secs: {}, secondary: {}, perks: {}, groups: {}, equip: null, allSlots: false, loc: 'arctic', plane: 'f5', pullBack: true, ctl: 'mouse' });
 // what each rank of the old skill web cost, so ranks trained there come back as medals (anything not listed cost 2)
 const OLD_WEB_COST = { armor: 1, engine: 1, guns: 1, seekers: 1, controls: 1, supply: 1, reactive: 4, turbofan: 4, ap: 4, pylon: 4, instinct: 4, blackmkt: 4,
   tub: 3, damctl: 3, overhaul: 3, arearule: 3, hotbarrel: 3, match: 3, warhead: 3, datalink: 3, fbw: 3, evasive: 3, contracts: 3, scrounger: 3,
@@ -467,7 +488,9 @@ try {
   const obj = (k, base) => Object.assign({}, base || {}, s[k] || {});
   if (s) {
     save = Object.assign(defaultSave(), s, { locs: obj('locs', { arctic: true }), bosses: obj('bosses'), survBest: obj('survBest'),
-      planes: obj('planes', { f5: true }), skins: obj('skins', { factory: true }), skin: obj('skin'), guns: obj('guns'), loadout: obj('loadout'), secs: obj('secs'), secondary: obj('secondary'), perks: obj('perks') });
+      planes: obj('planes', { f5: true }), skins: obj('skins', { factory: true }), skin: obj('skin'), guns: obj('guns'), loadout: obj('loadout'), secs: obj('secs'), secondary: obj('secondary'), perks: obj('perks'), groups: obj('groups') });
+    // perks were unlocked as true; now each holds its tier, from I to V
+    for (const id in save.perks) if (save.perks[id] === true) save.perks[id] = 1;
     // the skill web and the old 12-skill tree are gone: every rank comes back as medals for perks
     for (const id in s.skills || {}) save.points += (s.skills[id] || 0) * (OLD_WEB_COST[id] || 2);
     for (const id in s.tree || {}) { const r = s.tree[id]; save.points += r * (r + 1) / 2; }
@@ -489,35 +512,49 @@ const pc = v => { const p = v * 100; return (Math.abs(p - Math.round(p)) < 0.05 
 const r1 = v => (Math.abs(v - Math.round(v)) < 0.05 ? Math.round(v) : v.toFixed(2).replace(/0$/, ''));
 const plural = (n, one, many) => r1(n) + ' ' + (Math.abs(n - 1) < 0.01 ? one : many);
 
-// ---- perks: unlocked for good with medals, then picked during a run and levelled up from I to III by picking them again ----
-// v: the value at each level (an array when a perk does two things); cost: medals to unlock it, 0 for the ones you start with
+// ---- perks: unlocked for good with medals, upgraded from tier I to V with more medals, and equipped into slots in the hangar ----
+// Perks are universal: the ones you equip fly with every jet. v: the value at each tier (an array when a perk does two things);
+// cost: medals to unlock it, 0 for the ones you start with
 const PERKS = [
-  { id: 'hot', name: 'Hot loads', cat: 'Guns', cost: 0, v: [0.15, 0.3, 0.5], d: v => '+' + pc(v) + ' gun damage' },
-  { id: 'belt', name: 'Linked belts', cat: 'Guns', cost: 0, v: [0.12, 0.25, 0.4], d: v => '+' + pc(v) + ' rate of fire' },
-  { id: 'cool', name: 'Cooled barrels', cat: 'Guns', cost: 0, v: [0.2, 0.35, 0.5], d: v => 'guns heat ' + pc(v) + ' slower' },
-  { id: 'sinks', name: 'Heat sinks', cat: 'Guns', cost: 3, v: [0.4, 0.8, 1.3], d: v => 'guns cool ' + pc(v) + ' faster, and come back sooner from an overheat' },
-  { id: 'sight', name: 'Gyro gunsight', cat: 'Guns', cost: 2, v: [[0.25, 0.1], [0.4, 0.2], [0.55, 0.3]], d: v => pc(v[0]) + ' tighter spread and +' + pc(v[1]) + ' range' },
-  { id: 'match', name: 'Match-grade ammo', cat: 'Guns', cost: 3, v: [0.08, 0.15, 0.22], d: v => pc(v) + ' of hits are critical, for 2.5× damage' },
-  { id: 'boom', name: 'Explosive rounds', cat: 'Guns', cost: 5, v: [0.25, 0.4, 0.6], d: v => 'hits burst for ' + pc(v) + ' damage to anything within 30 m' },
-  { id: 'chain', name: 'Arc rounds', cat: 'Guns', cost: 7, v: [6, 5, 4], d: v => 'every ' + v + 'th hit arcs to 2 nearby enemies for double damage' },
-  { id: 'glass', name: 'Glass cannon', cat: 'Guns', cost: 8, v: [[0.4, 0.25], [0.65, 0.3], [0.9, 0.35]], d: v => '+' + pc(v[0]) + ' gun damage, −' + pc(v[1]) + ' max hull' },
-  { id: 'rearm', name: 'Ordnance crew', cat: 'Secondary', cost: 0, v: [0.15, 0.3, 0.45], d: v => 'secondary cooldown ' + pc(v) + ' shorter' },
-  { id: 'rack', name: 'Ready rack', cat: 'Secondary', cost: 3, v: [1, 2, 3], d: v => '+' + plural(v, 'secondary charge', 'secondary charges') },
-  { id: 'warhead', name: 'Big warheads', cat: 'Secondary', cost: 3, v: [0.2, 0.4, 0.65], d: v => '+' + pc(v) + ' secondary damage' },
-  { id: 'bounty', name: 'Gun-kill bounty', cat: 'Secondary', cost: 4, v: [2, 4, 6], d: v => 'every gun kill takes another ' + v + ' s off the secondary cooldown' },
-  { id: 'plate', name: 'Armor plates', cat: 'Airframe', cost: 0, v: [20, 40, 65], d: v => '+' + v + ' max hull' },
-  { id: 'mech', name: 'Onboard mechanic', cat: 'Airframe', cost: 4, v: [0.8, 1.6, 2.5], d: v => 'repairs ' + v + ' hull a second in combat' },
-  { id: 'trophy', name: 'Trophy hunter', cat: 'Airframe', cost: 3, v: [6, 10, 15], d: v => 'every kill repairs ' + v + ' hull' },
-  { id: 'charm', name: 'Lucky charm', cat: 'Airframe', cost: 4, v: [0.08, 0.15, 0.22], d: v => pc(v) + ' of enemy hits miss you' },
-  { id: 'phoenix', name: 'Phoenix', cat: 'Airframe', cost: 10, v: [0.35, 0.5, 0.75], d: v => 'once a run, survive being shot down with ' + pc(v) + ' hull and a shockwave' },
-  { id: 'wep', name: 'Emergency power', cat: 'Flight', cost: 0, v: [[0.12, 0.04], [0.24, 0.08], [0.36, 0.12]], d: v => '+' + pc(v[0]) + ' thrust and +' + pc(v[1]) + ' top speed' },
-  { id: 'tabs', name: 'Spring tabs', cat: 'Flight', cost: 0, v: [0.1, 0.2, 0.3], d: v => '+' + pc(v) + ' roll and pitch rate' },
-  { id: 'wing', name: 'Wingman', cat: 'Tactics', cost: 6, v: [1, 2, 3], d: v => plural(v, 'wingman flies', 'wingmen fly') + ' every wave with you' },
-  { id: 'time', name: 'Killing time', cat: 'Tactics', cost: 6, v: [[0.8, 3], [1.2, 5], [1.6, 8]], d: v => 'every kill slows time for ' + v[0] + ' s and repairs ' + v[1] + ' hull' },
+  { id: 'hot', name: 'Hot loads', cat: 'Guns', cost: 0, v: [0.1, 0.18, 0.27, 0.37, 0.5], d: v => '+' + pc(v) + ' gun damage' },
+  { id: 'belt', name: 'Linked belts', cat: 'Guns', cost: 0, v: [0.08, 0.15, 0.22, 0.3, 0.4], d: v => '+' + pc(v) + ' rate of fire' },
+  { id: 'cool', name: 'Cooled barrels', cat: 'Guns', cost: 0, v: [0.12, 0.22, 0.32, 0.42, 0.52], d: v => 'guns heat ' + pc(v) + ' slower' },
+  { id: 'sinks', name: 'Heat sinks', cat: 'Guns', cost: 3, v: [0.25, 0.5, 0.8, 1.05, 1.35], d: v => 'guns cool ' + pc(v) + ' faster, and come back sooner from an overheat' },
+  { id: 'sight', name: 'Gyro gunsight', cat: 'Guns', cost: 2, v: [[0.15, 0.06], [0.25, 0.1], [0.35, 0.15], [0.45, 0.22], [0.55, 0.3]], d: v => pc(v[0]) + ' tighter spread and +' + pc(v[1]) + ' range' },
+  { id: 'match', name: 'Match-grade ammo', cat: 'Guns', cost: 3, v: [0.05, 0.09, 0.13, 0.17, 0.22], d: v => pc(v) + ' of hits are critical, for 2.5× damage' },
+  { id: 'boom', name: 'Explosive rounds', cat: 'Guns', cost: 5, v: [0.15, 0.25, 0.35, 0.47, 0.6], d: v => 'hits burst for ' + pc(v) + ' damage to anything within 30 m' },
+  { id: 'chain', name: 'Arc rounds', cat: 'Guns', cost: 7, v: [8, 7, 6, 5, 4], d: v => 'every ' + v + 'th hit arcs to 2 nearby enemies for double damage' },
+  { id: 'glass', name: 'Glass cannon', cat: 'Guns', cost: 8, v: [[0.3, 0.25], [0.45, 0.27], [0.6, 0.3], [0.75, 0.32], [0.9, 0.35]], d: v => '+' + pc(v[0]) + ' gun damage, −' + pc(v[1]) + ' max hull' },
+  { id: 'rearm', name: 'Ordnance crew', cat: 'Special', cost: 0, v: [0.1, 0.18, 0.27, 0.36, 0.45], d: v => 'special cooldown ' + pc(v) + ' shorter' },
+  { id: 'rack', name: 'Ready rack', cat: 'Special', cost: 3, v: [[1, 0], [1, 0.08], [2, 0.08], [2, 0.16], [3, 0.16]], d: v => '+' + plural(v[0], 'special charge', 'special charges') + (v[1] ? ' and a ' + pc(v[1]) + ' shorter cooldown' : '') },
+  { id: 'warhead', name: 'Big warheads', cat: 'Special', cost: 3, v: [0.12, 0.24, 0.36, 0.5, 0.65], d: v => '+' + pc(v) + ' special damage' },
+  { id: 'bounty', name: 'Gun-kill bounty', cat: 'Special', cost: 4, v: [1, 2, 3, 4.5, 6], d: v => 'every gun kill takes another ' + v + ' s off the special cooldown' },
+  { id: 'plate', name: 'Armor plates', cat: 'Airframe', cost: 0, v: [12, 24, 38, 52, 70], d: v => '+' + v + ' starting and max hull' },
+  { id: 'mech', name: 'Onboard mechanic', cat: 'Airframe', cost: 4, v: [0.5, 1, 1.5, 2, 2.6], d: v => 'repairs ' + v + ' hull a second in combat' },
+  { id: 'trophy', name: 'Trophy hunter', cat: 'Airframe', cost: 3, v: [4, 6, 9, 12, 15], d: v => 'every kill repairs ' + v + ' hull' },
+  { id: 'charm', name: 'Lucky charm', cat: 'Airframe', cost: 4, v: [0.05, 0.09, 0.13, 0.17, 0.22], d: v => pc(v) + ' of enemy hits miss you' },
+  { id: 'phoenix', name: 'Phoenix', cat: 'Airframe', cost: 10, v: [0.2, 0.3, 0.45, 0.6, 0.75], d: v => 'once a run, survive being shot down with ' + pc(v) + ' hull and a shockwave' },
+  { id: 'wep', name: 'Emergency power', cat: 'Flight', cost: 0, v: [[0.07, 0.02], [0.14, 0.05], [0.21, 0.07], [0.28, 0.1], [0.36, 0.12]], d: v => '+' + pc(v[0]) + ' thrust and +' + pc(v[1]) + ' top speed' },
+  { id: 'tabs', name: 'Spring tabs', cat: 'Flight', cost: 0, v: [0.06, 0.12, 0.18, 0.24, 0.3], d: v => '+' + pc(v) + ' roll and pitch rate' },
+  { id: 'wing', name: 'Wingman', cat: 'Tactics', cost: 6, v: [[80, 0.7], [100, 0.85], [125, 1], [150, 1.15], [180, 1.3]], d: v => 'a wingman flies with you, with ' + v[0] + ' hull and ' + pc(v[1]) + ' of your gun damage. If they go down, they\'re back next wave' },
+  { id: 'time', name: 'Killing time', cat: 'Tactics', cost: 6, v: [[0.5, 2], [0.8, 3], [1.1, 5], [1.4, 6], [1.7, 8]], d: v => 'every kill slows time for ' + v[0] + ' s and repairs ' + v[1] + ' hull' },
 ];
 const PERK_BY_ID = Object.fromEntries(PERKS.map(p => [p.id, p]));
-const PERK_MAX = 3, ROMAN = ['', 'I', 'II', 'III'];
-const perkOpen = p => !p.cost || !!save.perks[p.id];
+const PERK_MAX = 5, ROMAN = ['', 'I', 'II', 'III', 'IV', 'V'];
+// medals to raise a perk to each tier
+const TIER_COST = [0, 0, 2, 3, 5, 8];
+// your tier in a perk, 0 while it's locked
+const perkTier = p => save.perks[p.id] || (p.cost ? 0 : 1);
+const perkOpen = p => perkTier(p) > 0;
+// 3 slots to start, a 4th for your first boss and a 5th for downing the bosses of 3 locations
+const bossCount = () => LOC_ORDER.filter(id => save.bosses[id]).length;
+const perkSlotCount = () => save.allSlots ? 5 : 3 + (bossCount() >= 1 ? 1 : 0) + (bossCount() >= 3 ? 1 : 0);
+// the equipped perks, trimmed to the slots you have and the perks you've unlocked
+function equipped() {
+  if (!Array.isArray(save.equip)) save.equip = ['hot', 'plate', 'rearm'];
+  save.equip = save.equip.filter((id, i, a) => PERK_BY_ID[id] && perkOpen(PERK_BY_ID[id]) && a.indexOf(id) === i).slice(0, perkSlotCount());
+  return save.equip;
+}
 const perkText = (p, lvl) => { const t = p.d(p.v[lvl - 1]); return t[0].toUpperCase() + t.slice(1) + '.'; };
 
 // ================= aircraft and locations =================
@@ -530,7 +567,7 @@ const PLANES = {
     size: 1.05, cockpit: 'jet', eye: [0.85, -3.6], hp: 100, missiles: 2, lockTime: 1.0, lockRange: 2600,
     flight: { minSpeed: 62, maxSpeed: 320, corner: 145, gmax: 10, thrust: 28, pitch: 1.5, roll: 4.8, yaw: 0.45 },
     // hardpoints: [x, y, z] on the airframe in metres, nose toward -z. A bay takes a cannon, a pylon takes a gun pod
-    payload: 3, maxGuns: 2, perkSlots: 3, guns: ['m3', 'm39', 'minigun'], stock: { noseL: 'm39', noseR: 'm39' },
+    payload: 3, maxGuns: 2, guns: ['m3', 'm39', 'minigun'], stock: { noseL: 'm39', noseR: 'm39' },
     hardpoints: [{ id: 'noseL', name: 'Nose gun, left', kind: 'bay', at: [-0.45, 0.25, -6] }, { id: 'noseR', name: 'Nose gun, right', kind: 'bay', at: [0.45, 0.25, -6] },
       { id: 'pylL', name: 'Wing pylon, left', kind: 'pylon', at: [-2.4, -0.6, 0.9] }, { id: 'pylR', name: 'Wing pylon, right', kind: 'pylon', at: [2.4, -0.6, 0.9] }],
     livery: [0xa9b0b6, 0x2c3e66] },
@@ -538,7 +575,7 @@ const PLANES = {
     blurb: 'Fly-by-wire and a bubble canopy. The best roll rate and G limit in the hangar.',
     size: 1.1, cockpit: 'jet', eye: [1.05, -4.3], hp: 115, missiles: 4, lockTime: 0.85, lockRange: 3000,
     flight: { minSpeed: 66, maxSpeed: 345, corner: 150, gmax: 11.5, thrust: 34, pitch: 1.6, roll: 5.6, yaw: 0.45 },
-    payload: 4, maxGuns: 3, perkSlots: 3, guns: ['m3', 'm39', 'm61', 'minigun', 'suu23'], stock: { rootL: 'm61' },
+    payload: 4, maxGuns: 3, guns: ['m3', 'm39', 'm61', 'minigun', 'suu23'], stock: { rootL: 'm61', rootR: 'm3' },
     hardpoints: [{ id: 'rootL', name: 'Gun bay, left root', kind: 'bay', at: [-1.0, 0.45, -3] }, { id: 'rootR', name: 'Gun bay, right root', kind: 'bay', at: [1.0, 0.45, -3] },
       { id: 'pylL', name: 'Wing pylon, left', kind: 'pylon', at: [-2.9, -0.55, 1.2] }, { id: 'pylR', name: 'Wing pylon, right', kind: 'pylon', at: [2.9, -0.55, 1.2] }],
     livery: [0x8e979f, 0xc2272d] },
@@ -546,7 +583,7 @@ const PLANES = {
     blurb: 'Swing wings sweep back as you speed up. Fastest jet here, three missiles on the rails and the longest lock range.',
     size: 1.4, cockpit: 'jet', eye: [1.25, -6.2], hp: 150, missiles: 6, lockTime: 0.9, lockRange: 4500,
     flight: { minSpeed: 62, maxSpeed: 375, corner: 158, gmax: 9.5, thrust: 35, pitch: 1.4, roll: 4.0, yaw: 0.4 },
-    payload: 5.5, maxGuns: 4, perkSlots: 4, guns: ['m3', 'm39', 'm61', 'aden', 'minigun', 'suu23'], stock: { noseL: 'm61' },
+    payload: 5.5, maxGuns: 4, guns: ['m3', 'm39', 'm61', 'aden', 'minigun', 'suu23'], stock: { noseL: 'm61', noseR: 'm3' },
     hardpoints: [{ id: 'noseL', name: 'Nose bay, left', kind: 'bay', at: [-0.9, -0.2, -6] }, { id: 'noseR', name: 'Nose bay, right', kind: 'bay', at: [0.9, -0.2, -6] },
       { id: 'gloveL', name: 'Glove pylon, left', kind: 'pylon', at: [-2.1, -1.0, -1.4] }, { id: 'gloveR', name: 'Glove pylon, right', kind: 'pylon', at: [2.1, -1.0, -1.4] },
       { id: 'bellyL', name: 'Belly pylon, left', kind: 'pylon', at: [-0.75, -1.15, 2.6] }, { id: 'bellyR', name: 'Belly pylon, right', kind: 'pylon', at: [0.75, -1.15, 2.6] }],
@@ -555,7 +592,7 @@ const PLANES = {
     blurb: 'Tough, and it keeps its nose authority at high angles of attack where other jets stall.',
     size: 1.3, cockpit: 'jet', eye: [1.15, -5.8], hp: 165, missiles: 6, lockTime: 0.85, lockRange: 3200, stallAoa: 0.37,
     flight: { minSpeed: 56, maxSpeed: 330, corner: 140, gmax: 10.5, thrust: 31, pitch: 1.85, roll: 4.6, yaw: 0.55 },
-    payload: 5, maxGuns: 4, perkSlots: 4, guns: ['m3', 'm61', 'gau22', 'aden', 'minigun', 'suu23'], stock: { nose: 'm61' },
+    payload: 5, maxGuns: 4, guns: ['m3', 'm61', 'gau22', 'aden', 'minigun', 'suu23'], stock: { nose: 'm61', inL: 'minigun' },
     hardpoints: [{ id: 'nose', name: 'Nose cannon', kind: 'bay', at: [0, 0.55, -7.6] },
       { id: 'inL', name: 'Inner pylon, left', kind: 'pylon', at: [-3.0, -0.6, 1.0] }, { id: 'inR', name: 'Inner pylon, right', kind: 'pylon', at: [3.0, -0.6, 1.0] },
       { id: 'outL', name: 'Outer pylon, left', kind: 'pylon', at: [-4.9, -0.45, 1.8], up: true }, { id: 'outR', name: 'Outer pylon, right', kind: 'pylon', at: [4.9, -0.45, 1.8], up: true }],
@@ -564,7 +601,7 @@ const PLANES = {
     blurb: 'Stealth makes enemies slow to lock you and sloppy with their guns, unless you hang pods outside. Locks its own missiles fastest.',
     size: 1.15, cockpit: 'future', eye: [1.15, -4.2], hp: 150, missiles: 4, lockTime: 0.5, lockRange: 3600, stealth: 0.4,
     flight: { minSpeed: 62, maxSpeed: 355, corner: 148, gmax: 11, thrust: 36, pitch: 1.65, roll: 5.0, yaw: 0.5 },
-    payload: 4.5, maxGuns: 3, perkSlots: 4, guns: ['m61', 'gau22', 'aden', 'minigun', 'suu23'], stock: { rootL: 'gau22' },
+    payload: 4.5, maxGuns: 3, guns: ['m61', 'gau22', 'aden', 'minigun', 'suu23'], stock: { rootL: 'gau22' },
     hardpoints: [{ id: 'rootL', name: 'Internal gun, left root', kind: 'bay', at: [-1.1, 0.6, -2.5] }, { id: 'centre', name: 'Centreline pod', kind: 'pylon', at: [0, -1.05, 0.4] },
       { id: 'pylL', name: 'Wing pylon, left', kind: 'pylon', at: [-3.2, -0.5, 1.6] }, { id: 'pylR', name: 'Wing pylon, right', kind: 'pylon', at: [3.2, -0.5, 1.6] }],
     livery: [0x59616a, 0x8b949c] },
@@ -573,7 +610,7 @@ const PLANE_ORDER = ['f5', 'f16', 'f14', 'f18', 'f35'];
 
 // ---- guns: bought once with credits, then fitted to the hardpoints of any jet that takes them ----
 // rof is rounds per second for one gun; weight counts against the jet's payload; drag cuts top speed;
-// heat is how much of the shared heat gauge one second of fire fills
+// heat is how much of its fire group's heat gauge one second of fire fills
 const GUNS = {
   m3: { name: 'M3 .50 cal', short: '.50 CAL', kind: 'Machine gun', mount: 'bay', weight: 0.4, price: 0, rof: 15, dmg: 2.4, heat: 0.07, speed: 900, spread: 0.006, range: 1100, color: 0xfff0b8, len: 11, sound: 1300,
     d: 'Light and fast-firing. Weak alone, but it barely weighs anything.' },
@@ -594,8 +631,9 @@ const GUN_ORDER = ['m3', 'm39', 'm61', 'gau22', 'aden', 'minigun', 'suu23'];
 // every point of payload above (or below) the factory loadout costs (or gives) this much turn and thrust
 const WEIGHT_TURN = 0.035, WEIGHT_THRUST = 0.025;
 const gunDps = id => GUNS[id].rof * GUNS[id].dmg;
-// All guns share one heat gauge: firing fills it, and at the top they lock until it cools to HEAT_RESUME.
-// It cools at HEAT_COOL a second once the trigger has been off for HEAT_DELAY.
+// The guns are split into two fire groups, primary and secondary, and only the group you've selected fires.
+// Each group has its own heat gauge: firing fills it, and at the top that group locks until it cools to HEAT_RESUME.
+// A gauge cools at HEAT_COOL a second once its group has been quiet for HEAT_DELAY.
 const HEAT_COOL = 0.3, HEAT_DELAY = 0.3, HEAT_RESUME = 0.3;
 const gunOwned = id => !GUNS[id].price || !!save.guns[id] || PLANE_ORDER.some(pid => save.planes[pid] && Object.values(PLANES[pid].stock).includes(id));
 // the guns on each hardpoint of a jet: your saved choice, or the factory fit
@@ -609,13 +647,25 @@ function loadoutOf(pid) {
   if (!n || n > P.maxGuns || loadWeight(pid, out) > P.payload + 1e-6) return Object.assign({}, P.stock);
   return out;
 }
+// which fire group (1 primary, 2 secondary) each fitted gun is in: your saved choice, or bays primary and pods secondary.
+// The primary group is never empty, and with two or more guns and nothing in the secondary, the last gun moves there.
+function groupsOf(pid, lo) {
+  lo = lo || loadoutOf(pid);
+  const P = PLANES[pid], saved = save.groups[pid] || {}, out = {}, fitted = P.hardpoints.filter(h => lo[h.id]);
+  for (const h of fitted) out[h.id] = saved[h.id] === 1 || saved[h.id] === 2 ? saved[h.id] : h.kind === 'bay' ? 1 : 2;
+  const n = g => fitted.filter(h => out[h.id] === g).length;
+  if (!n(1) && fitted.length) out[fitted[0].id] = 1;
+  if (!save.groups[pid] && !n(2) && fitted.length > 1) out[fitted[fitted.length - 1].id] = 2;
+  return out;
+}
 const loadWeight = (pid, lo) => Object.values(lo || loadoutOf(pid)).reduce((a, g) => a + (g ? GUNS[g].weight : 0), 0);
 // what a loadout does to the airframe, against the factory fit
 function loadoutSpec(pid, lo) {
   lo = lo || loadoutOf(pid);
   const P = PLANES[pid], w = loadWeight(pid, lo), dw = w - loadWeight(pid, P.stock);
-  const guns = Object.values(lo).filter(Boolean), pods = guns.filter(g => GUNS[g].mount === 'pylon').length;
-  return { weight: w, payload: P.payload, heat: guns.reduce((a, g) => a + GUNS[g].heat, 0), turn: clamp(1 - WEIGHT_TURN * dw, 0.7, 1.08), thrust: clamp(1 - WEIGHT_THRUST * dw, 0.75, 1.06),
+  const guns = Object.values(lo).filter(Boolean), pods = guns.filter(g => GUNS[g].mount === 'pylon').length, gr = groupsOf(pid, lo);
+  const inG = k => Object.keys(lo).filter(h => lo[h] && gr[h] === k).map(h => lo[h]);
+  return { weight: w, payload: P.payload, groups: [1, 2].map(k => ({ guns: inG(k), heat: inG(k).reduce((a, g) => a + GUNS[g].heat, 0), dps: inG(k).reduce((a, g) => a + gunDps(g), 0) })), turn: clamp(1 - WEIGHT_TURN * dw, 0.7, 1.08), thrust: clamp(1 - WEIGHT_THRUST * dw, 0.75, 1.06),
     speed: 1 - guns.reduce((a, g) => a + (GUNS[g].drag || 0), 0), dps: guns.reduce((a, g) => a + gunDps(g), 0), guns: guns.length, pods,
     stealth: P.stealth ? P.stealth * (pods ? 0.5 : 1) : 0 };
 }
@@ -633,6 +683,7 @@ const SECONDARIES = {
     d: 'Knocks out every enemy within 1.1 km for 3.5 s, and fries the seekers of missiles chasing you.' },
 };
 const SEC_ORDER = ['missile', 'rockets', 'flak', 'emp'];
+// (in the game these are called specials: the secondary fire group is the second set of guns)
 const KILL_REFUND = 2, SEC_MIN_COOLDOWN = 4;
 const secOwned = id => !SECONDARIES[id].price || !!save.secs[id];
 const secondaryOf = pid => { const id = save.secondary[pid]; return SECONDARIES[id] && secOwned(id) ? id : 'missile'; };
@@ -640,7 +691,7 @@ const secondaryOf = pid => { const id = save.secondary[pid]; return SECONDARIES[
 function secondarySpec(pid, m) {
   const id = secondaryOf(pid), S = SECONDARIES[id];
   m = m || {};
-  return { secId: id, charges: (S.charges || Math.ceil(PLANES[pid].missiles / 2.5)) + (m.rack || 0),
+  return { secId: id, charges: (S.charges || Math.ceil(PLANES[pid].missiles / 2.5)) + (m.rack || 0) + (m.upRack || 0),
     reload: Math.max(SEC_MIN_COOLDOWN, S.cd * (m.secCd || 1)), secDmg: S.dmg * (m.secDmg || 1) };
 }
 
@@ -691,16 +742,19 @@ function composeEra() {
   if (!LOCS[save.loc] || !save.locs[save.loc]) save.loc = 'arctic';
   if (!PLANES[save.plane] || !save.planes[save.plane]) save.plane = 'f5';
   const L = LOCS[coopLoc || save.loc], P = PLANES[save.plane], E = ENEMY_JETS[L.enemy];
-  // the mounted guns, each firing from its own hardpoint. era.gun is the main one (most damage per second),
-  // used for the lead sight and your wingmen
-  const lo = loadoutOf(P.id), ls = loadoutSpec(P.id, lo);
-  const mounts = P.hardpoints.filter(hp => lo[hp.id]).map(hp => ({ hp, gun: GUNS[lo[hp.id]] }));
-  const main = mounts.reduce((a, m) => (!a || m.gun.rof * m.gun.dmg > a.gun.rof * a.gun.dmg ? m : a), null).gun;
+  // the mounted guns, each firing from its own hardpoint in its fire group. era.gun is the main one (most damage per second),
+  // used for your wingman and your teammates' tracers; each group's main gun sets the lead sight while it's selected
+  const lo = loadoutOf(P.id), ls = loadoutSpec(P.id, lo), gr = groupsOf(P.id, lo);
+  const mounts = P.hardpoints.filter(hp => lo[hp.id]).map(hp => ({ hp, gun: GUNS[lo[hp.id]], group: gr[hp.id] }));
+  const mainOf = list => list.reduce((a, m) => (!a || m.gun.rof * m.gun.dmg > a.gun.rof * a.gun.dmg ? m : a), null);
+  const main = mainOf(mounts).gun;
   const same = mounts.filter(m => m.gun === main);
+  const fireGroups = [1, 2].map(k => mounts.filter(m => m.group === k)).filter(l => l.length)
+    .map(l => ({ mounts: l, heat: l.reduce((a, m) => a + m.gun.heat, 0), gun: mainOf(l).gun, name: [...new Set(l.map(m => m.gun.short))].join(' + ') }));
   era = Object.assign({}, P.flight, {
     id: L.id + ':' + P.id, loc: L, plane: P, name: L.name, short: P.short, style: P.cockpit, size: P.size,
     hp: P.hp, shield: 0, missiles: P.missiles, stallAoa: P.stallAoa, lockTime: P.lockTime, lockRange: P.lockRange, stealth: ls.stealth,
-    secId: secondaryOf(P.id), sec: SECONDARIES[secondaryOf(P.id)], heat: ls.heat, mounts, load: ls, gun: Object.assign({}, main, { rof: main.rof * same.length, offsets: same.map(m => m.hp.at) }),
+    secId: secondaryOf(P.id), sec: SECONDARIES[secondaryOf(P.id)], fireGroups, mounts, load: ls, gun: Object.assign({}, main, { rof: main.rof * same.length, offsets: same.map(m => m.hp.at) }),
     enemy: { model: L.enemy, name: E.name, size: E.size, flight: E.flight, hp: E.hp, dmg: 2.3 + 0.25 * L.threat, rof: 6, speedMul: 0.92 + 0.015 * L.threat, color: 0xff9a6b,
       gun: Object.assign({}, GUN20, { offsets: [[-0.8, 0.3, -5]] }) },
     boss: L.boss, world: L.world, player: P.livery[0], accent: P.livery[1], enemyCol: E.livery[0], enemyAccent: E.livery[1],
@@ -1633,6 +1687,8 @@ function updateMissiles(dt) {
 // ================= input =================
 const keys = {};
 let mouseFire = false, missileRequest = false, flareRequest = false, padPrev = {};
+// switch gun groups: 'next', or 0 / 1 for primary / secondary
+let swapRequest = null, wheelAt = 0;
 let touchStick = { x: 0, y: 0, active: false }, touchFire = false, touchThr = 0;
 let camMode = 0, hadLock = false;
 // mouse aim: a world direction the camera looks along; the instructor flies the plane toward it
@@ -1649,7 +1705,7 @@ function setAimFromDir(d) { aimYaw = Math.atan2(-d.x, -d.z); aimPitch = Math.asi
 function nudgeAim(dx, dy) { aimYaw -= dx; aimPitch = clamp(aimPitch - dy, -1.45, 1.45); updateAimDir(); }
 
 window.addEventListener('keydown', e => {
-  if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code) && state !== 'hangar') e.preventDefault();
+  if (['Space', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code) && state !== 'hangar') e.preventDefault();
   keys[e.code] = true;
   if (e.repeat) return;
   initAudio();
@@ -1659,6 +1715,9 @@ window.addEventListener('keydown', e => {
     if (e.code === 'KeyP' || e.code === 'Escape') setPaused(true);
     if (e.code === 'KeyR') missileRequest = true;
     if (e.code === 'KeyF') flareRequest = true;
+    if (e.code === 'Tab' || e.code === 'KeyG') swapRequest = 'next';
+    if (e.code === 'Digit1') swapRequest = 0;
+    if (e.code === 'Digit2') swapRequest = 1;
   } else if (state === 'paused') {
     if (e.code === 'KeyP' || e.code === 'Escape') setPaused(false);
   } else if (state === 'choice') {
@@ -1678,6 +1737,13 @@ glCanvas.addEventListener('mousedown', e => {
   if (mouseMode() && document.pointerLockElement !== glCanvas && glCanvas.requestPointerLock) { try { const r = glCanvas.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (err) {} }
 });
 window.addEventListener('mouseup', e => { if (e.button === 0) mouseFire = false; });
+// the mouse wheel swaps gun groups, one swap per flick
+glCanvas.addEventListener('wheel', e => {
+  if (state !== 'playing') return;
+  e.preventDefault();
+  const now = performance.now();
+  if (now - wheelAt > 200 && Math.abs(e.deltaY) > 0) { swapRequest = 'next'; wheelAt = now; }
+}, { passive: false });
 glCanvas.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('mousemove', e => {
   if (state !== 'playing') return;
@@ -1709,6 +1775,7 @@ const hold = (id, on, off) => { const el = $(id); el.addEventListener('pointerdo
 hold('tFire', () => touchFire = true, () => touchFire = false);
 hold('tMsl', () => missileRequest = true, () => {});
 hold('tFlr', () => flareRequest = true, () => {});
+hold('tSwap', () => swapRequest = 'next', () => {});
 hold('tThrUp', () => touchThr = 1, () => touchThr = 0);
 hold('tThrDn', () => touchThr = -1, () => touchThr = 0);
 
@@ -1751,10 +1818,11 @@ function readControls(dt) {
     if (b(7)) fire = true;
     if (b(6) && !padPrev[6]) missileRequest = true;
     if (b(1) && !padPrev[1]) flareRequest = true;
+    if (b(2) && !padPrev[2] && state === 'playing') swapRequest = 'next';
     if (b(5)) thr += 1; if (b(4)) thr -= 1;
     if (b(3) && !padPrev[3] && state === 'playing') setCamMode(1 - camMode);
     if (b(9) && !padPrev[9]) { if (state === 'playing') setPaused(true); else if (state === 'paused') setPaused(false); }
-    padPrev = {}; [1, 3, 6, 9].forEach(i => padPrev[i] = b(i));
+    padPrev = {}; [1, 2, 3, 6, 9].forEach(i => padPrev[i] = b(i));
     break;
   }
   return { pitch: clamp(pitch, -1, 1), roll: clamp(roll, -1, 1), yaw: clamp(yaw, -1, 1), throttle: clamp(thr, -1, 1), fire };
@@ -1768,33 +1836,38 @@ let lockTarget = null, lockT = 0, locked = false, lockBeepT = 0;
 let showcase = null, showT = 0;
 const camQ = new THREE.Quaternion();
 
-// a perk's value at the level you have it (i picks one part of a two-part perk), 0 when you don't
+// a perk's value at the tier you have equipped (i picks one part of a two-part perk), 0 when it isn't equipped
 function pv(id, i) {
   const l = run.perks[id] || 0;
   if (!l) return 0;
   const x = PERK_BY_ID[id].v[l - 1];
   return Array.isArray(x) ? x[i || 0] : x;
 }
+// how many of a field upgrade you've picked this run
+const up = id => (run.up && run.up[id]) || 0;
+// equipped perks and this run's field upgrades, folded into one set of multipliers
 function perkMods() {
   return {
-    dmg: (1 + pv('hot')) * (1 + pv('glass')), rof: 1 + pv('belt'), crit: pv('match'), spread: 1 - pv('sight'), range: 1 + pv('sight', 1),
-    heatGen: 1 - pv('cool'), cool: 1 + pv('sinks'), splash: pv('boom'), chain: pv('chain'),
-    hp: pv('plate'), hpMul: 1 - pv('glass', 1), regen: pv('mech'), vamp: pv('trophy') + pv('time', 1), ghost: pv('charm'), phoenix: pv('phoenix'),
-    thrust: 1 + pv('wep'), speed: 1 + pv('wep', 1), turn: 1 + pv('tabs'), wingmen: pv('wing'), slowmo: pv('time'),
-    secCd: 1 - pv('rearm'), rack: pv('rack'), secDmg: 1 + pv('warhead'), gunRearm: KILL_REFUND + pv('bounty'),
+    dmg: (1 + pv('hot')) * (1 + pv('glass')) * (1 + 0.1 * up('dmg')), rof: (1 + pv('belt')) * (1 + 0.08 * up('rof')), crit: pv('match'), spread: 1 - pv('sight'), range: 1 + pv('sight', 1),
+    heatGen: (1 - pv('cool')) * Math.pow(0.88, up('cool')), cool: 1 + pv('sinks'), splash: pv('boom'), chain: pv('chain'),
+    hp: pv('plate') + 15 * up('hull'), hpMul: 1 - pv('glass', 1), regen: pv('mech'), vamp: pv('trophy') + pv('time', 1), ghost: pv('charm'), phoenix: pv('phoenix'),
+    thrust: (1 + pv('wep')) * (1 + 0.06 * up('thr')), speed: 1 + pv('wep', 1), turn: 1 + pv('tabs'), slowmo: pv('time'),
+    secCd: (1 - pv('rearm')) * (1 - pv('rack', 1)) * Math.pow(0.9, up('sec')), rack: pv('rack'), upRack: up('rack'), secDmg: 1 + pv('warhead'), gunRearm: KILL_REFUND + pv('bounty'),
+    // one wingman at most, from the Wingman perk; field upgrades make them tougher and deadlier this run
+    wingman: run.perks.wing ? { hp: pv('wing') + 40 * up('wHull'), dmg: pv('wing', 1) * (1 + 0.25 * up('wGun')), missiles: 2 + up('wMsl'), cover: up('wCover') > 0 } : null,
   };
 }
 function refreshMods() { run.mods = perkMods(); }
 function playerStats() {
-  const m = run.mods, b = run.bonus, e = era, ld = e.load;
-  const dmgMul = m.dmg * b.dmg, rofMul = m.rof, spreadMul = m.spread;
+  const m = run.mods, e = era, ld = e.load;
+  const dmgMul = m.dmg, rofMul = m.rof, spreadMul = m.spread;
   return {
     size: e.size, abMax: 1.2, abMul: 1, stallAoa: e.stallAoa, minSpeed: e.minSpeed, maxSpeed: e.maxSpeed * m.speed * ld.speed,
     corner: e.corner, gmax: e.gmax, thrust: e.thrust * m.thrust * ld.thrust, induced: 1,
     pitch: e.pitch, roll: e.roll, yaw: e.yaw, turnMul: m.turn * ld.turn,
-    hp: Math.max(30, Math.round((e.hp + m.hp + b.hp) * m.hpMul)), shield: e.shield, armor: 0,
+    hp: Math.max(30, Math.round((e.hp + m.hp) * m.hpMul)), shield: e.shield, armor: 0,
     dmgMul, rofMul, spreadMul, dmg: e.gun.dmg * dmgMul, rof: e.gun.rof * rofMul, spread: e.gun.spread * spreadMul, crit: m.crit, critMul: 2.5,
-    heatGen: e.heat * m.heatGen, cool: HEAT_COOL * m.cool,
+    heatGen: m.heatGen, cool: HEAT_COOL * m.cool,
     ...secondarySpec(e.plane.id, m), lockTime: e.lockTime,
   };
 }
@@ -1813,21 +1886,25 @@ function clearCombat() {
   coopClear();
 }
 
-// ---------------- survival: wave N is N fighters, a perk between waves, and the location's boss every tenth wave ----------------
+// ---------------- survival: wave N is N fighters, a field upgrade between waves, and the location's boss every tenth wave ----------------
 const SURV_LIVE = 8; // fighters in the air at once; the rest of the wave joins as they fall
 const SURV_TIERS = ['mig21', 'mig29', 'su27', 'su35', 'su57'];
 const BOSS_EVERY = 10;
 function startSurvival() {
   initAudio();
   clearCombat();
-  run = { survival: true, wave: 0, hull: 0, perks: {}, bonus: { dmg: 1, hp: 0 }, kills: 0, cleared: 0, bosses: 0, unlocked: [],
+  // the perks you equipped in the hangar, at the tiers you've bought; they stay put for the whole run
+  const perks = {};
+  for (const id of equipped()) perks[id] = perkTier(PERK_BY_ID[id]);
+  run = { survival: true, wave: 0, hull: 0, perks, up: {}, kills: 0, cleared: 0, bosses: 0, unlocked: [],
     rerolls: 1, phoenixUsed: 0, hitCount: 0, over: false, seen: {}, deathT: 0, mission: null, coop: !!(net && net.active), downNote: '' };
   refreshMods();
   run.hull = maxHull();
-  offerPerks();
+  run.wave = 0;
+  nextWave();
 }
 function nextWave() {
-  // in co-op every pilot picks a perk, then the host starts the wave for everyone
+  // in co-op every pilot picks a field upgrade, then the host starts the wave for everyone
   if (run.coop && !coopGo) return coopReady();
   run.wave++;
   // enemy toughness climbs with the wave; depth feeds hull, damage and pilot skill
@@ -1870,56 +1947,61 @@ function survivalWaveDone() {
   offerPerks();
 }
 
-// ---- perk picks: before wave 1 and after every wave ----
-const perkSlots = () => era.plane.perkSlots;
-const perksHeld = () => Object.keys(run.perks).length;
-// once every slot is full and every perk is at III, these fill the empty cards
-const BOOSTS = [
-  { k: 'Armorer', t: 'Tune the guns', d: '+8% gun damage for the rest of the run.', go: () => { run.bonus.dmg *= 1.08; } },
-  { k: 'Workshop', t: 'Reinforce', d: '+12 max hull for the rest of the run, and repair 12.', go: () => { run.bonus.hp += 12; run.hull += 12; } },
-  { k: 'Supply', t: 'Spare parts', d: 'Repair 25 hull.', go: () => { run.hull += 25; } },
+// ---- field upgrades: after every wave you pick one, and it lasts for the rest of the run ----
+// max: how many times you can pick it. wing: only offered while you fly with a wingman
+const UPGRADES = [
+  { id: 'dmg', cat: 'Guns', name: 'Tune the guns', max: 5, d: '+10% gun damage.' },
+  { id: 'rof', cat: 'Guns', name: 'Faster cycling', max: 5, d: '+8% rate of fire.' },
+  { id: 'cool', cat: 'Guns', name: 'Barrel swap', max: 4, d: 'Both gun groups heat 12% slower.' },
+  { id: 'sec', cat: 'Special', name: 'Quick reload', max: 4, d: 'Special cooldown 10% shorter.' },
+  { id: 'rack', cat: 'Special', name: 'Extra rack', max: 2, d: '+1 special charge.' },
+  { id: 'hull', cat: 'Airframe', name: 'Reinforce', max: 5, d: '+15 max hull, and repair 15.' },
+  { id: 'thr', cat: 'Flight', name: 'Engine tune', max: 4, d: '+6% thrust.' },
+  { id: 'wHull', cat: 'Wingman', name: 'Wingman armor', max: 3, wing: true, d: 'Your wingman gets +40 hull.' },
+  { id: 'wGun', cat: 'Wingman', name: 'Wingman guns', max: 3, wing: true, d: 'Your wingman hits 25% harder.' },
+  { id: 'wMsl', cat: 'Wingman', name: 'Wingman missiles', max: 3, wing: true, d: 'Your wingman carries one more missile every wave.' },
+  { id: 'wCover', cat: 'Wingman', name: 'Cover me', max: 1, wing: true, d: 'Your wingman goes after the fighters on your tail first.' },
 ];
-// three offers: the next level of perks you hold, and new perks from your unlocked pool while a slot is free
-function perkChoices() {
-  const ups = shuffle(Object.keys(run.perks).filter(id => run.perks[id] < PERK_MAX)).map(id => ({ id, lvl: run.perks[id] + 1 }));
-  const fresh = perksHeld() < perkSlots() ? shuffle(PERKS.filter(p => perkOpen(p) && !run.perks[p.id])).map(p => ({ id: p.id, lvl: 1 })) : [];
-  // with both on offer, show at least one of each
-  const out = ups.length && fresh.length ? [ups.shift(), fresh.shift()] : [];
-  const rest = shuffle(ups.concat(fresh));
-  while (out.length < 3 && rest.length) out.push(rest.shift());
+const UP_BY_ID = Object.fromEntries(UPGRADES.map(u => [u.id, u]));
+// three offers from what you can still take, with a wingman card in the mix when you have one
+function upgradeChoices() {
+  const open = UPGRADES.filter(u => up(u.id) < u.max && (!u.wing || run.perks.wing));
+  const wing = shuffle(open.filter(u => u.wing)), rest = shuffle(open.filter(u => !u.wing));
+  const out = wing.length ? [wing.shift()] : [];
+  const pool = shuffle(rest.concat(wing));
+  while (out.length < 3 && pool.length) out.push(pool.shift());
   return shuffle(out);
 }
-function perkCard(c) {
-  const p = PERK_BY_ID[c.id], up = c.lvl > 1;
-  return { k: (up ? 'Level ' + ROMAN[c.lvl] : 'New perk') + ' · ' + p.cat, t: p.name + (up ? ' ' + ROMAN[c.lvl] : ''),
-    d: perkText(p, c.lvl) + (up ? ' Up from: ' + p.d(p.v[c.lvl - 2]) + '.' : ''), cls: up ? 'lv-up' : 'lv-new' };
+function upCard(u) {
+  const n = up(u.id);
+  return { k: u.cat + (u.max > 1 ? ' · ' + (n + 1) + ' of ' + u.max : ''), t: u.name, d: u.d, cls: n ? 'lv-up' : 'lv-new' };
 }
-function addPerk(id) {
+function addUpgrade(id) {
   const before = maxHull();
-  run.perks[id] = (run.perks[id] || 0) + 1;
+  run.up[id] = up(id) + 1;
   refreshMods();
   // extra max hull arrives filled
   run.hull = clamp(run.hull + Math.max(0, maxHull() - before), 1, maxHull());
 }
+const upsHeld = () => UPGRADES.filter(u => up(u.id)).map(u => u.name + (u.max > 1 ? ' ×' + up(u.id) : ''));
 function offerPerks() {
-  let picks = perkChoices();
-  const first = run.wave === 0, next = run.wave + 1;
+  let picks = upgradeChoices();
+  const next = run.wave + 1;
   const go = f => () => { f(); run.hull = clamp(run.hull, 1, maxHull()); nextWave(); };
   const render = () => {
     const heal = Math.round(maxHull() * 0.4);
-    const cards = picks.map(c => Object.assign(perkCard(c), { onPick: go(() => addPerk(c.id)) }))
-      .concat(BOOSTS.slice(0, Math.max(0, 3 - picks.length)).map(b => ({ k: b.k, t: b.t, d: b.d, onPick: go(b.go) })));
-    if (!first) cards.push({ k: 'Ground crew', t: 'Field repair', d: 'Repair ' + heal + ' hull.', disabled: run.hull >= maxHull(), onPick: go(() => { run.hull += heal; }) });
-    const held = PERKS.filter(p => run.perks[p.id]).map(p => p.name + ' ' + ROMAN[run.perks[p.id]]);
+    const cards = picks.map(u => Object.assign(upCard(u), { onPick: go(() => addUpgrade(u.id)) }));
+    if (cards.length < 3) cards.push({ k: 'Supply', t: 'Spare parts', d: 'Repair 25 hull.', onPick: go(() => { run.hull += 25; }) });
+    cards.push({ k: 'Ground crew', t: 'Field repair', d: 'Repair ' + heal + ' hull.', disabled: run.hull >= maxHull(), onPick: go(() => { run.hull += heal; }) });
+    const held = upsHeld();
     showChoice({
-      title: first ? 'Pick your first perk' : 'Wave ' + run.wave + ' cleared',
-      sub: (first ? 'The ' + era.plane.short + ' has ' + perkSlots() + ' perk slots. After every wave, pick another perk or level one up to III.'
-        : run.downNote + 'Hull ' + Math.round(run.hull) + ' / ' + maxHull() + '. Perks ' + perksHeld() + ' / ' + perkSlots() + (held.length ? ': ' + held.join(', ') : '') + '.') +
+      title: 'Wave ' + run.wave + ' cleared',
+      sub: run.downNote + 'Hull ' + Math.round(run.hull) + ' / ' + maxHull() + '. Pick a field upgrade for the rest of the run' + (held.length ? ' (so far: ' + held.join(', ') + ')' : '') + '.' +
         ' Wave ' + next + ' brings ' + plural(next, 'fighter', 'fighters') + (next % BOSS_EVERY === 0 ? ' and the ' + era.boss.name.toLowerCase() : '') + '.',
       cards,
       buttons: [
-        run.rerolls > 0 && { label: 'Reroll (' + run.rerolls + ' left)', onClick: () => { run.rerolls--; picks = perkChoices(); render(); } },
-        !first && { label: run.coop ? 'Leave the team and bank it' : 'End here and bank it', onClick: () => endRun('bail') },
+        run.rerolls > 0 && { label: 'Reroll (' + run.rerolls + ' left)', onClick: () => { run.rerolls--; picks = upgradeChoices(); render(); } },
+        { label: run.coop ? 'Leave the team and bank it' : 'End here and bank it', onClick: () => endRun('bail') },
       ].filter(Boolean),
     });
   };
@@ -1932,20 +2014,20 @@ function endSurvival(reason) {
   const hadSkins = new Set(A.SKINS.filter(skinOwned).map(sk => sk.id));
   // a co-op run pays out like a solo one but doesn't count toward your solo best
   const prev = save.survBest[loc] || 0, record = waves > prev && !run.coop;
-  const medals = Math.floor(waves / 2) + 3 * run.bosses;
+  const medals = waves + 3 * run.bosses;
   const credits = Math.round((run.kills * 12 + waves * 30 + run.bosses * 250) * (0.8 + 0.2 * era.loc.threat));
   save.points += medals; save.credits += credits; save.runs++; save.totalKills += run.kills;
   if (record) save.survBest[loc] = waves;
   const fresh = A.SKINS.filter(sk => skinOwned(sk) && !hadSkins.has(sk.id));
   persist();
   $('dbTitle').textContent = reason === 'bail' ? 'Run banked' : run.coop ? 'Team shot down' : 'Shot down';
-  const held = PERKS.filter(p => run.perks[p.id]).map(p => p.name + ' ' + ROMAN[run.perks[p.id]]);
+  const held = upsHeld();
   $('dbSub').textContent = (run.coop ? 'Your team survived ' : 'You survived ') + plural(waves, 'wave', 'waves') + ' over ' + era.name + ' in the ' + era.plane.short + '.' +
     (run.coop ? ' Co-op runs don\'t count toward your solo best.' : record ? (prev ? ' New best here, up from ' + prev + '.' : ' New best here.') : ' Best here is ' + prev + '.') +
     (run.bosses ? ' ' + plural(run.bosses, 'boss', 'bosses') + ' downed.' : '') + (run.unlocked.length ? ' You unlocked ' + run.unlocked.map(id => LOCS[id].name).join(' and ') + '.' : '') +
-    (fresh.length ? ' New paint: ' + fresh.map(sk => sk.name).join(', ') + '.' : '') + (held.length ? ' Perks: ' + held.join(', ') + '.' : '');
+    (fresh.length ? ' New paint: ' + fresh.map(sk => sk.name).join(', ') + '.' : '') + (held.length ? ' Field upgrades: ' + held.join(', ') + '.' : '');
   $('dbStats').innerHTML = [['Waves', waves], ['Kills', run.kills], ['Credits', '+' + credits.toLocaleString()], ['Medals', '+' + medals]].map(([l, v]) => '<div><b>' + v + '</b><span>' + l + '</span></div>').join('');
-  $('dbPts').textContent = 'A medal for every two waves and three for every boss. You now have ' + plural(save.points, 'medal', 'medals') + ' to unlock perks and ' + save.credits.toLocaleString() + ' credits.';
+  $('dbPts').textContent = 'A medal for every wave and three for every boss. You now have ' + plural(save.points, 'medal', 'medals') + ' to unlock and upgrade perks, and ' + save.credits.toLocaleString() + ' credits.';
   leaveCombat();
   state = 'debrief'; showScreen('debrief');
 }
@@ -1968,13 +2050,15 @@ function startMission(type, node, opts) {
   camQ.copy(player.quat);
   const depth = node.c;
   run.mission = { type, node, opts: opts || {}, depth, t: 0, done: false, doneT: 0 };
-  run.guns = era.mounts.map(m => ({ hp: m.hp, gun: m.gun, cd: 0 }));
-  run.heat = 0; run.overheat = false; run.coolT = 0;
+  // each fire group has its own heat gauge; you start every wave on the primary guns
+  run.groups = era.fireGroups.map(g => ({ g, guns: g.mounts.map(m => ({ hp: m.hp, gun: m.gun, cd: 0 })), heat: 0, over: false, coolT: 0 }));
+  run.grp = 0;
   // the first wave starts with full charges; later waves keep whatever was left and how far the cooldown had run
   if (run.wave > 1) run.charges = Math.min(run.charges, st.charges);
   else { run.charges = st.charges; run.reloadT = 0; }
   run.flares = 24; run.flareCd = 0; run.warnT = 0; run.deathT = 0;
-  for (let i = 0; i < run.mods.wingmen; i++) spawnAlly(i);
+  // a wingman who went down last wave is back for this one
+  if (run.mods.wingman) spawnAlly(run.mods.wingman);
   const skill = Math.min(0.2 + era.loc.threat * 0.06 + depth * 0.08, 0.97);
   // every tenth wave the location's boss flies in, with half the wave as escorts
   const boss = run.wave % BOSS_EVERY === 0;
@@ -2041,13 +2125,15 @@ function spawnEnemy(skill, ace, kind, model, variant) {
   initPilot(e, skill, kind);
   enemies.push(e);
 }
-function spawnAlly(i) {
-  const st = { size: era.size, stallAoa: era.stallAoa, minSpeed: era.minSpeed, maxSpeed: era.maxSpeed * 0.97, corner: era.corner, gmax: era.gmax * 0.9, thrust: era.thrust, pitch: era.pitch, roll: era.roll, yaw: era.yaw, hp: 80 };
+// your wingman (one per pilot): w is run.mods.wingman, with their hull, gun damage, missiles and orders
+function spawnAlly(w) {
+  const st = { size: era.size, stallAoa: era.stallAoa, minSpeed: era.minSpeed, maxSpeed: era.maxSpeed * 0.97, corner: era.corner, gmax: era.gmax * 0.9, thrust: era.thrust, pitch: era.pitch, roll: era.roll, yaw: era.yaw, hp: w.hp };
   const a = new Plane(st, planeMesh(era.plane.id, skinFor(era.plane.id), era.plane.livery), 0);
-  a.pos.copy(player.pos).addScaledVector(player.right, (i % 2 ? -1 : 1) * (70 + 40 * Math.floor(i / 2))).addScaledVector(player.fwd, -50);
+  a.pos.copy(player.pos).addScaledVector(player.right, 70).addScaledVector(player.fwd, -50);
   a.quat.copy(player.quat); a.axes(); a.vel.copy(player.vel); a.speed = player.speed;
-  a.ally = true;
+  a.ally = true; a.gunMul = w.dmg; a.cover = w.cover;
   initPilot(a, 0.75, 'fighter');
+  a.missiles = w.missiles;
   allies.push(a);
 }
 // tier: 1 on wave 10, 2 on wave 20, and so on; each tier adds hull and gunners' damage
@@ -2124,8 +2210,14 @@ function bossDown() {
 const validTarget = t => t && t.alive && !t.dying;
 function pickTarget(e) {
   if (e.ally) {
+    // with Cover me, fighters going after you count as much closer
     let best = null, bd = Infinity;
-    for (const o of enemies) { if (!validTarget(o)) continue; const d = o.pos.distanceTo(e.pos) * (o.heavy ? 1.5 : 1); if (d < bd) { bd = d; best = o; } }
+    for (const o of enemies) {
+      if (!validTarget(o)) continue;
+      const onMe = e.cover && (o.target === player || (o.puppet && net && o.tgt === net.slot));
+      const d = o.pos.distanceTo(e.pos) * (o.heavy ? 1.5 : 1) * (onMe ? 0.2 : 1);
+      if (d < bd) { bd = d; best = o; }
+    }
     return best;
   }
   const others = allies.filter(validTarget), pilots = [player].concat(coopMatePlanes()).filter(validTarget);
@@ -2185,7 +2277,7 @@ function aiControl(e, dt) {
     e.mslCd = hunter ? rand(6, 9) : rand(9, 16);
     if (!(t === player && Math.random() < era.stealth)) {
       e.missiles--;
-      fireMissile(e, t, e.ally ? 60 : 26 + 4 * era.loc.threat, e.ally ? null : { turn: 2.0, max: 640, g: 62, lead: 1, life: 7, fuse: 20 });
+      fireMissile(e, t, e.ally ? 60 * e.gunMul : 26 + 4 * era.loc.threat, e.ally ? null : { turn: 2.0, max: 640, g: 62, lead: 1, life: 7, fuse: 20 });
       if (t === player) popText('Missile launch!');
     }
   }
@@ -2236,22 +2328,33 @@ function updatePlaying(dt) {
     player.fly(dt, ctl);
     player.trails(dt);
     const st = player.s;
-    // guns share one heat gauge: holding the trigger fills it, and at the top they lock until it cools to HEAT_RESUME
-    const firing = ctl.fire && !run.overheat;
+    // only the selected fire group shoots. Holding the trigger fills its heat gauge, and at the top it locks until it cools to HEAT_RESUME,
+    // swapping to the other group if that one is ready. The group you aren't using cools the whole time
+    if (swapRequest != null) { selectGroup(swapRequest === 'next' ? 1 - run.grp : swapRequest); swapRequest = null; }
+    const cur = run.groups[run.grp];
+    const firing = ctl.fire && !cur.over;
     run.firing = firing;
-    if (firing) {
-      run.heat = Math.min(1, run.heat + st.heatGen * dt); run.coolT = HEAT_DELAY;
-      if (run.heat >= 1) { run.overheat = true; popText('Guns overheated'); burst(0.35, 260, 0.2, 'lowpass'); }
-    } else {
-      run.coolT -= dt;
-      if (run.coolT <= 0 || run.overheat) run.heat = Math.max(0, run.heat - st.cool * dt);
-      if (run.overheat && run.heat <= HEAT_RESUME) { run.overheat = false; beep(760, 0.08, 0.07); }
-    }
-    // every mounted gun keeps its own rate of fire
-    for (const g of run.guns) {
-      if (!firing) { g.cd = Math.max(0, g.cd - dt); continue; }
-      g.cd -= dt;
-      while (g.cd <= 0) { fireGun(player, g.gun, g.gun.dmg * st.dmgMul, g.gun.spread * st.spreadMul, g.gun.color, g.hp.at); g.cd += 1 / (g.gun.rof * st.rofMul); }
+    for (const G of run.groups) {
+      const on = firing && G === cur;
+      if (on) {
+        G.heat = Math.min(1, G.heat + G.g.heat * st.heatGen * dt); G.coolT = HEAT_DELAY;
+        if (G.heat >= 1) {
+          G.over = true; burst(0.35, 260, 0.2, 'lowpass');
+          const other = run.groups[1 - run.grp];
+          if (other && !other.over) { run.grp = 1 - run.grp; popText((run.grp ? 'Secondary' : 'Primary') + ' guns · ' + other.g.name); beep(620, 0.06, 0.06); }
+          else popText('Guns overheated');
+        }
+      } else {
+        G.coolT -= dt;
+        if (G.coolT <= 0 || G.over) G.heat = Math.max(0, G.heat - st.cool * dt);
+        if (G.over && G.heat <= HEAT_RESUME) { G.over = false; if (G === cur) beep(760, 0.08, 0.07); }
+      }
+      // every mounted gun keeps its own rate of fire
+      for (const g of G.guns) {
+        if (!on) { g.cd = Math.max(0, g.cd - dt); continue; }
+        g.cd -= dt;
+        while (g.cd <= 0) { fireGun(player, g.gun, g.gun.dmg * st.dmgMul, g.gun.spread * st.spreadMul, g.gun.color, g.hp.at); g.cd += 1 / (g.gun.rof * st.rofMul); }
+      }
     }
     if (st.shield) {
       player.shieldDelay -= dt;
@@ -2329,7 +2432,7 @@ function updatePlaying(dt) {
       e.trails(dt);
       e.gunCd -= dt; e.firing = c.fire;
       if (c.fire && e.gunCd <= 0) {
-        if (e.ally) { fireGun(e, era.gun, era.gun.dmg * 0.9, era.gun.spread * 2, era.gun.color); e.gunCd = 1 / (era.gun.rof * 0.6); }
+        if (e.ally) { fireGun(e, era.gun, era.gun.dmg * e.gunMul, era.gun.spread * 2, era.gun.color); e.gunCd = 1 / (era.gun.rof * 0.6); }
         else enemyGun(e, depthMul, e.target === player);
       }
       if (e.pos.y < groundAt(e.pos.x, e.pos.z) + 2) { e.hp = 0; e.dying = true; onPlaneDown(e, null); explosion(e.pos, 1.2); e.remove(); }
@@ -2357,6 +2460,16 @@ function updatePlaying(dt) {
   }
   coopUpdate(dt);
 }
+// switch fire groups (0 primary, 1 secondary); a jet with one group has nothing to switch to
+function selectGroup(i) {
+  if (!run.groups[i]) { if (i) popText('No secondary guns · fit some in Loadout'); return; }
+  if (i === run.grp) return;
+  run.grp = i;
+  const G = run.groups[i];
+  popText((i ? 'Secondary' : 'Primary') + ' guns · ' + G.g.name + (G.over ? ' · cooling' : ''));
+  beep(i ? 620 : 520, 0.05, 0.06);
+}
+const activeGun = () => (run && run.groups && run.groups[run.grp] ? run.groups[run.grp].g.gun : era.gun);
 function waveCleared() {
   const m = run.mission, next = run.wave + 1;
   m.done = true; m.doneT = 2.4; slowmoT = 1.2;
@@ -2488,12 +2601,17 @@ function drawHud(dt) {
   hEls.alt.textContent = Math.max(0, Math.round(player.pos.y));
   hEls.thr.textContent = player.throttle > 1.001 ? 'AB' : Math.round(player.throttle * 100);
   hEls.g.textContent = Math.max(0, player.g).toFixed(1);
-  const st = player.s, heatTxt = run.overheat ? '<b style="color:' + red + '">OVERHEAT</b>' : '<b>' + Math.round(run.heat * 100) + '%</b>';
-  let wp = '<div>GUNS <b>' + era.mounts.length + '×</b> · HEAT ' + heatTxt + '</div>';
+  const st = player.s;
+  // both gun groups, the selected one marked, each with its own heat
+  let wp = run.groups.map((G, i) => {
+    const sel = i === run.grp, heat = G.over ? '<b style="color:' + red + '">HOT</b>' : '<b>' + Math.round(G.heat * 100) + '%</b>';
+    return '<div style="opacity:' + (sel ? 1 : 0.6) + '">' + (sel ? '▶ ' : '') + (i ? 'SEC ' : 'PRI ') + G.g.name + ' · ' + heat + '</div>';
+  }).join('');
+  if (run.groups.length < 2) wp += '<div style="opacity:0.6">SEC · none fitted</div>';
   wp += '<div>' + era.sec.short + ' <b>' + run.charges + '/' + st.charges + '</b>' + (run.charges < st.charges ? ' · ' + Math.ceil(st.reload - run.reloadT) + 's' : '') + '</div>';
   if (st.secId === 'missile') wp += '<div>' + (lockTarget ? (locked ? '<b>LOCKED</b>' : 'LOCKING…') : 'NO TARGET') + '</div>';
   wp += '<div>FLARES <b>' + run.flares + '</b></div>';
-  if (allies.length) wp += '<div>WINGMEN <b>' + allies.filter(a => a.alive && !a.dying).length + '</b></div>';
+  if (run.mods.wingman) { const a = allies.find(x => x.alive && !x.dying); wp += '<div>WINGMAN ' + (a ? '<b>' + Math.ceil(a.hp / a.maxHp * 100) + '%</b>' : '<b style="color:' + red + '">DOWN</b> · back next wave') + '</div>'; }
   if (hEls.weap.innerHTML !== wp) hEls.weap.innerHTML = wp;
   let warn = '';
   if (live) {
@@ -2536,11 +2654,16 @@ function drawHud(dt) {
     hud.beginPath(); hud.arc(rx, ry, 14, 0, Math.PI * 2); hud.stroke();
     hud.beginPath(); hud.moveTo(rx - 24, ry); hud.lineTo(rx - 17, ry); hud.moveTo(rx + 17, ry); hud.lineTo(rx + 24, ry); hud.moveTo(rx, ry + 17); hud.lineTo(rx, ry + 24); hud.stroke();
     hud.fillStyle = paper; hud.fillRect(rx - 1, ry - 1, 2, 2);
-    // gun heat, under the reticle once the guns warm up
-    if (run.heat > 0.02) {
+    // gun heat under the reticle once the guns warm up: the selected group on top, the other one thin below it
+    const cur = run.groups[run.grp], oth = run.groups[1 - run.grp];
+    if (cur.heat > 0.02 || (oth && oth.heat > 0.02)) {
       hud.fillStyle = 'rgba(0,0,0,0.45)'; hud.fillRect(rx - 22, ry + 30, 44, 4);
-      hud.fillStyle = run.overheat ? red : run.heat > 0.7 ? amber : paper; hud.fillRect(rx - 22, ry + 30, 44 * run.heat, 4);
-      if (run.overheat) { hud.fillStyle = red; hud.fillText('OVERHEAT', rx, ry + 48); }
+      hud.fillStyle = cur.over ? red : cur.heat > 0.7 ? amber : paper; hud.fillRect(rx - 22, ry + 30, 44 * cur.heat, 4);
+      if (oth) {
+        hud.fillStyle = 'rgba(0,0,0,0.45)'; hud.fillRect(rx - 22, ry + 36, 44, 2);
+        hud.fillStyle = oth.over ? red : 'rgba(235,228,210,0.6)'; hud.fillRect(rx - 22, ry + 36, 44 * oth.heat, 2);
+      }
+      if (cur.over) { hud.fillStyle = red; hud.fillText(oth && !oth.over ? 'OVERHEAT · SWAP GUNS' : 'OVERHEAT', rx, ry + 52); }
     }
     if (hitMarkerT > 0) {
       hud.strokeStyle = amber; hud.lineWidth = 2.2;
@@ -2589,8 +2712,8 @@ function drawHud(dt) {
         hud.lineWidth = 1.6;
       }
       // lead pip for the closest target in gun range
-      if (!leadDrawn && d < era.gun.range) {
-        const tt = d / era.gun.speed;
+      if (!leadDrawn && d < activeGun().range) {
+        const tt = d / activeGun().speed;
         const lp = project(tv2.copy(e.pos).addScaledVector(e.vel, tt).addScaledVector(player.vel, -tt));
         if (lp.ok) {
           hud.strokeStyle = paper; hud.beginPath(); hud.arc(lp.x, lp.y, 6, 0, Math.PI * 2); hud.stroke();
@@ -2834,11 +2957,11 @@ TABS.forEach((t, i, all) => {
   });
 });
 
-const KEYS_MOUSE = [['Mouse', 'Aim. The jet flies toward the circle. In the cockpit it moves the stick'], ['V (hold)', 'Free look'], ['W / S', 'Throttle. Keep holding W at 100% for afterburner'], ['A / D', 'Roll (overrides the aim)'], ['Q / E', 'Rudder'], ['↑ / ↓', 'Pitch override'], ['LMB · Space', 'Guns'], ['RMB · R', 'Secondary weapon. Missiles need a lock first'], ['F · MMB', 'Flares'], ['C', 'Chase / cockpit view'], ['P · Esc', 'Pause'], ['M', 'Mute']];
-const KEYS_DIRECT = [['W / S', 'Pitch (or ↑ ↓)'], ['A / D', 'Roll (or ← →)'], ['Q / E', 'Rudder'], ['Shift / X', 'Throttle. Hold Shift at 100% for afterburner'], ['Space · LMB', 'Guns'], ['R · RMB', 'Secondary weapon. Missiles need a lock first'], ['F', 'Flares'], ['V (hold) + mouse', 'Free look'], ['C', 'Chase / cockpit view'], ['P · Esc', 'Pause'], ['M', 'Mute']];
+const KEYS_MOUSE = [['Mouse', 'Aim. The jet flies toward the circle. In the cockpit it moves the stick'], ['V (hold)', 'Free look'], ['W / S', 'Throttle. Keep holding W at 100% for afterburner'], ['A / D', 'Roll (overrides the aim)'], ['Q / E', 'Rudder'], ['↑ / ↓', 'Pitch override'], ['LMB · Space', 'Guns (the selected group)'], ['Wheel · Tab · 1 / 2', 'Swap primary and secondary guns'], ['RMB · R', 'Special. Missiles need a lock first'], ['F · MMB', 'Flares'], ['C', 'Chase / cockpit view'], ['P · Esc', 'Pause'], ['M', 'Mute']];
+const KEYS_DIRECT = [['W / S', 'Pitch (or ↑ ↓)'], ['A / D', 'Roll (or ← →)'], ['Q / E', 'Rudder'], ['Shift / X', 'Throttle. Hold Shift at 100% for afterburner'], ['Space · LMB', 'Guns (the selected group)'], ['Tab · G · 1 / 2', 'Swap primary and secondary guns'], ['R · RMB', 'Special. Missiles need a lock first'], ['F', 'Flares'], ['V (hold) + mouse', 'Free look'], ['C', 'Chase / cockpit view'], ['P · Esc', 'Pause'], ['M', 'Mute']];
 function renderHangar() {
   TABS.forEach(t => { $('tab-' + t).setAttribute('aria-selected', hangarTab === t ? 'true' : 'false'); $('tab-' + t).tabIndex = hangarTab === t ? 0 : -1; $('pane-' + t).hidden = hangarTab !== t; });
-  const cheap = PERKS.filter(p => !perkOpen(p) && p.cost <= save.points).length;
+  const cheap = PERKS.filter(p => (!perkOpen(p) && p.cost <= save.points) || (perkOpen(p) && perkTier(p) < PERK_MAX && TIER_COST[perkTier(p) + 1] <= save.points)).length;
   $('ptsBadge').textContent = cheap; $('ptsBadge').hidden = !cheap;
   const sk = A.SKIN_BY_ID[previewSkin || skinFor(era.plane.id)];
   $('heroName').textContent = era.plane.name;
@@ -2869,13 +2992,14 @@ function renderSurvival() {
     b.addEventListener('click', () => selectLoc(id));
     el.appendChild(b);
   });
-  $('survNote').textContent = 'You fly the ' + era.plane.name + ' with its ' + era.sec.name.toLowerCase() + ' and ' + plural(era.plane.perkSlots, 'perk slot', 'perk slots') + '. Pick another jet in the Hangar tab, and its guns in Loadout.';
+  const eq = equipped().map(id => PERK_BY_ID[id].name + ' ' + ROMAN[perkTier(PERK_BY_ID[id])]);
+  $('survNote').textContent = 'You fly the ' + era.plane.name + ' with its ' + era.sec.name.toLowerCase() + (eq.length ? ', and ' + eq.join(', ') : ' and no perks equipped') + '. Pick another jet in the Hangar tab, its guns in Loadout, and your perks in Perks.';
 }
 function renderAircraft() {
   // the shop: stats are scaled against the best jet in the hangar
   const best = k => Math.max(...PLANE_ORDER.map(id => k(PLANES[id])));
   const turn = P => P.flight.gmax * 9.8 / P.flight.corner;
-  const bars = [['Speed', P => P.flight.maxSpeed], ['Turn', turn], ['Roll', P => P.flight.roll], ['Armor', P => P.hp], ['Payload', P => P.payload], ['Guns', P => P.maxGuns], ['Perks', P => P.perkSlots]];
+  const bars = [['Speed', P => P.flight.maxSpeed], ['Turn', turn], ['Roll', P => P.flight.roll], ['Armor', P => P.hp], ['Payload', P => P.payload], ['Guns', P => P.maxGuns]];
   const pl = $('planeList'); pl.innerHTML = '';
   PLANE_ORDER.forEach(id => {
     const P = PLANES[id], owned = !!save.planes[id], afford = save.credits >= P.price;
@@ -2885,7 +3009,7 @@ function renderAircraft() {
     const stats = bars.map(([l, f]) => '<span>' + l + '</span><i><b style="width:' + Math.round(f(P) / best(f) * 100) + '%"></b></i>').join('');
     const foot = owned ? (era.plane.id === id ? '<span class="tag">Flying this one</span>' : '<span class="tag">Owned · click to fly</span>')
       : '<span class="cost">' + (afford ? 'Buy for ' : 'Costs ') + P.price.toLocaleString() + ' credits</span>';
-    b.innerHTML = '<img class="thumb" alt="" src="' + planeThumb(id, skinFor(id)) + '"><span class="pn">' + P.name + '</span><span class="pr">' + P.role + ' · ' + plural(P.maxGuns, 'gun', 'guns') + ' · ' + plural(P.perkSlots, 'perk slot', 'perk slots') + '</span><span class="bl">' + P.blurb + '</span><span class="stats">' + stats + '</span>' + foot;
+    b.innerHTML = '<img class="thumb" alt="" src="' + planeThumb(id, skinFor(id)) + '"><span class="pn">' + P.name + '</span><span class="pr">' + P.role + ' · ' + plural(P.maxGuns, 'gun', 'guns') + '</span><span class="bl">' + P.blurb + '</span><span class="stats">' + stats + '</span>' + foot;
     b.addEventListener('click', () => {
       if (!save.planes[id]) { if (save.credits < P.price) return; save.credits -= P.price; save.planes[id] = true; persist(); beep(990, 0.1, 0.08); }
       selectPlane(id);
@@ -2934,7 +3058,7 @@ function fitGun(hpId, gid) {
   composeEra(); setupShowcase(); renderHangar();
 }
 function renderLoadout() {
-  const P = era.plane, pid = P.id, lo = loadoutOf(pid), ls = loadoutSpec(pid, lo);
+  const P = era.plane, pid = P.id, lo = loadoutOf(pid), ls = loadoutSpec(pid, lo), gr = groupsOf(pid, lo);
   if (!P.hardpoints.some(h => h.id === selHp)) selHp = (P.hardpoints.find(h => lo[h.id]) || P.hardpoints[0]).id;
   const hp = P.hardpoints.find(h => h.id === selHp);
   // plan view with a marker on each hardpoint; markers on the centreline pair are nudged apart so both stay clickable
@@ -2950,14 +3074,32 @@ function renderLoadout() {
     b.className = 'hpm ' + h.kind + (g ? ' full' : '') + (pair ? (h.at[0] < 0 ? ' lt' : ' rt') : h.up ? ' up' : ''); b.id = 'hp-' + h.id;
     b.style.left = (u * 100) + '%'; b.style.top = (v * 100) + '%';
     b.setAttribute('aria-pressed', h.id === selHp ? 'true' : 'false');
-    b.setAttribute('aria-label', h.name + ': ' + (g ? GUNS[g].name : 'empty'));
+    b.setAttribute('aria-label', h.name + ': ' + (g ? GUNS[g].name + ', ' + (gr[h.id] === 1 ? 'primary' : 'secondary') + ' group' : 'empty'));
     b.title = h.name;
-    b.innerHTML = (h.kind === 'pylon' ? 'P' : 'G') + (g ? '<span>' + GUNS[g].short + '</span>' : '');
+    b.innerHTML = (h.kind === 'pylon' ? 'P' : 'G') + (g ? '<span>' + GUNS[g].short + ' · ' + (gr[h.id] === 1 ? 'PRI' : 'SEC') + '</span>' : '');
     b.addEventListener('click', () => { selHp = h.id; gunArm = null; renderHangar(); const f = $('hp-' + h.id); if (f) f.focus(); });
     dg.appendChild(b);
   }
   $('loHp').textContent = hp.name + (hp.kind === 'pylon' ? ' · gun pods' : ' · cannons');
   $('loWeight').textContent = 'Guns ' + ls.guns + ' / ' + P.maxGuns + ' · payload ' + r1(ls.weight) + ' / ' + P.payload;
+  // which fire group the gun on this hardpoint is in
+  const grp = $('loGroup'); grp.innerHTML = '';
+  if (lo[hp.id]) {
+    grp.appendChild(document.createTextNode('Fire group:'));
+    [[1, 'Primary'], [2, 'Secondary']].forEach(([k, label]) => {
+      const b = document.createElement('button'); b.textContent = label; b.id = 'grp-' + k;
+      b.setAttribute('aria-pressed', gr[hp.id] === k ? 'true' : 'false');
+      b.addEventListener('click', () => {
+        if (gr[hp.id] === k) return;
+        const next = Object.assign({}, gr, { [hp.id]: k });
+        // keep at least one gun in the primary group
+        if (!Object.values(next).includes(1)) return;
+        save.groups[pid] = next; persist(); beep(880, 0.06, 0.06); composeEra(); renderHangar();
+        const f = $('grp-' + k); if (f) f.focus();
+      });
+      grp.appendChild(b);
+    });
+  }
   // the gun list for this hardpoint; scales compare against the best gun of the same mount type
   const list = GUN_ORDER.filter(id => GUNS[id].mount === hp.kind), best = f => Math.max(...list.map(id => f(GUNS[id])));
   const bars = [['Damage/s', g => g.rof * g.dmg, v => Math.round(v)], ['Per hit', g => g.dmg, v => r1(v)], ['Velocity', g => g.speed, v => v + ' m/s'], ['Fire time', g => 1 / g.heat, v => Math.round(v) + ' s'], ['Weight', g => g.weight, v => r1(v)]];
@@ -2999,7 +3141,7 @@ function renderLoadout() {
     });
     gl.appendChild(b);
   });
-  // secondary weapon: one per jet
+  // the special: one per jet
   const sl = $('loSec'); sl.innerHTML = '';
   SEC_ORDER.forEach(id => {
     const S = SECONDARIES[id], on = era.secId === id, owned = secOwned(id), b = document.createElement('button');
@@ -3030,16 +3172,15 @@ function renderLoadout() {
   const kinds = k => P.hardpoints.filter(h => h.kind === k).length;
   const spec = [
     ['Guns fitted', ls.guns + ' of ' + P.maxGuns, P.hardpoints.length + ' hardpoints: ' + kinds('bay') + ' bays · ' + kinds('pylon') + ' pylons'],
-    ['Firepower', Math.round(ls.dps) + ' dmg/s', 'Before perks'],
-    ['Gun heat', r1(1 / ls.heat) + ' s of fire', 'Then ' + r1((1 - HEAT_RESUME) / HEAT_COOL) + ' s to cool off'],
+    ...ls.groups.map((g, i) => [(i ? 'Secondary' : 'Primary') + ' guns', g.guns.length ? Math.round(g.dps) + ' dmg/s' : 'None',
+      g.guns.length ? g.guns.map(id => GUNS[id].short).join(' + ') + ' · ' + r1(1 / g.heat) + ' s of fire, ' + r1((1 - HEAT_RESUME) / HEAT_COOL) + ' s to cool' : 'Put a gun in this group to swap to it']),
     ['Payload', r1(ls.weight) + ' / ' + P.payload, 'Factory fit ' + r1(loadWeight(pid, P.stock))],
     ['Handling', fx(ls.turn - 1) + ' turn', fx(ls.thrust - 1) + ' thrust · ' + fx(ls.speed - 1) + ' top speed'],
     ['Top speed', Math.round(F.maxSpeed * ls.speed * 3.6) + ' km/h', 'Afterburner pushes past it'],
     ['G limit', F.gmax + ' G', 'Corner speed ' + Math.round(F.corner * 3.6) + ' km/h'],
     ['Roll rate', Math.round(F.roll * 57.3 / 10) * 10 + '°/s', F.yaw >= 0.5 ? 'Strong rudder' : 'Light rudder'],
     ['Hull', P.hp, P.stallAoa ? 'Keeps nose authority at high AoA' : 'Standard airframe'],
-    ['Secondary', era.sec.short.charAt(0) + era.sec.short.slice(1).toLowerCase() + ' · ' + plural(secondarySpec(pid).charges, 'charge', 'charges'), 'Each recharges in ' + Math.round(secondarySpec(pid).reload) + ' s' + (era.secId === 'missile' ? ' · lock ' + P.lockTime + ' s' : '')],
-    ['Perk slots', P.perkSlots, 'Filled during a run'],
+    ['Special', era.sec.short.charAt(0) + era.sec.short.slice(1).toLowerCase() + ' · ' + plural(secondarySpec(pid).charges, 'charge', 'charges'), 'Each recharges in ' + Math.round(secondarySpec(pid).reload) + ' s' + (era.secId === 'missile' ? ' · lock ' + P.lockTime + ' s' : '')],
   ];
   if (P.stealth) spec.push(['Stealth', Math.round(ls.stealth * 100) + '%', ls.pods ? 'Pods on the pylons halve it' : 'Clean airframe']);
   spec.push(['Takes', P.guns.map(g => GUNS[g].short).join(' · '), '']);
@@ -3047,28 +3188,56 @@ function renderLoadout() {
 }
 $('loStock').addEventListener('click', () => { delete save.loadout[era.plane.id]; gunArm = null; persist(); composeEra(); setupShowcase(); renderHangar(); });
 
-// ---- perk shop: unlock perks for good with medals; the run decides which ones you take ----
+// ---- perks: unlock and upgrade with medals, then equip into your slots. Equipped perks fly with every jet ----
+function spendMedals(key, cost, f) {
+  if (save.points < cost) return;
+  if (perkArm !== key) { perkArm = key; renderHangar(); const b = $(key); if (b) b.focus(); return; }
+  save.points -= cost; perkArm = null; f(); persist(); beep(990, 0.1, 0.08); renderHangar();
+  const b = $(key); if (b) b.focus();
+}
+function toggleEquip(id) {
+  const eq = equipped(), i = eq.indexOf(id);
+  if (i >= 0) eq.splice(i, 1);
+  else if (eq.length < perkSlotCount()) eq.push(id);
+  else return;
+  perkArm = null; persist(); beep(880, 0.06, 0.06); renderHangar();
+  const b = $('eq-' + id); if (b) b.focus();
+}
 function renderPerks() {
-  $('perkNote').textContent = 'You have ' + plural(save.points, 'medal', 'medals') + '. The ' + era.plane.short + ' has ' + plural(era.plane.perkSlots, 'perk slot', 'perk slots') + '; ' +
-    PLANE_ORDER.filter(id => PLANES[id].perkSlots > 3).map(id => PLANES[id].short).join(', ') + ' have 4. ' + PERKS.filter(perkOpen).length + ' of ' + PERKS.length + ' perks unlocked.';
+  const eq = equipped(), slots = perkSlotCount();
+  $('perkNote').textContent = 'You have ' + plural(save.points, 'medal', 'medals') + '. ' + PERKS.filter(perkOpen).length + ' of ' + PERKS.length + ' perks unlocked. ' +
+    'Slots: ' + eq.length + ' of ' + slots + ' used.' + (slots < 5 ? ' ' + (slots < 4 ? 'Down your first boss to open a 4th slot.' : 'Down the bosses of 3 locations to open a 5th slot.') : '');
+  const sl = $('perkSlots'); sl.innerHTML = '';
+  for (let i = 0; i < 5; i++) {
+    const id = eq[i], p = id && PERK_BY_ID[id], b = document.createElement('button');
+    b.className = 'slot' + (p ? ' full' : '') + (i >= slots ? ' locked' : '');
+    b.disabled = !p;
+    b.innerHTML = p ? '<small>Slot ' + (i + 1) + ' · ' + p.cat + '</small><b>' + p.name + ' ' + ROMAN[perkTier(p)] + '</b><small>Click to take off</small>'
+      : i < slots ? '<small>Slot ' + (i + 1) + '</small><b>Empty</b><small>Equip a perk below</small>' : '<small>Slot ' + (i + 1) + '</small><b>Locked</b><small>' + (i === 3 ? 'Down a boss' : 'Down 3 bosses') + '</small>';
+    if (p) b.addEventListener('click', () => toggleEquip(id));
+    sl.appendChild(b);
+  }
   const el = $('perkShop'); el.innerHTML = '';
   PERKS.forEach(p => {
-    const open = perkOpen(p), b = document.createElement('button');
-    b.className = 'gun pk' + (open ? '' : ' locked') + (perkArm === p.id ? ' armed' : ''); b.id = 'perk-' + p.id;
-    b.setAttribute('aria-pressed', open ? 'true' : 'false');
-    let status, cls = '';
-    if (open) { status = p.cost ? 'Unlocked' : 'Starter perk'; cls = ' on'; }
-    else { status = perkArm === p.id ? 'Click again to unlock for ' + plural(p.cost, 'medal', 'medals') : (save.points >= p.cost ? 'Unlock · ' : 'Needs ') + plural(p.cost, 'medal', 'medals'); cls = ' cost'; }
-    b.disabled = !open && save.points < p.cost;
-    b.innerHTML = '<span class="gn">' + p.name + '</span><span class="gk">' + p.cat + '</span><span class="lv">' +
-      [1, 2, 3].map(l => '<b>' + ROMAN[l] + '</b><span>' + perkText(p, l) + '</span>').join('') + '</span><span class="gs' + cls + '">' + status + '</span>';
-    b.addEventListener('click', () => {
-      if (open || b.disabled) return;
-      if (perkArm !== p.id) { perkArm = p.id; renderHangar(); const f = $('perk-' + p.id); if (f) f.focus(); return; }
-      save.points -= p.cost; save.perks[p.id] = true; perkArm = null; persist(); beep(990, 0.1, 0.08); renderHangar();
-      const f = $('perk-' + p.id); if (f) f.focus();
-    });
-    el.appendChild(b);
+    const t = perkTier(p), open = t > 0, on = eq.includes(p.id), c = document.createElement('div');
+    c.className = 'gun pk' + (open ? '' : ' locked') + (on ? ' eq' : ''); c.id = 'perk-' + p.id;
+    c.innerHTML = '<span class="gn">' + p.name + (open ? ' ' + ROMAN[t] : '') + '</span><span class="gk">' + p.cat + (on ? ' · equipped' : '') + '</span><span class="lv">' +
+      [1, 2, 3, 4, 5].map(l => '<b class="' + (l === t ? 'cur' : '') + '">' + ROMAN[l] + '</b><span class="' + (l > t ? 'dim' : '') + '">' + perkText(p, l) + '</span>').join('') + '</span><span class="acts"></span>';
+    const acts = c.querySelector('.acts');
+    const btn = (id, label, cls, dis, f) => { const b = document.createElement('button'); b.id = id; b.textContent = label; b.className = cls; b.disabled = dis; b.addEventListener('click', f); acts.appendChild(b); };
+    if (!open) {
+      const key = 'unl-' + p.id;
+      btn(key, perkArm === key ? 'Click again · ' + plural(p.cost, 'medal', 'medals') : (save.points >= p.cost ? 'Unlock · ' : 'Needs ') + plural(p.cost, 'medal', 'medals'),
+        'go' + (perkArm === key ? ' armed' : ''), save.points < p.cost, () => spendMedals(key, p.cost, () => { save.perks[p.id] = 1; }));
+    } else {
+      btn('eq-' + p.id, on ? 'Equipped · take off' : eq.length < slots ? 'Equip' : 'Slots full', on ? 'on' : '', !on && eq.length >= slots, () => toggleEquip(p.id));
+      if (t < PERK_MAX) {
+        const key = 'upg-' + p.id, cost = TIER_COST[t + 1];
+        btn(key, perkArm === key ? 'Click again · ' + plural(cost, 'medal', 'medals') : 'Tier ' + ROMAN[t + 1] + ' · ' + plural(cost, 'medal', 'medals'),
+          'go' + (perkArm === key ? ' armed' : ''), save.points < cost, () => spendMedals(key, cost, () => { save.perks[p.id] = t + 1; }));
+      }
+    }
+    el.appendChild(c);
   });
 }
 
@@ -3089,7 +3258,8 @@ $('unlockBtn').addEventListener('click', () => {
   for (const id of PLANE_ORDER) save.planes[id] = true;
   for (const id of GUN_ORDER) save.guns[id] = true;
   for (const id of SEC_ORDER) save.secs[id] = true;
-  for (const p of PERKS) save.perks[p.id] = true;
+  for (const p of PERKS) save.perks[p.id] = Math.max(1, save.perks[p.id] || 0);
+  save.allSlots = true;
   for (const sk of A.SKINS) save.skins[sk.id] = true;
   persist(); beep(990, 0.1, 0.08); renderHangar();
   $('unlockBtn').textContent = 'Everything unlocked';
@@ -3253,7 +3423,7 @@ function drawGauges() {
     // right display: flight data
     c.fillStyle = bg; c.fillRect(684, 30, 300, 260); c.strokeStyle = '#444'; c.lineWidth = 6; c.strokeRect(684, 30, 300, 260);
     c.fillStyle = ink; c.font = '700 26px "Chakra Petch", sans-serif';
-    const lines = [['SPD', Math.round(spd)], ['ALT', Math.round(alt)], ['HDG', String(Math.round(heading)).padStart(3, '0')], ['G', p.g.toFixed(1)], ['THR', p.throttle > 1.001 ? 'AB' : Math.round(p.throttle * 100) + '%'], ['HULL', Math.round(hullF * 100) + '%'], [era.sec.tag, run.charges + '/' + p.s.charges + (run.charges < p.s.charges ? ' ' + Math.ceil(p.s.reload - run.reloadT) + 's' : '') + ' FLR ' + run.flares], ['GUN', run.overheat ? 'HOT' : Math.round(run.heat * 100) + '%']];
+    const lines = [['SPD', Math.round(spd)], ['ALT', Math.round(alt)], ['HDG', String(Math.round(heading)).padStart(3, '0')], ['G', p.g.toFixed(1)], ['THR', p.throttle > 1.001 ? 'AB' : Math.round(p.throttle * 100) + '%'], ['HULL', Math.round(hullF * 100) + '%'], [era.sec.tag, run.charges + '/' + p.s.charges + (run.charges < p.s.charges ? ' ' + Math.ceil(p.s.reload - run.reloadT) + 's' : '') + ' FLR ' + run.flares], [run.grp ? 'GN2' : 'GN1', run.groups[run.grp].over ? 'HOT' : Math.round(run.groups[run.grp].heat * 100) + '%']];
     lines.forEach(([k, v], i) => { c.textAlign = 'left'; c.fillText(k, 704, 62 + i * 29); c.textAlign = 'right'; c.fillText(String(v), 964, 62 + i * 29); });
   }
   gaugeTex.needsUpdate = true;
@@ -3344,7 +3514,7 @@ function coopAnyMateUp() {
 }
 const coopWatch = () => coopMatePlanes().find(validTarget) || null;
 function coopClear() {
-  for (const m of coop.mates.values()) { if (m.p) scene.remove(m.p.mesh); m.p = null; }
+  for (const m of coop.mates.values()) { if (m.p) scene.remove(m.p.mesh); if (m.wp) scene.remove(m.wp.mesh); m.p = null; m.wp = null; }
   coop.pup.clear();
 }
 
@@ -3356,7 +3526,7 @@ function coopUpdate(dt) {
     coop.sendT = COOP_SEND;
     const live = player.alive && !player.dying;
     net.send({ t: 's', p: packPose(player), th: n1(player.throttle), fi: live && run.firing ? 1 : 0, hp: Math.ceil(player.hp), mh: Math.round(player.maxHp),
-      dn: live ? 0 : 1, by: coop.downBy, pl: era.plane.id, sk: skinFor(era.plane.id) });
+      dn: live ? 0 : 1, by: coop.downBy, pl: era.plane.id, sk: skinFor(era.plane.id), w: (allies[0] && validTarget(allies[0])) ? packPose(allies[0]) : 0 });
   }
   if (net.isHost) { coop.worldT -= dt; if (coop.worldT <= 0) { coop.worldT = COOP_WORLD; coopSendWorld(); } }
   for (const m of coop.mates.values()) coopMateUpdate(m, dt);
@@ -3458,6 +3628,7 @@ function makeMate(m) {
 }
 function coopMateUpdate(m, dt) {
   if (!m.snap) return;
+  coopMateWingman(m, dt);
   if (m.p && (m.p.planeId !== m.pl || m.p.skinId !== m.sk)) { scene.remove(m.p.mesh); m.p = null; }
   if (!m.p) { if (m.dn) return; m.p = makeMate(m); }
   const p = m.p;
@@ -3488,9 +3659,26 @@ function coopMateState(f, msg) {
   if (!m) coop.mates.set(f, m = { slot: f, p: null });
   m.snap = { at: performance.now(), p: msg.p.slice(0, 3), q: msg.p.slice(3, 7), v: msg.p.slice(7, 10) };
   m.th = msg.th; m.fi = msg.fi; m.hp = msg.hp; m.mh = msg.mh; m.dn = !!msg.dn; m.by = msg.by; m.pl = msg.pl; m.sk = msg.sk;
+  m.wsnap = msg.w ? { at: m.snap.at, p: msg.w.slice(0, 3), q: msg.w.slice(3, 7), v: msg.w.slice(7, 10) } : null;
+}
+// a teammate's wingman, for show: their own game flies it and decides what it hits
+function coopMateWingman(m, dt) {
+  const w = m.wp;
+  if (!m.wsnap) { if (w && w.alive && !w.dying) { w.dying = true; w.dieT = 0; w.fall = 0; explosion(w.pos, 0.6); } if (w && w.dying && w.alive) w.dyingUpdate(dt); return; }
+  if (!w || !w.alive || w.dying || w.planeId !== m.pl) {
+    if (w) scene.remove(w.mesh);
+    const P = PLANES[m.pl] || PLANES.f5;
+    m.wp = new Plane({ size: P.size, maxSpeed: P.flight.maxSpeed, hp: 100 }, planeMesh(P.id, m.sk, P.livery), 0);
+    m.wp.planeId = P.id; m.wp.damage = () => {};
+    for (const r of m.wp.mesh.userData.msl || []) r.visible = false;
+    m.wp.pos.set(m.wsnap.p[0], m.wsnap.p[1], m.wsnap.p[2]); m.wp.quat.set(m.wsnap.q[0], m.wsnap.q[1], m.wsnap.q[2], m.wsnap.q[3]); m.wp.axes();
+  }
+  coopInterp(m.wp, m.wsnap, dt);
+  m.wp.animate(dt); m.wp.trails(dt);
 }
 function coopDropMate(slot) {
   const m = coop.mates.get(slot);
+  if (m && m.wp) scene.remove(m.wp.mesh);
   if (m && m.p) { scene.remove(m.p.mesh); if (lockTarget === m.p) { lockTarget = null; locked = false; } }
   coop.mates.delete(slot);
 }
@@ -3569,7 +3757,7 @@ function coopMissileIn(src, msg, real) {
   coopFake = !real; fireMissile(src, missileTarget(msg.tg), msg.d || 0, o); coopFake = false;
 }
 
-// ---- the wave gate: every pilot picks a perk, then the host starts the next wave for everyone ----
+// ---- the wave gate: every pilot picks a field upgrade, then the host starts the next wave for everyone ----
 function coopReady() {
   coop.ready.add(net.slot);
   coop.waiting = true;
@@ -3597,13 +3785,12 @@ function coopCheckReady() {
   net.send({ t: 'wave', n: run.wave, sub: run.mission.sub, pilots: coop.members.size });
 }
 function coopRespawnPenalty() {
-  const ids = Object.keys(run.perks);
+  const ids = Object.keys(run.up).filter(id => run.up[id] > 0);
   let lost = '';
   if (ids.length) {
-    const id = ids[Math.floor(Math.random() * ids.length)], p = PERK_BY_ID[id];
-    run.perks[id]--;
-    lost = run.perks[id] ? p.name + ' drops to ' + ROMAN[run.perks[id]] : 'you lose ' + p.name;
-    if (!run.perks[id]) delete run.perks[id];
+    const id = ids[Math.floor(Math.random() * ids.length)];
+    run.up[id]--;
+    lost = 'you lose one ' + UP_BY_ID[id].name;
     refreshMods();
   }
   run.hull = Math.max(1, Math.round(maxHull() * 0.5));
@@ -3748,7 +3935,7 @@ function coopRender() {
     if (net.isHost) {
       ls.textContent = 'Launch co-op'; launch.disabled = !!hostInfo.busy;
       $('launchEra').textContent = era.short + ' · ' + era.name.toUpperCase() + ' · ' + ros.length + (ros.length === 1 ? ' PILOT' : ' PILOTS');
-      $('coopNote').textContent = coop.status || (ros.length === 1 ? 'Waiting for pilots. You can launch alone too.' : 'You pick the location. Everyone flies their own jet, loadout and perks. Enemy numbers and hull go up with every pilot.');
+      $('coopNote').textContent = coop.status || (ros.length === 1 ? 'Waiting for pilots. You can launch alone too.' : 'You pick the location. Everyone flies their own jet, loadout, perks and wingman. Enemy numbers and hull go up with every pilot.');
     } else {
       ls.textContent = 'Waiting for the host'; launch.disabled = true;
       const L = LOCS[hostInfo.loc];
@@ -3758,7 +3945,7 @@ function coopRender() {
   } else {
     ls.textContent = 'Launch survival'; launch.disabled = false;
     $('coopTag').textContent = '';
-    $('coopNote').textContent = coop.err || coop.status || 'Fly survival together over the internet. One pilot hosts and shares the four-letter code. Enemy numbers and hull go up with every pilot, friendly fire and friendly missile locks are on, and a pilot who goes down comes back after the wave with half hull and one perk level lost.';
+    $('coopNote').textContent = coop.err || coop.status || 'Fly survival together over the internet. One pilot hosts and shares the four-letter code. Enemy numbers and hull go up with every pilot, friendly fire and friendly missile locks are on, and a pilot who goes down comes back after the wave with half hull and one field upgrade lost.';
     $('coopNote').classList.toggle('bad', !!coop.err);
   }
   coopSyncInfo();
@@ -3801,7 +3988,7 @@ function coopHud(live) {
     const w = coopWatch();
     hud.fillText(coopRoom() ? 'YOU\'RE DOWN · BACK IN AFTER THIS WAVE' : 'YOU\'RE DOWN', W / 2, H - 80);
     hud.font = '600 12px "Chakra Petch", sans-serif';
-    if (w) hud.fillText('Watching ' + nameOf(w.mateSlot) + ' · lose a perk level and half your hull on the way back', W / 2, H - 60);
+    if (w) hud.fillText('Watching ' + nameOf(w.mateSlot) + ' · lose a field upgrade and half your hull on the way back', W / 2, H - 60);
     hud.font = '600 11px "Chakra Petch", sans-serif';
   }
   const camInv = camera.matrixWorldInverse;
@@ -3870,7 +4057,7 @@ buildWorld();
 toHangar();
 loadManifest();
 requestAnimationFrame(frame);
-window.__skybreak = { get fps() { return fpsAvg; }, get state() { return state; }, get player() { return player; }, get enemies() { return enemies; }, get allies() { return allies; }, get run() { return run; }, startSurvival, nextWave, survivalWave, endRun, addPerk, offerPerks,
+window.__skybreak = { get fps() { return fpsAvg; }, get state() { return state; }, get player() { return player; }, get enemies() { return enemies; }, get allies() { return allies; }, get run() { return run; }, startSurvival, nextWave, survivalWave, endRun, addUpgrade, offerPerks, selectGroup,
   wave(w) { run.wave = w - 1; nextWave(); },
   nudge(dx, dy) { nudgeAim(dx, dy); }, setAim(y, p) { aimYaw = y; aimPitch = p; updateAimDir(); }, cam(m) { camMode = m; },
   setup(loc, plane) { save.locs[loc] = true; save.planes[plane] = true; save.loc = loc; save.plane = plane; composeEra(); buildWorld(); setupShowcase(); renderHangar(); },
