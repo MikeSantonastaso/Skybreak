@@ -1,25 +1,49 @@
 # Skybreak
 
-A browser prototype of a roguelike jet dogfighting game. Pick a location, a heat level and a jet, fly a branching map of eight missions that ends in a boss, collect gear that changes how you fight, and bring home credits for new jets and paint, and skill points for the skill web.
+A browser prototype of a roguelike jet dogfighting game. Pick a location and a jet, survive as many waves of enemy fighters as you can, pick perks between waves, and bring home credits for jets, guns and paint, and medals for unlocking perks.
 
-## Progression
+## Survival
 
-- **Locations** open one at a time: down the boss at one to open the next.
-- **Heat 0 to 5** at each location. Downing the boss at a heat level opens the next one there. Each level adds enemy hull, damage, skill and numbers, and pays more credits and boss skill points.
-- **Skill web:** 61 permanent skills in five rings around a core, across six sectors (Airframe, Engine, Guns, Missiles, Pilot, Logistics). Train any skill connected to one you already have. Each sector ends in a keystone, and hybrid skills on the rim join neighbouring sectors.
-- **Survival:** a separate mode on its own tab. Wave 1 is one fighter, wave 2 is two, and so on. From wave 3 every third fighter is a newer jet type, and from wave 5 one in four is an ace. From wave 3 about half of the rest are variants (see below). After each wave pick a piece of gear or a field repair. Hull, missiles and the missile cooldown carry over between waves. The best wave at each location is saved, and every wave pays credits, with a skill point for every two.
-- **Enemy variants** mix in from survival wave 3, and from the middle of a sortie map. Interceptors (FAST) are quick and fragile, heavy fighters (HEAVY) are armored and hit hard, ghosts (GHOST) can't be locked and only show on the HUD and radar inside 1.5 km but carry no missiles, and hunters (HUNTER) carry four missiles and fire them from long range.
-- **Missiles are a special.** Each jet carries one to three on the rails, and each refills on a 24 s cooldown. Gun kills take 2 s off the cooldown. The Missiles sector of the skill web and the Ordnance crew, Ready rack and Gun-kill bounty gear cut the cooldown or add missiles.
-- **Hangar:** five jets to buy with credits, and a paint shop with schemes bought with credits or earned by downing bosses, racking up kills or clearing heat 5.
-- **Loadout:** each jet has its own gun hardpoints (bays inside the airframe for cannons, wing pylons for gun pods), a payload limit and a list of guns it can take. The Loadout tab shows the jet from above with a marker on every hardpoint: pick one and fit a gun. Seven guns, from the light M3 .50 cal to the ADEN 30 mm and the SUU-23 pod, are bought once with credits; a gun that comes fitted on a jet you own is free. Weight above the factory fit costs turn and thrust (lighter gives a little back), pods add drag, and pods on the F-35 halve its stealth. In combat every gun fires from its own hardpoint at its own rate.
+- Wave 1 is one fighter, wave 2 is two, and so on. From wave 3 every third fighter is a newer jet type, and from wave 5 one in four is an ace. From wave 3 about half of the rest are variants (see below).
+- **Every tenth wave brings the location's boss** with half the wave as escorts, and each boss after the first is tougher. Downing a location's boss opens the next location.
+- Hull and secondary charges carry over between waves. The best wave at each location is saved, and every wave pays credits.
+- **Enemy variants:** interceptors (FAST) are quick and fragile, heavy fighters (HEAVY) are armored and hit hard, ghosts (GHOST) can't be locked and only show on the HUD and radar inside 1.5 km but carry no missiles, and hunters (HUNTER) carry four missiles and fire them from long range.
 
-| Jet | Hardpoints | Payload | Factory guns |
-| --- | --- | --- | --- |
-| F-5E | 2 nose bays, 2 pylons | 3 | 2 × M39 |
-| F-16C | 2 root bays, 2 pylons | 4 | M61 |
-| F-14B | 2 nose bays, 4 pylons | 5.5 | M61 |
-| F/A-18E | 1 nose bay, 4 pylons | 5 | M61 |
-| F-35C | 1 internal bay, 3 pylons | 4.5 | GAU-22 |
+## Weapons
+
+- **Guns:** each jet has a gun limit: 2 on the F-5E, 3 on the F-16C and F-35C, and 4 on the F-14B and F/A-18E. In-run perks make your guns better but never add more.
+- **Heat:** all guns share one heat gauge. Firing fills it, and a gun's Fire time in the Loadout tab is how long that gun alone can fire from cold. At full the guns lock until the gauge cools back to 30%, so more guns hit harder but overheat sooner. It cools 0.3 s after you let go.
+- **Secondary weapon:** one per jet, on the right mouse button or R. Each holds a few charges that refill one at a time, and gun kills take 2 s off the cooldown.
+
+| Secondary | Charges | Cooldown | Price | What it does |
+| --- | --- | --- | --- | --- |
+| Heat-seeking missiles | 1 to 3, by jet | 22 s | Free | Lock on, then fire. Flares and hard breaks can shake them |
+| Rocket pod | 2 | 12 s | Free | Eight unguided rockets down the nose |
+| Flak cannon | 3 | 8 s | 1,800 | A shell that bursts beside the first enemy it passes and hits everything nearby |
+| EMP pulse | 1 | 26 s | 3,500 | Knocks out every enemy within 1.1 km for 3.5 s and defeats missiles chasing you |
+
+## Perks
+
+- **During a run:** before wave 1 and after every wave you pick a new perk for an empty slot, or the next level of a perk you already hold, up to level III. Field repair and one reroll a run are also on offer. Once every slot is full and every perk is at III, plain boosts fill the cards.
+- **Slots:** the F-5E and F-16C have 3 perk slots, and the F-14B, F/A-18E and F-35C have 4.
+- **Unlocks:** 7 perks are open from the start. The other 15 are unlocked for good in the Perks tab with medals. You earn a medal for every two waves you survive and three for every boss.
+- Perks cover guns (damage, rate of fire, heat, spread, crits, explosive and arc rounds, glass cannon), the secondary (cooldown, charges, damage, gun-kill bounty), the airframe (hull, repairs, dodging, Phoenix), flight (thrust and roll) and tactics (wingmen, killing time).
+
+## Hangar and loadout
+
+- **Hangar:** five jets to buy with credits, and a paint shop with schemes bought with credits or earned by downing bosses, racking up kills or surviving 30 waves.
+- **Loadout:** each jet has its own gun hardpoints (bays inside the airframe for cannons, wing pylons for gun pods), a payload limit, a gun limit and a list of guns it can take. The Loadout tab shows the jet from above with a marker on every hardpoint: pick one and fit a gun. Seven guns, from the light M3 .50 cal to the ADEN 30 mm and the SUU-23 pod, are bought once with credits; a gun that comes fitted on a jet you own is free. Weight above the factory fit costs turn and thrust (lighter gives a little back), pods add drag, and pods on the F-35 halve its stealth. In combat every gun fires from its own hardpoint at its own rate. Pick the secondary weapon below the guns.
+- **Testing:** Settings has an Unlock everything button that opens every location, jet, gun, secondary, perk and paint scheme.
+
+| Jet | Hardpoints | Gun limit | Payload | Perk slots | Factory guns |
+| --- | --- | --- | --- | --- | --- |
+| F-5E | 2 nose bays, 2 pylons | 2 | 3 | 3 | 2 × M39 |
+| F-16C | 2 root bays, 2 pylons | 3 | 4 | 3 | M61 |
+| F-14B | 2 nose bays, 4 pylons | 4 | 5.5 | 4 | M61 |
+| F/A-18E | 1 nose bay, 4 pylons | 4 | 5 | 4 | M61 |
+| F-35C | 1 internal bay, 3 pylons | 3 | 4.5 | 4 | GAU-22 |
+
+Old saves carry over: ranks trained in the old skill web come back as medals, and a heat 5 clear keeps the Gold standard paint.
 
 **Play:** open `index.html` in a browser, or use the GitHub Pages link for this repository.
 
@@ -31,7 +55,7 @@ A browser prototype of a roguelike jet dogfighting game. Pick a location, a heat
 | W / S | Throttle. Keep holding W at 100% for afterburner |
 | A / D, Q / E | Roll, rudder |
 | Left mouse / Space | Guns |
-| Right mouse / R | Missile, after lock-on. Each one refills on a cooldown |
+| Right mouse / R | Secondary weapon. Missiles need a lock first. Charges refill on a cooldown |
 | F / middle mouse | Flares |
 | V (hold) | Free look |
 | C | Chase / cockpit view |

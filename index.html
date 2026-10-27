@@ -73,8 +73,6 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
 .pips { display: flex; gap: 3px; }
 .pips i { width: 14px; height: 5px; background: rgba(235,228,210,0.14); }
 .pips i.on { background: var(--amber); }
-.treefoot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
-.treefoot .note { max-width: 52ch; }
 .scrap { font-family: var(--display); font-weight: 900; font-size: 26px; letter-spacing: 0.02em; color: var(--paper); text-transform: none; }
 .launch { background: var(--amber); color: #1a1206; border: 0; padding: 16px 18px; font-family: var(--display); font-weight: 900; font-size: 30px; letter-spacing: 0.04em; text-transform: uppercase; text-align: left; display: flex; justify-content: space-between; align-items: center; }
 .launch:hover { filter: brightness(1.08); }
@@ -92,46 +90,12 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
 .ghost:hover { color: var(--paper); }
 .note { font-size: 12px; color: var(--muted); line-height: 1.4; margin: 0; }
 
-/* sortie map */
-.mapwrap { max-width: 1120px; }
-.maphead { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 12px; }
-.maphead h2 { font-family: var(--display); font-weight: 900; font-size: clamp(34px, 6vw, 54px); color: var(--amber); line-height: 0.9; }
-.maphead .note { margin-top: 8px; color: var(--paper); }
-.runstats { display: flex; gap: 20px; flex-wrap: wrap; }
-.runstats b { display: block; font-family: var(--display); font-weight: 900; font-size: 30px; font-variant-numeric: tabular-nums; line-height: 1; }
-.runstats span { font-size: 11px; letter-spacing: 0.14em; color: var(--muted); text-transform: uppercase; }
-.mapscroll { overflow-x: auto; padding-block: 6px; }
-.map { position: relative; min-width: 780px; height: 300px; }
-.map svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.map line { stroke: rgba(235,228,210,0.18); stroke-width: 2; }
-.map line.walked { stroke: var(--amber); }
-.map line.open { stroke: rgba(255,181,71,0.55); stroke-dasharray: 4 4; }
-.mnode { position: absolute; transform: translate(-50%, -50%); width: 96px; padding: 8px 6px 7px; border: 1px solid rgba(235,228,210,0.18); background: var(--panel-solid); color: var(--paper); font-size: 12.5px; font-weight: 600; display: flex; flex-direction: column; gap: 4px; align-items: center; text-align: center; }
-.mnode small { font-size: 10px; letter-spacing: 0.06em; color: var(--muted); font-weight: 500; line-height: 1.2; }
-.mnode .gl { width: 14px; height: 14px; background: var(--paper); }
-.g-patrol { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
-.g-elite { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); background: var(--danger) !important; }
-.g-intercept { background: var(--amber) !important; }
-.g-depot { border-radius: 50%; background: var(--good) !important; }
-.g-airfield { clip-path: polygon(35% 0, 65% 0, 65% 35%, 100% 35%, 100% 65%, 65% 65%, 65% 100%, 35% 100%, 35% 65%, 0 65%, 0 35%, 35% 35%); background: var(--good) !important; }
-.g-signal { border-radius: 50%; background: transparent !important; border: 2px solid var(--cyan); box-sizing: border-box; }
-.g-boss { width: 20px !important; height: 20px !important; clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); background: var(--danger) !important; }
-.mnode.reach { border-color: var(--amber); cursor: pointer; box-shadow: 0 0 0 3px rgba(255,181,71,0.18); }
-.mnode.reach:hover { background: #2a2416; }
-.mnode.done { opacity: 0.55; }
-.mnode.here { border-color: var(--good); opacity: 1; }
-.mnode:disabled { cursor: default; }
-.mnode.far { opacity: 0.4; }
 .items { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { font-size: 12.5px; padding: 5px 9px; border: 1px solid rgba(235,228,210,0.2); background: rgba(255,255,255,0.03); }
 .chip b { color: var(--amber); margin-left: 4px; }
-.chip.r-rare { border-color: rgba(111,179,255,0.7); }
-.chip.r-legendary { border-color: rgba(255,122,69,0.85); }
-.items .note { margin: 0; }
-.perk.r-rare { border-color: rgba(111,179,255,0.55); }
-.perk.r-rare .k { color: #8cc2ff; }
-.perk.r-legendary { border-color: rgba(255,122,69,0.7); }
-.perk.r-legendary .k { color: #ff8d5c; }
+.perk.lv-up { border-color: rgba(127,233,242,0.55); }
+.perk.lv-up .k { color: var(--cyan); }
+.perk.lv-new .k { color: var(--good); }
 .perk .f { margin-top: auto; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; color: var(--amber); }
 .perk:disabled { opacity: 0.45; cursor: default; }
 .perk:disabled:hover { border-color: rgba(235,228,210,0.16); background: rgba(255,255,255,0.03); }
@@ -177,14 +141,6 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
 .tab b { font-family: var(--ui); font-size: 12px; font-weight: 700; background: var(--amber); color: #1a1206; padding: 2px 7px; margin-left: 8px; vertical-align: 4px; letter-spacing: 0; }
 .note.lede { color: var(--paper); opacity: 0.8; max-width: 70ch; font-size: 13px; }
 .era:disabled { cursor: default; }
-.heat { display: flex; gap: 6px; flex-wrap: wrap; }
-.hb { position: relative; min-width: 50px; height: 44px; background: rgba(255,255,255,0.03); border: 1px solid rgba(235,228,210,0.18); color: var(--paper); font-family: var(--display); font-weight: 900; font-size: 24px; }
-.hb:not(:disabled):hover { border-color: var(--amber); }
-.hb[aria-pressed="true"] { background: var(--amber); color: #1a1206; border-color: var(--amber); }
-.hb:disabled { opacity: 0.35; cursor: default; }
-.hb i { position: absolute; top: 2px; right: 4px; font-style: normal; font-family: var(--ui); font-size: 10px; color: var(--good); }
-.hb[aria-pressed="true"] i { color: #1a1206; }
-.heatnote { margin-top: 8px; max-width: 70ch; }
 .plane img.thumb { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: contain; margin: -4px 0 2px; background: radial-gradient(ellipse at 50% 62%, rgba(255,255,255,0.09), rgba(255,255,255,0) 68%); }
 .plane.locked img.thumb { filter: grayscale(0.7) brightness(0.8); }
 .skins { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px; }
@@ -242,48 +198,15 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
 .lospec dd { margin: 2px 0 0; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .lospec dd small { display: block; font-size: 11.5px; font-weight: 400; color: var(--muted); }
 .lospec .up { color: var(--good); } .lospec .dn { color: var(--danger); }
-/* skill web */
-.webbox { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
-.webwrap { overflow-x: auto; }
-.web { min-width: 520px; }
-.cols.wide { grid-template-columns: minmax(0, 1fr); }
-.cols.wide > aside { display: none; }
-svg.webs { display: block; width: 100%; height: auto; }
-.webs .ring { fill: none; stroke: rgba(235,228,210,0.07); stroke-width: 1; }
-.webs .spoke { stroke: rgba(235,228,210,0.06); stroke-width: 1; }
-.webs .sec { font-family: var(--ui); font-size: 17px; font-weight: 700; letter-spacing: 0.16em; dominant-baseline: middle; }
-.webs .ln { stroke: rgba(235,228,210,0.13); stroke-width: 2; }
-.webs .ln.open { stroke: rgba(255,181,71,0.45); stroke-dasharray: 5 5; }
-.webs .ln.on { stroke: var(--amber); stroke-width: 3.5; }
-.wn { cursor: pointer; outline: none; }
-.wn .b { fill: #121c21; stroke: rgba(235,228,210,0.28); stroke-width: 2.5; }
-.wn .in { fill: none; stroke: rgba(235,228,210,0.2); stroke-width: 1.5; }
-.wn.avail .b { stroke: var(--sc); stroke-width: 3; }
-.wn.avail .in { stroke: var(--sc); }
-.wn.trained .b { fill: var(--sc); stroke: var(--sc); }
-.wn.trained .in { stroke: rgba(17,24,28,0.5); }
-.wn.maxed .b { stroke: #fff; }
-.wn.locked { opacity: 0.5; }
-.wn.core .b { fill: var(--amber); stroke: var(--amber); }
-.wn text { font-family: var(--ui); font-size: 15px; font-weight: 700; fill: var(--paper); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
-.wn.trained text, .wn.core text { fill: #11181c; }
-.wn .sel { fill: none; stroke: var(--paper); stroke-width: 2.5; opacity: 0; }
-.wn.selected .sel { opacity: 1; }
-.wn:focus-visible .sel { opacity: 1; stroke: var(--amber); }
-.wn:hover .b { filter: brightness(1.2); }
-.wdetail { border: 1px solid rgba(235,228,210,0.14); background: rgba(255,255,255,0.025); padding: 12px 14px; min-height: 132px; box-sizing: border-box; }
-.wdetail h3 { font-family: var(--display); font-weight: 900; font-size: 28px; color: var(--paper); line-height: 1; margin: 2px 0 6px; }
-.wdetail p { margin: 0 0 5px; font-size: 13px; line-height: 1.4; color: var(--paper); }
-.wdetail p b { color: var(--amber); font-weight: 600; }
-.wd-k { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 600; color: var(--muted); }
-.wd-foot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
-.wd-foot .btn { padding: 9px 14px; }
-@media (min-width: 1000px) { .webbox { grid-template-columns: minmax(0, 1fr) 250px; align-items: start; } }
+/* perks */
+.perkgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
+.pk .lv { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 8px; font-size: 12px; color: var(--paper); line-height: 1.3; }
+.pk .lv b { color: var(--amber); font-weight: 700; }
+.pk.locked .gn { color: var(--muted); }
 @media (max-width: 600px) {
   .hero .wallet { top: 54px; padding: 6px 14px 6px 30px; gap: 14px; }
   .hero .wallet b { font-size: 20px; }
   .tab { font-size: 20px; padding: 4px 10px 8px; }
-  .web { min-width: 680px; }
 }
 
 /* ---------- HUD ---------- */
@@ -334,7 +257,7 @@ svg.webs { display: block; width: 100%; height: auto; }
   <div class="hud-tl">
     <div class="wave" id="hWave">WAVE 1</div>
     <div id="hEnemies">0 bandits</div>
-    <div id="hKills">0 kills · 0 skill points banked</div>
+    <div id="hKills">0 kills</div>
   </div>
   <button class="hud-pause" id="pauseBtn">PAUSE</button>
   <div class="hud-bl">
@@ -356,7 +279,7 @@ svg.webs { display: block; width: 100%; height: auto; }
   <div id="stickZone"><div id="stickBase"></div><div id="stickKnob"></div></div>
   <div class="tbtns">
     <button id="tThrUp">THR +</button>
-    <button id="tMsl">MSL</button>
+    <button id="tMsl">SEC</button>
     <button id="tThrDn">THR −</button>
     <button id="tFire" class="fire">FIRE</button>
     <button id="tFlr">FLR</button>
@@ -371,28 +294,15 @@ svg.webs { display: block; width: 100%; height: auto; }
   </div>
   <div class="panel">
     <div class="tabs" role="tablist" aria-label="Hangar sections">
-      <button class="tab" role="tab" id="tab-sortie" aria-controls="pane-sortie">Sortie</button>
       <button class="tab" role="tab" id="tab-survival" aria-controls="pane-survival">Survival</button>
       <button class="tab" role="tab" id="tab-hangar" aria-controls="pane-hangar">Hangar</button>
       <button class="tab" role="tab" id="tab-loadout" aria-controls="pane-loadout">Loadout</button>
-      <button class="tab" role="tab" id="tab-skills" aria-controls="pane-skills">Skills<b id="ptsBadge"></b></button>
+      <button class="tab" role="tab" id="tab-perks" aria-controls="pane-perks">Perks<b id="ptsBadge"></b></button>
     </div>
     <div class="cols">
       <div class="col">
-        <div id="pane-sortie" class="col" role="tabpanel" aria-labelledby="tab-sortie">
-          <p class="note lede">Each sortie is a branching map of eight missions that ends with a boss. Down the boss to open the next location, and the next heat level at this one. Bring home credits for jets and paint, and skill points for the web.</p>
-          <div>
-            <div class="label"><span>Location</span></div>
-            <div class="eras" id="eraList"></div>
-          </div>
-          <div>
-            <div class="label"><span>Heat · <span id="heatLoc"></span></span></div>
-            <div class="heat" id="heatList"></div>
-            <p class="note heatnote" id="heatNote"></p>
-          </div>
-        </div>
-        <div id="pane-survival" class="col" role="tabpanel" aria-labelledby="tab-survival" hidden>
-          <p class="note lede">How long can you last? Wave 1 is one fighter, wave 2 is two, and so on, with newer jets, aces and new kinds of fighter mixed in as the waves climb. After every wave pick one piece of gear or a field repair. Hull, missiles and the missile cooldown carry over between waves. Credits and skill points pay out for every wave you survive.</p>
+        <div id="pane-survival" class="col" role="tabpanel" aria-labelledby="tab-survival">
+          <p class="note lede">How long can you last? Wave 1 is one fighter, wave 2 is two, and so on, with newer jets, aces and new kinds of fighter mixed in as the waves climb. Every tenth wave brings the location's boss: down it to open the next location. Before wave 1 and after every wave, pick a perk or a field repair. Credits and medals pay out for every wave you survive.</p>
           <div>
             <div class="label"><span>Location</span></div>
             <div class="eras" id="survList"></div>
@@ -411,7 +321,7 @@ svg.webs { display: block; width: 100%; height: auto; }
           </div>
         </div>
         <div id="pane-loadout" class="col" role="tabpanel" aria-labelledby="tab-loadout" hidden>
-          <p class="note lede">Fit guns to the hardpoints on your jet. Bays inside the airframe take cannons, pylons under the wings take gun pods. Every gun has weight: go past the factory fit and the jet turns and climbs a little slower, go lighter and it gets nimbler. Pods also add drag, and on the F-35 they give away its stealth.</p>
+          <p class="note lede">Fit guns to the hardpoints on your jet, up to its gun limit. Bays inside the airframe take cannons, pylons under the wings take gun pods. Every gun has weight: go past the factory fit and the jet turns and climbs a little slower, go lighter and it gets nimbler. Pods also add drag, and on the F-35 they give away its stealth. All the guns share one heat gauge, so more guns hit harder but overheat sooner. Then pick one secondary weapon.</p>
           <div class="lobox">
             <div class="lodiag" id="loDiag"></div>
             <div class="col" style="gap:10px">
@@ -420,26 +330,23 @@ svg.webs { display: block; width: 100%; height: auto; }
             </div>
           </div>
           <div>
+            <div class="label"><span>Secondary weapon · right mouse or R</span></div>
+            <div class="guns" id="loSec"></div>
+          </div>
+          <div>
             <div class="label"><span>Spec sheet · <span id="loFor"></span></span></div>
             <dl class="lospec" id="loSpec"></dl>
           </div>
           <button class="ghost" id="loStock">Back to the factory loadout</button>
         </div>
-        <div id="pane-skills" class="col" role="tabpanel" aria-labelledby="tab-skills" hidden>
-          <p class="note lede">Skills are permanent. Start at the core and train any skill that connects to one you already have. The inner rings are cheap. The outer rings cost more, each sector ends in a keystone, and hybrids on the rim join two sectors.</p>
-          <div class="webbox">
-            <div class="webwrap"><div class="web" id="web"></div></div>
-            <div class="wdetail" id="wDetail"></div>
-          </div>
-          <div>
-            <div class="label"><span>Your bonuses</span></div>
-            <div class="items" id="wTotals"></div>
-          </div>
-          <div class="treefoot"><p class="note" id="webCount"></p><button class="ghost" id="refundBtn">Refund all points</button></div>
+        <div id="pane-perks" class="col" role="tabpanel" aria-labelledby="tab-perks" hidden>
+          <p class="note lede">Perks are picked during a run. Before wave 1 and after every wave you choose one: a new perk for an empty slot, or the next level of a perk you already have, up to level III. Unlock more perks here with medals. You earn a medal for every two waves you survive and three for every boss.</p>
+          <p class="note" id="perkNote"></p>
+          <div class="perkgrid" id="perkShop"></div>
         </div>
       </div>
       <aside class="col">
-        <button class="launch" id="launch"><span>Launch sortie</span><small id="launchEra">F-5E</small></button>
+        <button class="launch" id="launch"><span>Launch survival</span><small id="launchEra">F-5E</small></button>
         <div class="record" id="record"></div>
         <div>
           <div class="label"><span>Controls</span></div>
@@ -450,7 +357,8 @@ svg.webs { display: block; width: 100%; height: auto; }
           <label class="toggle"><input type="radio" name="ctl" id="optCtlMouse"> Mouse aim, War Thunder style. Point the mouse and the plane flies there.</label>
           <label class="toggle"><input type="radio" name="ctl" id="optCtlKeys"> Direct control with keyboard or gamepad</label>
           <label class="toggle"><input type="checkbox" id="optPull"> Pull back to climb in direct control (S or ↓ raises the nose)</label>
-          <p class="note">A gamepad works too: left stick flies, right stick is rudder, RT fires, LT launches a missile, B drops flares, bumpers set throttle.</p>
+          <p class="note">A gamepad works too: left stick flies, right stick is rudder, RT fires, LT fires the secondary, B drops flares, bumpers set throttle.</p>
+          <button class="ghost" id="unlockBtn">Unlock everything (testing)</button>
           <button class="ghost" id="resetBtn">Reset all progress</button>
           <p class="note" id="credits" hidden></p>
         </div>
@@ -465,23 +373,6 @@ svg.webs { display: block; width: 100%; height: auto; }
     <p class="sub" id="perkSub"></p>
     <div class="perkcards" id="perkList"></div>
     <div class="row left" id="perkBtns"></div>
-  </div>
-</section>
-
-<section id="map" class="screen" hidden>
-  <div class="panel mapwrap">
-    <div class="maphead">
-      <div>
-        <div class="label" id="mapEra"><span>Sortie</span></div>
-        <h2>Choose your next mission</h2>
-        <p class="note" id="mapNote"></p>
-      </div>
-      <div class="runstats" id="runStats"></div>
-    </div>
-    <div class="mapscroll"><div class="map" id="mapView"></div></div>
-    <div class="label" style="margin-top:14px"><span>Gear this sortie</span></div>
-    <div class="items" id="itemChips"></div>
-    <div class="row" style="justify-content:flex-start;margin-top:16px"><button class="ghost" id="mapAbandon">Abandon sortie</button></div>
   </div>
 </section>
 
@@ -529,170 +420,70 @@ const Y_AXIS = new V3(0, 1, 0);
 
 // ================= save data =================
 const SAVE_KEY = 'skybreak-save-v3';
-const defaultSave = () => ({ points: 0, credits: 0, best: 0, totalKills: 0, runs: 0, tree: {}, skills: {}, locs: { arctic: true }, bosses: {}, heatWon: {}, selHeat: {}, survBest: {},
-  planes: { f5: true }, skins: { factory: true }, skin: {}, guns: {}, loadout: {}, loc: 'arctic', plane: 'f5', pullBack: true, ctl: 'mouse' });
+const defaultSave = () => ({ points: 0, credits: 0, totalKills: 0, runs: 0, locs: { arctic: true }, bosses: {}, survBest: {},
+  planes: { f5: true }, skins: { factory: true }, skin: {}, guns: {}, loadout: {}, secs: {}, secondary: {}, perks: {}, loc: 'arctic', plane: 'f5', pullBack: true, ctl: 'mouse' });
+// what each rank of the old skill web cost, so ranks trained there come back as medals (anything not listed cost 2)
+const OLD_WEB_COST = { armor: 1, engine: 1, guns: 1, seekers: 1, controls: 1, supply: 1, reactive: 4, turbofan: 4, ap: 4, pylon: 4, instinct: 4, blackmkt: 4,
+  tub: 3, damctl: 3, overhaul: 3, arearule: 3, hotbarrel: 3, match: 3, warhead: 3, datalink: 3, fbw: 3, evasive: 3, contracts: 3, scrounger: 3,
+  juggernaut: 8, supercruise: 8, gunfighter: 8, foxthree: 8, sixth: 8, profiteer: 8, spars: 5, gunrun: 5, ordnance: 5, snapshot: 5, lucky: 5, salvage: 5 };
 let save = defaultSave();
 try {
   const s = JSON.parse(localStorage.getItem(SAVE_KEY));
   const obj = (k, base) => Object.assign({}, base || {}, s[k] || {});
-  if (s) save = Object.assign(defaultSave(), s, { tree: obj('tree'), skills: obj('skills'), locs: obj('locs', { arctic: true }), bosses: obj('bosses'), heatWon: obj('heatWon'), selHeat: obj('selHeat'), survBest: obj('survBest'),
-    planes: obj('planes', { f5: true }), skins: obj('skins', { factory: true }), skin: obj('skin'), guns: obj('guns'), loadout: obj('loadout') });
-  else {
+  if (s) {
+    save = Object.assign(defaultSave(), s, { locs: obj('locs', { arctic: true }), bosses: obj('bosses'), survBest: obj('survBest'),
+      planes: obj('planes', { f5: true }), skins: obj('skins', { factory: true }), skin: obj('skin'), guns: obj('guns'), loadout: obj('loadout'), secs: obj('secs'), secondary: obj('secondary'), perks: obj('perks') });
+    // the skill web and the old 12-skill tree are gone: every rank comes back as medals for perks
+    for (const id in s.skills || {}) save.points += (s.skills[id] || 0) * (OLD_WEB_COST[id] || 2);
+    for (const id in s.tree || {}) { const r = s.tree[id]; save.points += r * (r + 1) / 2; }
+    for (const k of ['skills', 'tree', 'heatWon', 'selHeat', 'best', 'webNote']) delete save[k];
+    if (s.heatWon && Object.values(s.heatWon).some(h => h >= 5)) save.skins.gold = true;
+  } else {
     // carry skill points and the record over from the era version; each boss it beat pays for some hangar credit
     const old = JSON.parse(localStorage.getItem('skybreak-save-v2'));
-    if (old) Object.assign(save, { points: old.points || 0, tree: Object.assign({}, old.tree || {}), best: old.best || 0, totalKills: old.totalKills || 0, runs: old.runs || 0, credits: 600 * Object.keys(old.bosses || {}).length, ctl: old.ctl || 'mouse', pullBack: old.pullBack !== false });
+    if (old) {
+      Object.assign(save, { points: old.points || 0, totalKills: old.totalKills || 0, runs: old.runs || 0, credits: 600 * Object.keys(old.bosses || {}).length, ctl: old.ctl || 'mouse', pullBack: old.pullBack !== false });
+      for (const id in old.tree || {}) { const r = old.tree[id]; save.points += r * (r + 1) / 2; }
+    }
   }
 } catch (e) {}
-// the old 12-skill tree is gone: every rank comes back as points to spend on the web (rank n cost n)
-if (Object.keys(save.tree).length) {
-  for (const id in save.tree) { const r = save.tree[id]; save.points += r * (r + 1) / 2; }
-  save.tree = {}; save.webNote = true;
-}
-// a boss beaten before heat levels existed counts as heat 0 cleared
-for (const id in save.bosses) if (save.bosses[id] && save.heatWon[id] == null) save.heatWon[id] = 0;
 function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
 persist();
 
-// ---- skill web: rings spread out from the core, and you can train any skill that touches one you already have ----
-const SECTORS = ['Airframe', 'Engine', 'Guns', 'Missiles', 'Pilot', 'Logistics'];
-const SECTOR_COL = ['#8fd69a', '#ffb547', '#ff7a5c', '#7fe9f2', '#b9a3ff', '#e8d68a'];
 const pc = v => { const p = v * 100; return (Math.abs(p - Math.round(p)) < 0.05 ? Math.round(p) : p.toFixed(1)) + '%'; };
 const r1 = v => (Math.abs(v - Math.round(v)) < 0.05 ? Math.round(v) : v.toFixed(2).replace(/0$/, ''));
 const plural = (n, one, many) => r1(n) + ' ' + (Math.abs(n - 1) < 0.01 ? one : many);
-// how each stat reads on a node; the order here is the order of the bonus summary
-const STAT_FMT = {
-  hull: v => '+' + r1(v) + ' hull', hullPct: v => '+' + pc(v) + ' max hull', armor: v => pc(v) + ' less damage taken',
-  regen: v => r1(v) + ' hull/s after 4 s without a hit', repair: v => pc(v) + ' hull repaired after each mission', vamp: v => '+' + r1(v) + ' hull per kill',
-  thrust: v => '+' + pc(v) + ' thrust', speed: v => (v < 0 ? '' : '+') + pc(v) + ' top speed', drag: v => pc(v) + ' less speed lost in hard turns', ab: v => '+' + pc(v) + ' afterburner thrust',
-  dmg: v => '+' + pc(v) + ' gun damage', rof: v => '+' + pc(v) + ' rate of fire', crit: v => '+' + pc(v) + ' critical hit chance', critDmg: v => '+' + pc(v / 2.5) + ' critical damage', spread: v => pc(v) + ' tighter bullet spread',
-  mslDmg: v => '+' + pc(v) + ' missile and rocket damage', msl: v => '+' + plural(v, 'missile', 'missiles'), lock: v => pc(v) + ' faster lock-on', reload: v => pc(v) + ' shorter missile cooldown', seeker: v => '+' + pc(v) + ' missile agility', flares: v => '+' + plural(v, 'flare', 'flares'),
-  control: v => '+' + pc(v) + ' roll and pitch rate', gmax: v => '+' + pc(v) + ' G limit', dodge: v => pc(v) + ' of enemy bullets miss you', rerolls: v => '+' + plural(v, 'gear reroll', 'gear rerolls') + ' per sortie',
-  credits: v => '+' + pc(v) + ' credits', req: v => '+' + pc(v) + ' requisition from missions', startReq: v => '+' + r1(v) + ' requisition at launch', luck: v => pc(v) + ' chance a gear roll is rare or better', discount: v => pc(v) + ' off depot prices', startItems: v => '+' + plural(v, 'random gear pick', 'random gear picks') + ' at launch',
-};
-// per sector: ring 1, ring 2 (two), ring 3 (side, notable, side), ring 4 (two) and the keystone at the rim
-const WEB_DEF = [
-  { r1: ['armor', 'Armor plating', { hull: 8 }],
-    r2: [['sealing', 'Self-sealing tanks', { regen: 0.4 }], ['spall', 'Spall liners', { armor: 0.03 }]],
-    r3: [['repair', 'Field repair', { repair: 0.04 }], ['reactive', 'Reactive armor', { armor: 0.06, hullPct: 0.05 }], ['frames', 'Hull frames', { hullPct: 0.04 }]],
-    r4: [['tub', 'Titanium tub', { hullPct: 0.03 }], ['damctl', 'Damage control', { regen: 0.25 }]],
-    key: ['juggernaut', 'Juggernaut', { hullPct: 0.25, armor: 0.08, speed: -0.05 }, 'A flying tank. Heavier and a little slower.'] },
-  { r1: ['engine', 'Engine tuning', { thrust: 0.03 }],
-    r2: [['clean', 'Clean airframe', { drag: 0.06 }], ['intake', 'Intake ramps', { speed: 0.025 }]],
-    r3: [['abtune', 'Afterburner tuning', { ab: 0.08 }], ['turbofan', 'Turbofan swap', { thrust: 0.06, speed: 0.03 }], ['pylons', 'Low-drag pylons', { drag: 0.04 }]],
-    r4: [['overhaul', 'Engine overhaul', { thrust: 0.02 }], ['arearule', 'Area rule', { speed: 0.015 }]],
-    key: ['supercruise', 'Supercruise', { speed: 0.08, thrust: 0.12, ab: 0.15 }, 'Fly past the merge before they can turn.'] },
-  { r1: ['guns', 'Gunnery', { dmg: 0.05 }],
-    r2: [['feed', 'Belt feed', { rof: 0.05 }], ['sight', 'Gunsight', { spread: 0.08 }]],
-    r3: [['incend', 'Incendiary rounds', { crit: 0.03 }], ['ap', 'Armor piercing', { dmg: 0.1, critDmg: 0.25 }], ['cooling', 'Barrel cooling', { rof: 0.04 }]],
-    r4: [['hotbarrel', 'Hot barrels', { dmg: 0.03 }], ['match', 'Match-grade ammo', { crit: 0.02 }]],
-    key: ['gunfighter', 'Gunfighter', { dmg: 0.2, critDmg: 0.75, rof: 0.08 }, 'Every burst counts. Crits hit far harder.'] },
-  { r1: ['seekers', 'Seeker heads', { mslDmg: 0.06 }],
-    r2: [['fastlock', 'Fast lock', { lock: 0.08 }], ['rails', 'Rail reload', { reload: 0.1 }]],
-    r3: [['flarebox', 'Flare dispensers', { flares: 4 }], ['pylon', 'Extra pylons', { msl: 1, mslDmg: 0.05 }], ['proxfuse', 'Proximity fuse', { seeker: 0.06 }]],
-    r4: [['warhead', 'Warhead upgrade', { mslDmg: 0.05 }], ['datalink', 'Datalink', { lock: 0.05 }]],
-    key: ['foxthree', 'Fox three', { msl: 1, reload: 0.15, lock: 0.25, seeker: 0.15 }, 'Another missile, a shorter cooldown and a seeker that rarely lets go.'] },
-  { r1: ['controls', 'Control surfaces', { control: 0.03 }],
-    r2: [['gsuit', 'G-suit', { gmax: 0.03 }], ['aware', 'Situational awareness', { dodge: 0.02 }]],
-    r3: [['vectoring', 'Thrust vectoring', { control: 0.03 }], ['instinct', 'Ace instincts', { rerolls: 1 }], ['breathing', 'Combat breathing', { gmax: 0.03 }]],
-    r4: [['fbw', 'Fly-by-wire', { control: 0.02 }], ['evasive', 'Evasive training', { dodge: 0.015 }]],
-    key: ['sixth', 'Sixth sense', { dodge: 0.1, rerolls: 1, control: 0.06 }, 'You feel the shot coming before it leaves the barrel.'] },
-  { r1: ['supply', 'Supply lines', { credits: 0.05 }],
-    r2: [['reqoff', 'Requisition officer', { req: 0.08 }], ['qm', 'Quartermaster', { discount: 0.06 }]],
-    r3: [['bounty', 'Bounty contracts', { credits: 0.04 }], ['blackmkt', 'Black market', { luck: 0.06, startReq: 20 }], ['cache', 'Forward cache', { startReq: 15 }]],
-    r4: [['contracts', 'Contracts office', { credits: 0.04 }], ['scrounger', 'Scrounger', { req: 0.05 }]],
-    key: ['profiteer', 'War profiteer', { credits: 0.3, startItems: 1 }, 'Every sortie pays more, and you launch with free gear.'] },
-];
-// hybrids sit on the rim between sector s and s + 1
-const HYBRIDS = [
-  ['spars', 'Reinforced spars', { hullPct: 0.05, thrust: 0.04 }],
-  ['gunrun', 'Gun run', { speed: 0.03, dmg: 0.05 }],
-  ['ordnance', 'Ordnance expert', { dmg: 0.05, mslDmg: 0.08 }],
-  ['snapshot', 'Snap shot', { lock: 0.08, control: 0.04 }],
-  ['lucky', 'Lucky streak', { dodge: 0.03, luck: 0.05 }],
-  ['salvage', 'Salvage crew', { vamp: 2, credits: 0.05 }],
-];
-const WEB = {}, WEB_LIST = [];
-function webNode(def, ring, ang, max, cost, kind, sector) {
-  const n = { id: def[0], name: def[1], stats: def[2], flavor: def[3] || '', ring, ang, max, cost, kind, sector, links: [] };
-  WEB[n.id] = n; WEB_LIST.push(n); return n;
-}
-const webLink = (a, b) => { if (!a.links.includes(b.id)) a.links.push(b.id); if (!b.links.includes(a.id)) b.links.push(a.id); };
-(function buildWeb() {
-  const core = webNode(['core', 'Flight school', {}], 0, 0, 0, 0, 'core', -1);
-  const rings = { 2: [], 3: [], 4: [] }, outer = [];
-  WEB_DEF.forEach((d, s) => {
-    const a0 = s * 60;
-    const n1 = webNode(d.r1, 1, a0, 3, 1, 'minor', s); webLink(core, n1);
-    const n2 = d.r2.map((x, i) => webNode(x, 2, a0 + (i ? 15 : -15), 3, 2, 'minor', s));
-    n2.forEach(n => webLink(n1, n));
-    const n3 = d.r3.map((x, i) => i === 1 ? webNode(x, 3, a0, 2, 4, 'notable', s) : webNode(x, 3, a0 + (i ? 20 : -20), 4, 2, 'minor', s));
-    webLink(n2[0], n3[0]); webLink(n2[0], n3[1]); webLink(n2[1], n3[1]); webLink(n2[1], n3[2]);
-    const n4 = d.r4.map((x, i) => webNode(x, 4, a0 + (i ? 13 : -13), 5, 3, 'minor', s));
-    webLink(n3[0], n4[0]); webLink(n3[1], n4[0]); webLink(n3[1], n4[1]); webLink(n3[2], n4[1]);
-    const k = webNode(d.key, 5, a0, 1, 8, 'keystone', s);
-    n4.forEach(n => webLink(n, k));
-    rings[2].push(...n2); rings[3].push(...n3); rings[4].push(...n4); outer.push(n4);
-  });
-  HYBRIDS.forEach((h, s) => {
-    const n = webNode(h, 5, s * 60 + 30, 2, 5, 'hybrid', -1); n.pair = [s, (s + 1) % 6];
-    webLink(n, outer[s][1]); webLink(n, outer[(s + 1) % 6][0]);
-  });
-  // threads around rings 2 to 4 turn the spokes into a web
-  [2, 3, 4].forEach(r => rings[r].forEach((n, i, L) => webLink(n, L[(i + 1) % L.length])));
-})();
-const WEB_TOTAL = WEB_LIST.reduce((a, n) => a + n.max * n.cost, 0);
-const skill = id => id === 'core' ? 1 : (save.skills[id] || 0);
-const webOpen = n => n.kind !== 'core' && n.links.some(id => skill(id) > 0);
-const canTrain = n => webOpen(n) && skill(n.id) < n.max && save.points >= n.cost;
-let webCache = {};
-function refreshWeb() {
-  const o = {};
-  for (const n of WEB_LIST) { const r = skill(n.id); if (!r || n.kind === 'core') continue; for (const k in n.stats) o[k] = (o[k] || 0) + n.stats[k] * r; }
-  webCache = o;
-}
-const ws = k => webCache[k] || 0;
-refreshWeb();
 
-// ---- run gear: picked after missions or bought at depots, stacks, lasts one sortie ----
-const ITEMS = [
-  { id: 'hot', name: 'Hot loads', r: 'common', d: '+20% gun damage.' },
-  { id: 'belt', name: 'Linked belts', r: 'common', d: '+20% rate of fire.' },
-  { id: 'plate', name: 'Armor plates', r: 'common', d: '+25 max hull, and repairs 25 now.' },
-  { id: 'ail', name: 'Spring tabs', r: 'common', d: '+15% roll and pitch rate.' },
-  { id: 'wep', name: 'Emergency power', r: 'common', d: '+20% thrust and +6% top speed.' },
-  { id: 'mech', name: 'Onboard mechanic', r: 'common', d: 'Repairs 1 hull per second in combat.' },
-  { id: 'trophy', name: 'Trophy hunter', r: 'common', d: 'Every kill repairs 10 hull.' },
-  { id: 'rearm', name: 'Ordnance crew', r: 'common', d: 'Missile cooldown 20% shorter.' },
-  { id: 'boom', name: 'Explosive rounds', r: 'rare', d: 'Hits burst for 40% damage to anything within 30 m.' },
-  { id: 'pod', name: 'Gun pods', r: 'rare', d: 'An extra pair of guns under the wings.' },
-  { id: 'tail', name: 'Tail gunner', r: 'rare', d: 'A rear gunner shoots at enemies behind you.' },
-  { id: 'wing', name: 'Wingman', r: 'rare', d: 'An allied fighter flies every mission with you.' },
-  { id: 'rocket', name: 'Rocket rails', r: 'rare', d: 'Fires a homing rocket at the enemy nearest your nose every 5 s.' },
-  { id: 'ghost', name: 'Lucky charm', r: 'rare', d: '15% of enemy hits miss you entirely.' },
-  { id: 'rack', name: 'Ready rack', r: 'rare', d: 'One more missile on the rails.' },
-  { id: 'scav', name: 'Gun-kill bounty', r: 'rare', d: 'Every gun kill takes another 4 s off the missile cooldown.' },
-  { id: 'chain', name: 'Arc rounds', r: 'legendary', d: 'Every 5th hit arcs to 2 nearby enemies for double damage.' },
-  { id: 'phoenix', name: 'Phoenix', r: 'legendary', d: 'Once per sortie, survive being shot down with half hull and a shockwave.' },
-  { id: 'glass', name: 'Glass cannon', r: 'legendary', d: '+80% gun damage, -35% max hull.' },
-  { id: 'time', name: 'Killing time', r: 'legendary', d: 'Every kill slows time for a moment and repairs 5 hull.' },
-  { id: 'swarm', name: 'Swarm racks', r: 'legendary', d: 'Rockets fire in salvos of three. Comes with rocket rails.' },
+// ---- perks: unlocked for good with medals, then picked during a run and levelled up from I to III by picking them again ----
+// v: the value at each level (an array when a perk does two things); cost: medals to unlock it, 0 for the ones you start with
+const PERKS = [
+  { id: 'hot', name: 'Hot loads', cat: 'Guns', cost: 0, v: [0.15, 0.3, 0.5], d: v => '+' + pc(v) + ' gun damage' },
+  { id: 'belt', name: 'Linked belts', cat: 'Guns', cost: 0, v: [0.12, 0.25, 0.4], d: v => '+' + pc(v) + ' rate of fire' },
+  { id: 'cool', name: 'Cooled barrels', cat: 'Guns', cost: 0, v: [0.2, 0.35, 0.5], d: v => 'guns heat ' + pc(v) + ' slower' },
+  { id: 'sinks', name: 'Heat sinks', cat: 'Guns', cost: 3, v: [0.4, 0.8, 1.3], d: v => 'guns cool ' + pc(v) + ' faster, and come back sooner from an overheat' },
+  { id: 'sight', name: 'Gyro gunsight', cat: 'Guns', cost: 2, v: [[0.25, 0.1], [0.4, 0.2], [0.55, 0.3]], d: v => pc(v[0]) + ' tighter spread and +' + pc(v[1]) + ' range' },
+  { id: 'match', name: 'Match-grade ammo', cat: 'Guns', cost: 3, v: [0.08, 0.15, 0.22], d: v => pc(v) + ' of hits are critical, for 2.5× damage' },
+  { id: 'boom', name: 'Explosive rounds', cat: 'Guns', cost: 5, v: [0.25, 0.4, 0.6], d: v => 'hits burst for ' + pc(v) + ' damage to anything within 30 m' },
+  { id: 'chain', name: 'Arc rounds', cat: 'Guns', cost: 7, v: [6, 5, 4], d: v => 'every ' + v + 'th hit arcs to 2 nearby enemies for double damage' },
+  { id: 'glass', name: 'Glass cannon', cat: 'Guns', cost: 8, v: [[0.4, 0.25], [0.65, 0.3], [0.9, 0.35]], d: v => '+' + pc(v[0]) + ' gun damage, −' + pc(v[1]) + ' max hull' },
+  { id: 'rearm', name: 'Ordnance crew', cat: 'Secondary', cost: 0, v: [0.15, 0.3, 0.45], d: v => 'secondary cooldown ' + pc(v) + ' shorter' },
+  { id: 'rack', name: 'Ready rack', cat: 'Secondary', cost: 3, v: [1, 2, 3], d: v => '+' + plural(v, 'secondary charge', 'secondary charges') },
+  { id: 'warhead', name: 'Big warheads', cat: 'Secondary', cost: 3, v: [0.2, 0.4, 0.65], d: v => '+' + pc(v) + ' secondary damage' },
+  { id: 'bounty', name: 'Gun-kill bounty', cat: 'Secondary', cost: 4, v: [2, 4, 6], d: v => 'every gun kill takes another ' + v + ' s off the secondary cooldown' },
+  { id: 'plate', name: 'Armor plates', cat: 'Airframe', cost: 0, v: [20, 40, 65], d: v => '+' + v + ' max hull' },
+  { id: 'mech', name: 'Onboard mechanic', cat: 'Airframe', cost: 4, v: [0.8, 1.6, 2.5], d: v => 'repairs ' + v + ' hull a second in combat' },
+  { id: 'trophy', name: 'Trophy hunter', cat: 'Airframe', cost: 3, v: [6, 10, 15], d: v => 'every kill repairs ' + v + ' hull' },
+  { id: 'charm', name: 'Lucky charm', cat: 'Airframe', cost: 4, v: [0.08, 0.15, 0.22], d: v => pc(v) + ' of enemy hits miss you' },
+  { id: 'phoenix', name: 'Phoenix', cat: 'Airframe', cost: 10, v: [0.35, 0.5, 0.75], d: v => 'once a run, survive being shot down with ' + pc(v) + ' hull and a shockwave' },
+  { id: 'wep', name: 'Emergency power', cat: 'Flight', cost: 0, v: [[0.12, 0.04], [0.24, 0.08], [0.36, 0.12]], d: v => '+' + pc(v[0]) + ' thrust and +' + pc(v[1]) + ' top speed' },
+  { id: 'tabs', name: 'Spring tabs', cat: 'Flight', cost: 0, v: [0.1, 0.2, 0.3], d: v => '+' + pc(v) + ' roll and pitch rate' },
+  { id: 'wing', name: 'Wingman', cat: 'Tactics', cost: 6, v: [1, 2, 3], d: v => plural(v, 'wingman flies', 'wingmen fly') + ' every wave with you' },
+  { id: 'time', name: 'Killing time', cat: 'Tactics', cost: 6, v: [[0.8, 3], [1.2, 5], [1.6, 8]], d: v => 'every kill slows time for ' + v[0] + ' s and repairs ' + v[1] + ' hull' },
 ];
-const ITEM_BY_ID = Object.fromEntries(ITEMS.map(i => [i.id, i]));
-const RARITY = { common: { w: 62, price: 45, label: 'Common' }, rare: { w: 30, price: 90, label: 'Rare' }, legendary: { w: 8, price: 160, label: 'Legendary' } };
-
-const MAP_COLS = 8;
-const NODE_INFO = {
-  patrol: { label: 'Patrol', desc: 'Fighter sweep' },
-  elite: { label: 'Elite', desc: 'Aces · rare gear' },
-  intercept: { label: 'Intercept', desc: 'Stop the bombers' },
-  depot: { label: 'Depot', desc: 'Buy gear, repair' },
-  airfield: { label: 'Airfield', desc: 'Repair or overhaul' },
-  signal: { label: 'Signal', desc: 'Unknown' },
-  boss: { label: 'Boss', desc: '' },
-  survival: { label: 'Wave', desc: '' },
-};
-const COMBAT = ['patrol', 'elite', 'intercept', 'boss'];
-const WAVES = MAP_COLS - 1;
+const PERK_BY_ID = Object.fromEntries(PERKS.map(p => [p.id, p]));
+const PERK_MAX = 3, ROMAN = ['', 'I', 'II', 'III'];
+const perkOpen = p => !p.cost || !!save.perks[p.id];
+const perkText = (p, lvl) => { const t = p.d(p.v[lvl - 1]); return t[0].toUpperCase() + t.slice(1) + '.'; };
 
 // ================= aircraft and locations =================
 // Flight numbers: speeds in m/s at military power, corner = speed where the wing reaches its G limit,
@@ -704,7 +495,7 @@ const PLANES = {
     size: 1.05, cockpit: 'jet', eye: [0.85, -3.6], hp: 100, missiles: 2, lockTime: 1.0, lockRange: 2600,
     flight: { minSpeed: 62, maxSpeed: 320, corner: 145, gmax: 10, thrust: 28, pitch: 1.5, roll: 4.8, yaw: 0.45 },
     // hardpoints: [x, y, z] on the airframe in metres, nose toward -z. A bay takes a cannon, a pylon takes a gun pod
-    payload: 3, guns: ['m3', 'm39', 'minigun'], stock: { noseL: 'm39', noseR: 'm39' },
+    payload: 3, maxGuns: 2, perkSlots: 3, guns: ['m3', 'm39', 'minigun'], stock: { noseL: 'm39', noseR: 'm39' },
     hardpoints: [{ id: 'noseL', name: 'Nose gun, left', kind: 'bay', at: [-0.45, 0.25, -6] }, { id: 'noseR', name: 'Nose gun, right', kind: 'bay', at: [0.45, 0.25, -6] },
       { id: 'pylL', name: 'Wing pylon, left', kind: 'pylon', at: [-2.4, -0.6, 0.9] }, { id: 'pylR', name: 'Wing pylon, right', kind: 'pylon', at: [2.4, -0.6, 0.9] }],
     livery: [0xa9b0b6, 0x2c3e66] },
@@ -712,7 +503,7 @@ const PLANES = {
     blurb: 'Fly-by-wire and a bubble canopy. The best roll rate and G limit in the hangar.',
     size: 1.1, cockpit: 'jet', eye: [1.05, -4.3], hp: 115, missiles: 4, lockTime: 0.85, lockRange: 3000,
     flight: { minSpeed: 66, maxSpeed: 345, corner: 150, gmax: 11.5, thrust: 34, pitch: 1.6, roll: 5.6, yaw: 0.45 },
-    payload: 4, guns: ['m3', 'm39', 'm61', 'minigun', 'suu23'], stock: { rootL: 'm61' },
+    payload: 4, maxGuns: 3, perkSlots: 3, guns: ['m3', 'm39', 'm61', 'minigun', 'suu23'], stock: { rootL: 'm61' },
     hardpoints: [{ id: 'rootL', name: 'Gun bay, left root', kind: 'bay', at: [-1.0, 0.45, -3] }, { id: 'rootR', name: 'Gun bay, right root', kind: 'bay', at: [1.0, 0.45, -3] },
       { id: 'pylL', name: 'Wing pylon, left', kind: 'pylon', at: [-2.9, -0.55, 1.2] }, { id: 'pylR', name: 'Wing pylon, right', kind: 'pylon', at: [2.9, -0.55, 1.2] }],
     livery: [0x8e979f, 0xc2272d] },
@@ -720,7 +511,7 @@ const PLANES = {
     blurb: 'Swing wings sweep back as you speed up. Fastest jet here, three missiles on the rails and the longest lock range.',
     size: 1.4, cockpit: 'jet', eye: [1.25, -6.2], hp: 150, missiles: 6, lockTime: 0.9, lockRange: 4500,
     flight: { minSpeed: 62, maxSpeed: 375, corner: 158, gmax: 9.5, thrust: 35, pitch: 1.4, roll: 4.0, yaw: 0.4 },
-    payload: 5.5, guns: ['m3', 'm39', 'm61', 'aden', 'minigun', 'suu23'], stock: { noseL: 'm61' },
+    payload: 5.5, maxGuns: 4, perkSlots: 4, guns: ['m3', 'm39', 'm61', 'aden', 'minigun', 'suu23'], stock: { noseL: 'm61' },
     hardpoints: [{ id: 'noseL', name: 'Nose bay, left', kind: 'bay', at: [-0.9, -0.2, -6] }, { id: 'noseR', name: 'Nose bay, right', kind: 'bay', at: [0.9, -0.2, -6] },
       { id: 'gloveL', name: 'Glove pylon, left', kind: 'pylon', at: [-2.1, -1.0, -1.4] }, { id: 'gloveR', name: 'Glove pylon, right', kind: 'pylon', at: [2.1, -1.0, -1.4] },
       { id: 'bellyL', name: 'Belly pylon, left', kind: 'pylon', at: [-0.75, -1.15, 2.6] }, { id: 'bellyR', name: 'Belly pylon, right', kind: 'pylon', at: [0.75, -1.15, 2.6] }],
@@ -729,7 +520,7 @@ const PLANES = {
     blurb: 'Tough, and it keeps its nose authority at high angles of attack where other jets stall.',
     size: 1.3, cockpit: 'jet', eye: [1.15, -5.8], hp: 165, missiles: 6, lockTime: 0.85, lockRange: 3200, stallAoa: 0.37,
     flight: { minSpeed: 56, maxSpeed: 330, corner: 140, gmax: 10.5, thrust: 31, pitch: 1.85, roll: 4.6, yaw: 0.55 },
-    payload: 5, guns: ['m3', 'm61', 'gau22', 'aden', 'minigun', 'suu23'], stock: { nose: 'm61' },
+    payload: 5, maxGuns: 4, perkSlots: 4, guns: ['m3', 'm61', 'gau22', 'aden', 'minigun', 'suu23'], stock: { nose: 'm61' },
     hardpoints: [{ id: 'nose', name: 'Nose cannon', kind: 'bay', at: [0, 0.55, -7.6] },
       { id: 'inL', name: 'Inner pylon, left', kind: 'pylon', at: [-3.0, -0.6, 1.0] }, { id: 'inR', name: 'Inner pylon, right', kind: 'pylon', at: [3.0, -0.6, 1.0] },
       { id: 'outL', name: 'Outer pylon, left', kind: 'pylon', at: [-4.9, -0.45, 1.8], up: true }, { id: 'outR', name: 'Outer pylon, right', kind: 'pylon', at: [4.9, -0.45, 1.8], up: true }],
@@ -738,7 +529,7 @@ const PLANES = {
     blurb: 'Stealth makes enemies slow to lock you and sloppy with their guns, unless you hang pods outside. Locks its own missiles fastest.',
     size: 1.15, cockpit: 'future', eye: [1.15, -4.2], hp: 150, missiles: 4, lockTime: 0.5, lockRange: 3600, stealth: 0.4,
     flight: { minSpeed: 62, maxSpeed: 355, corner: 148, gmax: 11, thrust: 36, pitch: 1.65, roll: 5.0, yaw: 0.5 },
-    payload: 4.5, guns: ['m61', 'gau22', 'aden', 'minigun', 'suu23'], stock: { rootL: 'gau22' },
+    payload: 4.5, maxGuns: 3, perkSlots: 4, guns: ['m61', 'gau22', 'aden', 'minigun', 'suu23'], stock: { rootL: 'gau22' },
     hardpoints: [{ id: 'rootL', name: 'Internal gun, left root', kind: 'bay', at: [-1.1, 0.6, -2.5] }, { id: 'centre', name: 'Centreline pod', kind: 'pylon', at: [0, -1.05, 0.4] },
       { id: 'pylL', name: 'Wing pylon, left', kind: 'pylon', at: [-3.2, -0.5, 1.6] }, { id: 'pylR', name: 'Wing pylon, right', kind: 'pylon', at: [3.2, -0.5, 1.6] }],
     livery: [0x59616a, 0x8b949c] },
@@ -746,27 +537,31 @@ const PLANES = {
 const PLANE_ORDER = ['f5', 'f16', 'f14', 'f18', 'f35'];
 
 // ---- guns: bought once with credits, then fitted to the hardpoints of any jet that takes them ----
-// rof is rounds per second for one gun; weight counts against the jet's payload; drag cuts top speed
+// rof is rounds per second for one gun; weight counts against the jet's payload; drag cuts top speed;
+// heat is how much of the shared heat gauge one second of fire fills
 const GUNS = {
-  m3: { name: 'M3 .50 cal', short: '.50 CAL', kind: 'Machine gun', mount: 'bay', weight: 0.4, price: 0, rof: 15, dmg: 1.9, speed: 900, spread: 0.006, range: 1100, color: 0xfff0b8, len: 11, sound: 1300,
+  m3: { name: 'M3 .50 cal', short: '.50 CAL', kind: 'Machine gun', mount: 'bay', weight: 0.4, price: 0, rof: 15, dmg: 2.4, heat: 0.07, speed: 900, spread: 0.006, range: 1100, color: 0xfff0b8, len: 11, sound: 1300,
     d: 'Light and fast-firing. Weak alone, but it barely weighs anything.' },
-  m39: { name: 'M39 20 mm revolver', short: 'M39', kind: 'Revolver cannon', mount: 'bay', weight: 0.9, price: 0, rof: 11, dmg: 4.4, speed: 1030, spread: 0.004, range: 1250, color: 0xffe4a0, len: 16, sound: 950,
+  m39: { name: 'M39 20 mm revolver', short: 'M39', kind: 'Revolver cannon', mount: 'bay', weight: 0.9, price: 0, rof: 11, dmg: 5.5, heat: 0.1, speed: 1030, spread: 0.004, range: 1250, color: 0xffe4a0, len: 16, sound: 950,
     d: 'The F-5 workhorse. Accurate, steady and easy on the payload.' },
-  m61: { name: 'M61 Vulcan 20 mm', short: 'M61', kind: 'Rotary cannon', mount: 'bay', weight: 1.4, price: 0, rof: 30, dmg: 3.9, speed: 1050, spread: 0.0045, range: 1300, color: 0xffe4a0, len: 16, sound: 900,
+  m61: { name: 'M61 Vulcan 20 mm', short: 'M61', kind: 'Rotary cannon', mount: 'bay', weight: 1.4, price: 0, rof: 30, dmg: 4.9, heat: 0.15, speed: 1050, spread: 0.0045, range: 1300, color: 0xffe4a0, len: 16, sound: 900,
     d: 'Six barrels and a wall of lead. The all-rounder.' },
-  gau22: { name: 'GAU-22 25 mm', short: 'GAU-22', kind: 'Rotary cannon', mount: 'bay', weight: 1.6, price: 3200, rof: 22, dmg: 5.8, speed: 1100, spread: 0.0035, range: 1450, color: 0xffd28a, len: 18, sound: 800,
+  gau22: { name: 'GAU-22 25 mm', short: 'GAU-22', kind: 'Rotary cannon', mount: 'bay', weight: 1.6, price: 3200, rof: 22, dmg: 7.2, heat: 0.16, speed: 1100, spread: 0.0035, range: 1450, color: 0xffd28a, len: 18, sound: 800,
     d: 'Harder hitting and flatter shooting than the Vulcan, at a little more weight.' },
-  aden: { name: 'ADEN 30 mm', short: 'ADEN 30', kind: 'Revolver cannon', mount: 'bay', weight: 1.5, price: 4200, rof: 10, dmg: 12, speed: 820, spread: 0.005, range: 1250, color: 0xffb36b, len: 20, sound: 600,
+  aden: { name: 'ADEN 30 mm', short: 'ADEN 30', kind: 'Revolver cannon', mount: 'bay', weight: 1.5, price: 4200, rof: 10, dmg: 15, heat: 0.15, speed: 820, spread: 0.005, range: 1250, color: 0xffb36b, len: 20, sound: 600,
     d: 'Each shell lands like a hammer, but they are slow, so lead your target.' },
-  minigun: { name: 'M134 minigun pod', short: 'MINIGUN', kind: 'Gun pod', mount: 'pylon', weight: 1.1, price: 900, rof: 40, dmg: 1.05, speed: 880, spread: 0.009, range: 1000, color: 0xfff0b8, len: 10, sound: 1500, drag: 0.02,
+  minigun: { name: 'M134 minigun pod', short: 'MINIGUN', kind: 'Gun pod', mount: 'pylon', weight: 1.1, price: 900, rof: 40, dmg: 1.3, heat: 0.13, speed: 880, spread: 0.009, range: 1000, color: 0xfff0b8, len: 10, sound: 1500, drag: 0.02,
     d: 'A buzzsaw of 7.62 mm. Short range and it hangs drag under the wing.' },
-  suu23: { name: 'SUU-23 20 mm pod', short: 'SUU-23', kind: 'Gun pod', mount: 'pylon', weight: 2, price: 2200, rof: 20, dmg: 3.4, speed: 1000, spread: 0.008, range: 1200, color: 0xffe4a0, len: 16, sound: 950, drag: 0.03,
+  suu23: { name: 'SUU-23 20 mm pod', short: 'SUU-23', kind: 'Gun pod', mount: 'pylon', weight: 2, price: 2200, rof: 20, dmg: 4.2, heat: 0.12, speed: 1000, spread: 0.008, range: 1200, color: 0xffe4a0, len: 16, sound: 950, drag: 0.03,
     d: 'A whole extra cannon on a pylon. Heavy and draggy, and it hits hard.' },
 };
 const GUN_ORDER = ['m3', 'm39', 'm61', 'gau22', 'aden', 'minigun', 'suu23'];
 // every point of payload above (or below) the factory loadout costs (or gives) this much turn and thrust
 const WEIGHT_TURN = 0.035, WEIGHT_THRUST = 0.025;
 const gunDps = id => GUNS[id].rof * GUNS[id].dmg;
+// All guns share one heat gauge: firing fills it, and at the top they lock until it cools to HEAT_RESUME.
+// It cools at HEAT_COOL a second once the trigger has been off for HEAT_DELAY.
+const HEAT_COOL = 0.3, HEAT_DELAY = 0.3, HEAT_RESUME = 0.3;
 const gunOwned = id => !GUNS[id].price || !!save.guns[id] || PLANE_ORDER.some(pid => save.planes[pid] && Object.values(PLANES[pid].stock).includes(id));
 // the guns on each hardpoint of a jet: your saved choice, or the factory fit
 function loadoutOf(pid) {
@@ -775,7 +570,8 @@ function loadoutOf(pid) {
     const g = saved ? saved[hp.id] : P.stock[hp.id];
     out[hp.id] = g && GUNS[g] && GUNS[g].mount === hp.kind && P.guns.includes(g) && gunOwned(g) ? g : null;
   }
-  if (!Object.values(out).some(Boolean) || loadWeight(pid, out) > P.payload + 1e-6) return Object.assign({}, P.stock);
+  const n = Object.values(out).filter(Boolean).length;
+  if (!n || n > P.maxGuns || loadWeight(pid, out) > P.payload + 1e-6) return Object.assign({}, P.stock);
   return out;
 }
 const loadWeight = (pid, lo) => Object.values(lo || loadoutOf(pid)).reduce((a, g) => a + (g ? GUNS[g].weight : 0), 0);
@@ -784,9 +580,33 @@ function loadoutSpec(pid, lo) {
   lo = lo || loadoutOf(pid);
   const P = PLANES[pid], w = loadWeight(pid, lo), dw = w - loadWeight(pid, P.stock);
   const guns = Object.values(lo).filter(Boolean), pods = guns.filter(g => GUNS[g].mount === 'pylon').length;
-  return { weight: w, payload: P.payload, turn: clamp(1 - WEIGHT_TURN * dw, 0.7, 1.08), thrust: clamp(1 - WEIGHT_THRUST * dw, 0.75, 1.06),
+  return { weight: w, payload: P.payload, heat: guns.reduce((a, g) => a + GUNS[g].heat, 0), turn: clamp(1 - WEIGHT_TURN * dw, 0.7, 1.08), thrust: clamp(1 - WEIGHT_THRUST * dw, 0.75, 1.06),
     speed: 1 - guns.reduce((a, g) => a + (GUNS[g].drag || 0), 0), dps: guns.reduce((a, g) => a + gunDps(g), 0), guns: guns.length, pods,
     stealth: P.stealth ? P.stealth * (pods ? 0.5 : 1) : 0 };
+}
+
+// ---- secondary weapons: one per jet, on the right mouse button. Each holds a few charges that refill one at a time on a cooldown ----
+// Missiles take their charges from the jet; gun kills knock KILL_REFUND seconds off the cooldown
+const SECONDARIES = {
+  missile: { name: 'Heat-seeking missiles', short: 'MISSILES', tag: 'MSL', kind: 'Guided', price: 0, cd: 22, dmg: 75,
+    d: 'Lock on, then fire. They hit hard, but a hard break or a flare can shake them. The jet sets how many it carries.' },
+  rockets: { name: 'Rocket pod', short: 'ROCKETS', tag: 'RKT', kind: 'Unguided salvo', price: 0, charges: 2, cd: 12, dmg: 24, salvo: 8,
+    d: 'Eight rockets straight down the nose. No lock and nothing to shake them, so aim well and fire up close.' },
+  flak: { name: 'Flak cannon', short: 'FLAK', tag: 'FLK', kind: 'Area burst', price: 1800, charges: 3, cd: 8, dmg: 55, radius: 90,
+    d: 'A heavy shell that bursts beside the first enemy it passes, or at 1.3 km, and hits everything nearby. Made for crowds.' },
+  emp: { name: 'EMP pulse', short: 'EMP', tag: 'EMP', kind: 'Pulse', price: 3500, charges: 1, cd: 26, dmg: 20, radius: 1100, stun: 3.5,
+    d: 'Knocks out every enemy within 1.1 km for 3.5 s, and fries the seekers of missiles chasing you.' },
+};
+const SEC_ORDER = ['missile', 'rockets', 'flak', 'emp'];
+const KILL_REFUND = 2, SEC_MIN_COOLDOWN = 4;
+const secOwned = id => !SECONDARIES[id].price || !!save.secs[id];
+const secondaryOf = pid => { const id = save.secondary[pid]; return SECONDARIES[id] && secOwned(id) ? id : 'missile'; };
+// charges and cooldown for a jet's secondary, before (pid) or with (m) perks
+function secondarySpec(pid, m) {
+  const id = secondaryOf(pid), S = SECONDARIES[id];
+  m = m || {};
+  return { secId: id, charges: (S.charges || Math.ceil(PLANES[pid].missiles / 2.5)) + (m.rack || 0),
+    reload: Math.max(SEC_MIN_COOLDOWN, S.cd * (m.secCd || 1)), secDmg: S.dmg * (m.secDmg || 1) };
 }
 
 const ENEMY_JETS = {
@@ -797,12 +617,12 @@ const ENEMY_JETS = {
   su57: { name: 'Su-57', size: 1.45, hp: 74, flight: { minSpeed: 62, maxSpeed: 360, corner: 145, gmax: 10.5, thrust: 36, pitch: 1.75, roll: 5.0, yaw: 0.6 }, livery: [0x6f7c86, 0x9fb6c4] },
 };
 
-// Variants change how a fighter flies and fights, on top of its airframe. from: the survival wave it first turns up in, depth: the sortie column.
+// Variants change how a fighter flies and fights, on top of its airframe. from: the survival wave it first turns up in.
 const VARIANTS = {
-  fast: { name: 'Interceptor', tag: 'FAST', from: 3, depth: 2, speed: 1.28, thrust: 1.5, hp: 0.7, turn: 0.95, intro: 'interceptors are fast and fragile, and hit and run' },
-  heavy: { name: 'Heavy fighter', tag: 'HEAVY', from: 4, depth: 2, speed: 0.86, thrust: 0.9, hp: 2.2, armor: 0.25, turn: 0.8, gunDmg: 1.35, intro: 'heavy fighters are armored and hit hard' },
-  ghost: { name: 'Ghost', tag: 'GHOST', from: 5, depth: 4, speed: 1.05, thrust: 1.1, hp: 0.9, turn: 1.05, noLock: true, missiles: 0, seen: 1500, intro: "ghosts can't be locked, but carry no missiles" },
-  hunter: { name: 'Hunter', tag: 'HUNTER', from: 7, depth: 5, speed: 1, thrust: 1.05, hp: 0.9, turn: 0.95, missiles: 4, standoff: 750, intro: 'hunters fire missiles from long range' },
+  fast: { name: 'Interceptor', tag: 'FAST', from: 3, speed: 1.28, thrust: 1.5, hp: 0.7, turn: 0.95, intro: 'interceptors are fast and fragile, and hit and run' },
+  heavy: { name: 'Heavy fighter', tag: 'HEAVY', from: 4, speed: 0.86, thrust: 0.9, hp: 2.2, armor: 0.25, turn: 0.8, gunDmg: 1.35, intro: 'heavy fighters are armored and hit hard' },
+  ghost: { name: 'Ghost', tag: 'GHOST', from: 5, speed: 1.05, thrust: 1.1, hp: 0.9, turn: 1.05, noLock: true, missiles: 0, seen: 1500, intro: "ghosts can't be locked, but carry no missiles" },
+  hunter: { name: 'Hunter', tag: 'HUNTER', from: 7, speed: 1, thrust: 1.05, hp: 0.9, turn: 0.95, missiles: 4, standoff: 750, intro: 'hunters fire missiles from long range' },
 };
 const VARIANT_ORDER = ['fast', 'heavy', 'ghost', 'hunter'];
 
@@ -837,7 +657,7 @@ function composeEra() {
   if (!PLANES[save.plane] || !save.planes[save.plane]) save.plane = 'f5';
   const L = LOCS[save.loc], P = PLANES[save.plane], E = ENEMY_JETS[L.enemy];
   // the mounted guns, each firing from its own hardpoint. era.gun is the main one (most damage per second),
-  // used for the lead sight, gear that fires extra rounds, and your wingmen
+  // used for the lead sight and your wingmen
   const lo = loadoutOf(P.id), ls = loadoutSpec(P.id, lo);
   const mounts = P.hardpoints.filter(hp => lo[hp.id]).map(hp => ({ hp, gun: GUNS[lo[hp.id]] }));
   const main = mounts.reduce((a, m) => (!a || m.gun.rof * m.gun.dmg > a.gun.rof * a.gun.dmg ? m : a), null).gun;
@@ -845,7 +665,7 @@ function composeEra() {
   era = Object.assign({}, P.flight, {
     id: L.id + ':' + P.id, loc: L, plane: P, name: L.name, short: P.short, style: P.cockpit, size: P.size,
     hp: P.hp, shield: 0, missiles: P.missiles, stallAoa: P.stallAoa, lockTime: P.lockTime, lockRange: P.lockRange, stealth: ls.stealth,
-    mounts, load: ls, gun: Object.assign({}, main, { rof: main.rof * same.length, offsets: same.map(m => m.hp.at) }),
+    secId: secondaryOf(P.id), sec: SECONDARIES[secondaryOf(P.id)], heat: ls.heat, mounts, load: ls, gun: Object.assign({}, main, { rof: main.rof * same.length, offsets: same.map(m => m.hp.at) }),
     enemy: { model: L.enemy, name: E.name, size: E.size, flight: E.flight, hp: E.hp, dmg: 2.3 + 0.25 * L.threat, rof: 6, speedMul: 0.92 + 0.015 * L.threat, color: 0xff9a6b,
       gun: Object.assign({}, GUN20, { offsets: [[-0.8, 0.3, -5]] }) },
     boss: L.boss, world: L.world, player: P.livery[0], accent: P.livery[1], enemyCol: E.livery[0], enemyAccent: E.livery[1],
@@ -1483,7 +1303,7 @@ class Plane {
     if (this.shield > 0) { const a = Math.min(this.shield, amount); this.shield -= a; amount -= a; this.shieldDelay = 2.5; }
     this.hp -= amount;
     if (this.hp <= 0) {
-      if (this === player && run && (run.items.phoenix || 0) > run.phoenixUsed) { run.phoenixUsed++; this.hp = this.maxHp * 0.5; phoenixBlast(); return; }
+      if (this === player && run && run.mods.phoenix && !run.phoenixUsed) { run.phoenixUsed++; this.hp = this.maxHp * run.mods.phoenix; phoenixBlast(); return; }
       this.hp = 0; this.kill(from);
     }
   }
@@ -1545,7 +1365,7 @@ function spawnBullet(owner, start, dir, gun, dmg, color, crit) {
   mesh.position.copy(start);
   mesh.lookAt(tv2.copy(start).add(dir));
   scene.add(mesh);
-  bullets.push({ mesh, pos: mesh.position, prev: start.clone(), vel: dir.clone().multiplyScalar(gun.speed).add(owner.vel), life: gun.range / gun.speed, dmg, team: owner.team, owner, crit });
+  bullets.push({ mesh, pos: mesh.position, prev: start.clone(), vel: dir.clone().multiplyScalar(gun.speed).add(owner.vel), life: gun.range / gun.speed * (owner === player ? run.mods.range : 1), dmg, team: owner.team, owner, crit });
 }
 let gunSoundAt = 0;
 function fireGun(p, gun, dmg, spread, color, at) {
@@ -1622,9 +1442,9 @@ function onPlayerHit(e, b, at) {
   }
   if (m.chain) {
     run.hitCount++;
-    if (run.hitCount % 5 === 0) {
+    if (run.hitCount % m.chain === 0) {
       const near = enemies.filter(o => o !== e && o.alive && !o.dying && o.pos.distanceTo(e.pos) < 400).sort((a, c) => a.pos.distanceTo(e.pos) - c.pos.distanceTo(e.pos)).slice(0, 2);
-      near.forEach(o => { spawnArc(e.pos, o.pos); o.damage(b.dmg * 2 * m.chain, player); });
+      near.forEach(o => { spawnArc(e.pos, o.pos); o.damage(b.dmg * 2, player); });
       if (!near.length) spawnArc(e.pos, tv2.copy(e.pos).add(tv.set(rand(-25, 25), rand(-25, 25), rand(-25, 25))));
     }
   }
@@ -1650,7 +1470,8 @@ function phoenixBlast() {
 const missiles = [];
 let missileHit = false; // set while a missile deals its damage, so kills can tell guns from missiles
 const missileGeo = cyl(0.14, 0.14, 3, 8), missileMat = new THREE.MeshPhongMaterial({ color: 0xe8e8e2, flatShading: true }), enemyMissileMat = new THREE.MeshPhongMaterial({ color: 0xc9c2a8, flatShading: true });
-// o: turn (rad/s cap), max (m/s), g (airframe G limit), lead (0 pure pursuit .. 1 full lead), life (s)
+// o: turn (rad/s cap), max (m/s), g (airframe G limit), lead (0 pure pursuit .. 1 full lead), life (s),
+// dir and boost (launch direction and extra speed), burst (a flak shell: blast radius, set off by fuse or at the end of its life)
 function fireMissile(p, target, dmg, o) {
   o = o || {};
   const m = new THREE.Mesh(missileGeo, p.team ? enemyMissileMat : missileMat);
@@ -1658,10 +1479,53 @@ function fireMissile(p, target, dmg, o) {
   m.position.copy(p.pos).addScaledVector(p.up, -1.2).addScaledVector(p.right, side * 2.4);
   m.quaternion.copy(p.quat);
   scene.add(m);
-  missiles.push({ mesh: m, pos: m.position, dir: p.fwd.clone(), speed: p.speed, target, life: o.life || 8, smokeT: 0, owner: p, team: p.team, dmg: dmg || 75,
-    turn: o.turn || 3.6, max: o.max || 720, g: o.g || 120, lead: o.lead == null ? 1 : o.lead, fuse: o.fuse || 16, flareChecked: false });
+  missiles.push({ mesh: m, pos: m.position, dir: (o.dir || p.fwd).clone(), speed: p.speed + (o.boost || 0), target, life: o.life || 8, smokeT: 0, owner: p, team: p.team, dmg: dmg || 75,
+    turn: o.turn || 3.6, max: o.max || 720, g: o.g || 120, lead: o.lead == null ? 1 : o.lead, fuse: o.fuse || 16, flareChecked: false, burst: o.burst || 0, small: !!o.small });
   if (p === player || p.team === 0) burst(0.6, 600, 0.35, 'lowpass');
   else { const d = camera.position.distanceTo(p.pos); burst(0.5, 500, clamp(0.4 - d / 6000, 0.05, 0.3), 'lowpass'); }
+}
+// a flak shell hits everything in its radius, hardest at the centre
+function flakBurst(m) {
+  spawnFx(m.pos, { add: true, color: 0xffc070, size: m.burst * 0.7, grow: 1.6, life: 0.35 });
+  spawnFx(m.pos, { color: 0x3a3a3a, opacity: 0.7, size: m.burst * 0.5, grow: 2, life: 1.8, rise: 3 });
+  missileHit = true;
+  for (const e of enemies) {
+    if (!e.alive || e.dying) continue;
+    const d = e.pos.distanceTo(m.pos), r = m.burst + (e.heavy ? 20 : 0);
+    if (d < r) e.damage(m.dmg * (1 - 0.5 * d / r), m.owner);
+  }
+  missileHit = false;
+}
+// fire the jet's secondary weapon (one charge)
+function fireSecondary(st) {
+  const S = era.sec, dmg = st.secDmg;
+  if (st.secId === 'missile') {
+    fireMissile(player, locked ? lockTarget : null, dmg);
+    popText(locked ? 'Fox two' : 'Fox two, no lock');
+  } else if (st.secId === 'rockets') {
+    for (let i = 0; i < S.salvo; i++) {
+      const dir = tv.copy(player.fwd).addScaledVector(player.right, rand(-0.025, 0.025)).addScaledVector(player.up, rand(-0.025, 0.025)).normalize();
+      fireMissile(player, null, dmg, { dir, boost: 220 + i * 8, max: 900, life: 2.4, fuse: 14, small: true });
+    }
+    popText('Rockets away');
+  } else if (st.secId === 'flak') {
+    fireMissile(player, null, dmg, { boost: 450, max: 950, life: 1.5, fuse: 45, burst: S.radius });
+    popText('Flak out');
+  } else if (st.secId === 'emp') {
+    spawnFx(player.pos, { add: true, color: 0x9ff6ff, size: 60, grow: 14, life: 0.6 });
+    burst(0.5, 3600, 0.3, 'highpass');
+    let n = 0;
+    missileHit = true;
+    for (const e of enemies) {
+      if (!validTarget(e) || e.pos.distanceTo(player.pos) > S.radius) continue;
+      e.stunT = S.stun * (e.boss ? 0.5 : 1); e.damage(dmg, player); n++;
+      if (n <= 6) spawnArc(player.pos, e.pos);
+    }
+    missileHit = false;
+    let fried = 0;
+    for (const ms of missiles) if (ms.target === player) { ms.target = null; fried++; }
+    popText(n ? 'EMP · ' + plural(n, 'bandit', 'bandits') + ' knocked out' : fried ? 'EMP · missiles fried' : 'EMP · nothing in range');
+  }
 }
 function dropFlares(p) {
   for (let i = 0; i < 6; i++) {
@@ -1699,13 +1563,13 @@ function updateMissiles(dt) {
     m.pos.addScaledVector(m.dir, m.speed * dt);
     mm.lookAt(tv.set(0, 0, 0), m.dir, Y_AXIS); m.mesh.quaternion.setFromRotationMatrix(mm);
     m.smokeT -= dt;
-    if (m.smokeT <= 0) { m.smokeT = 0.02; spawnFx(m.pos, { color: 0xdddddd, opacity: 0.55, size: 2.5, grow: 3, life: 1.6 }); spawnFx(m.pos, { add: true, color: 0xffb060, size: 2.4, life: 0.08 }); }
+    if (m.smokeT <= 0) { m.smokeT = m.small ? 0.05 : 0.02; spawnFx(m.pos, { color: 0xdddddd, opacity: 0.55, size: 2.5, grow: 3, life: 1.6 }); spawnFx(m.pos, { add: true, color: 0xffb060, size: 2.4, life: 0.08 }); }
     let done = m.life <= 0 || m.pos.y < groundAt(m.pos.x, m.pos.z);
     if (m.team === 0) {
       for (const e of enemies) {
         if (!e.alive || e.dying) continue;
-        const r = e.heavy ? 22 * (e.boss ? 1 : 0.6) : m.fuse;
-        if (e.pos.distanceToSquared(m.pos) < r * r) { missileHit = true; e.damage(m.dmg, m.owner); missileHit = false; done = true; break; }
+        const r = e.heavy ? 22 * (e.boss ? 1 : 0.6) + (m.burst ? m.fuse : 0) : m.fuse;
+        if (e.pos.distanceToSquared(m.pos) < r * r) { if (!m.burst) { missileHit = true; e.damage(m.dmg, m.owner); missileHit = false; } done = true; break; }
       }
     } else {
       for (const a of [player].concat(allies)) {
@@ -1717,7 +1581,8 @@ function updateMissiles(dt) {
         }
       }
     }
-    if (done) { explosion(m.pos, 0.7); scene.remove(m.mesh); missiles.splice(i, 1); }
+    if (done && m.burst) flakBurst(m);
+    if (done) { explosion(m.pos, m.burst ? 1.3 : m.small ? 0.4 : 0.7); scene.remove(m.mesh); missiles.splice(i, 1); }
   }
 }
 
@@ -1859,42 +1724,34 @@ let lockTarget = null, lockT = 0, locked = false, lockBeepT = 0;
 let showcase = null, showT = 0;
 const camQ = new THREE.Quaternion();
 
-function itemMods() {
-  const n = id => run.items[id] || 0;
+// a perk's value at the level you have it (i picks one part of a two-part perk), 0 when you don't
+function pv(id, i) {
+  const l = run.perks[id] || 0;
+  if (!l) return 0;
+  const x = PERK_BY_ID[id].v[l - 1];
+  return Array.isArray(x) ? x[i || 0] : x;
+}
+function perkMods() {
   return {
-    dmg: Math.pow(1.2, n('hot')) * Math.pow(1.8, n('glass')), rof: Math.pow(1.2, n('belt')),
-    hp: 25 * n('plate'), hpMul: Math.pow(0.65, n('glass')), turn: Math.pow(1.15, n('ail')),
-    thrust: Math.pow(1.2, n('wep')), speed: Math.pow(1.06, n('wep')), regen: n('mech'),
-    vamp: 10 * n('trophy') + 5 * n('time') + ws('vamp'), slowmo: n('time'),
-    splash: 0.4 * n('boom'), pods: n('pod'), tail: n('tail'), wingmen: n('wing'),
-    rockets: n('rocket') + n('swarm'), salvo: n('swarm') ? 3 : 1,
-    ghost: 1 - Math.pow(0.85, n('ghost')) * (1 - Math.min(0.4, ws('dodge'))), chain: n('chain'),
-    mslCd: Math.pow(0.8, n('rearm')), rack: n('rack'), gunRearm: MSL_KILL_REFUND + 4 * n('scav'),
+    dmg: (1 + pv('hot')) * (1 + pv('glass')), rof: 1 + pv('belt'), crit: pv('match'), spread: 1 - pv('sight'), range: 1 + pv('sight', 1),
+    heatGen: 1 - pv('cool'), cool: 1 + pv('sinks'), splash: pv('boom'), chain: pv('chain'),
+    hp: pv('plate'), hpMul: 1 - pv('glass', 1), regen: pv('mech'), vamp: pv('trophy') + pv('time', 1), ghost: pv('charm'), phoenix: pv('phoenix'),
+    thrust: 1 + pv('wep'), speed: 1 + pv('wep', 1), turn: 1 + pv('tabs'), wingmen: pv('wing'), slowmo: pv('time'),
+    secCd: 1 - pv('rearm'), rack: pv('rack'), secDmg: 1 + pv('warhead'), gunRearm: KILL_REFUND + pv('bounty'),
   };
 }
-function refreshMods() { run.mods = itemMods(); }
-// Missiles are a special, like a grenade: a few on the rails, each refilling on a long cooldown, so the gun does the steady work.
-// A plane's listed missiles set how many charges it carries. Gun kills knock time off the cooldown.
-const MSL_COOLDOWN = 24, MSL_MIN_COOLDOWN = 6, MSL_KILL_REFUND = 2;
-function missileSpec(base, m) {
-  if (!base) return { missiles: 0, reload: MSL_COOLDOWN };
-  m = m || {};
-  return {
-    missiles: Math.ceil(base / 2.5) + Math.round(ws('msl')) + (m.rack || 0),
-    reload: Math.max(MSL_MIN_COOLDOWN, MSL_COOLDOWN * Math.max(0.35, 1 - ws('reload')) * (m.mslCd || 1)),
-  };
-}
+function refreshMods() { run.mods = perkMods(); }
 function playerStats() {
   const m = run.mods, b = run.bonus, e = era, ld = e.load;
-  const dmgMul = (1 + ws('dmg')) * m.dmg * b.dmg, rofMul = (1 + ws('rof')) * m.rof, spreadMul = Math.max(0.35, 1 - ws('spread'));
+  const dmgMul = m.dmg * b.dmg, rofMul = m.rof, spreadMul = m.spread;
   return {
-    size: e.size, abMax: 1.2, abMul: 1 + ws('ab'), stallAoa: e.stallAoa, minSpeed: e.minSpeed, maxSpeed: e.maxSpeed * (1 + ws('speed')) * m.speed * ld.speed,
-    corner: e.corner, gmax: e.gmax * (1 + ws('gmax')), thrust: e.thrust * (1 + ws('thrust')) * m.thrust * b.thrust * ld.thrust, induced: Math.max(0.4, 1 - ws('drag')),
-    pitch: e.pitch, roll: e.roll, yaw: e.yaw, turnMul: m.turn * (1 + ws('control')) * ld.turn,
-    hp: Math.max(30, Math.round((e.hp + ws('hull') + m.hp + b.hp) * (1 + ws('hullPct')) * m.hpMul)), shield: e.shield, armor: Math.min(0.5, ws('armor')),
-    dmgMul, rofMul, spreadMul, dmg: e.gun.dmg * dmgMul, rof: e.gun.rof * rofMul, spread: e.gun.spread * spreadMul, crit: ws('crit'), critMul: 2.5 + ws('critDmg'),
-    ...missileSpec(e.missiles, m), lockTime: e.lockTime * Math.max(0.35, 1 - ws('lock')),
-    mslDmg: 1 + ws('mslDmg'), seeker: 1 + ws('seeker'),
+    size: e.size, abMax: 1.2, abMul: 1, stallAoa: e.stallAoa, minSpeed: e.minSpeed, maxSpeed: e.maxSpeed * m.speed * ld.speed,
+    corner: e.corner, gmax: e.gmax, thrust: e.thrust * m.thrust * ld.thrust, induced: 1,
+    pitch: e.pitch, roll: e.roll, yaw: e.yaw, turnMul: m.turn * ld.turn,
+    hp: Math.max(30, Math.round((e.hp + m.hp + b.hp) * m.hpMul)), shield: e.shield, armor: 0,
+    dmgMul, rofMul, spreadMul, dmg: e.gun.dmg * dmgMul, rof: e.gun.rof * rofMul, spread: e.gun.spread * spreadMul, crit: m.crit, critMul: 2.5,
+    heatGen: e.heat * m.heatGen, cool: HEAT_COOL * m.cool,
+    ...secondarySpec(e.plane.id, m), lockTime: e.lockTime,
   };
 }
 const maxHull = () => playerStats().hp;
@@ -1911,64 +1768,22 @@ function clearCombat() {
   player = null;
 }
 
-// ---------------- the sortie map ----------------
-function pickType(c) {
-  if (c === 0) return 'patrol';
-  const bag = [['patrol', 36], ['intercept', 18], ['signal', 15], ['depot', 10], ['airfield', 8], ['elite', c >= 2 ? 15 : 0]];
-  let r = Math.random() * bag.reduce((a, b) => a + b[1], 0);
-  for (const [t, w] of bag) { r -= w; if (r <= 0) return t; }
-  return 'patrol';
-}
-function genMap() {
-  const cols = [];
-  for (let c = 0; c < MAP_COLS - 1; c++) {
-    const rows = c === 0 ? 2 : (Math.random() < 0.45 ? 2 : 3);
-    const col = [];
-    for (let r = 0; r < rows; r++) col.push({ c, r, rows, type: pickType(c), next: [], done: false });
-    cols.push(col);
-  }
-  // a place to spend requisition or patch up around the middle of the run
-  const mid = cols[3];
-  if (!mid.some(n => n.type === 'depot' || n.type === 'airfield')) mid[Math.floor(Math.random() * mid.length)].type = Math.random() < 0.5 ? 'depot' : 'airfield';
-  cols.push([{ c: MAP_COLS - 1, r: 0, rows: 1, type: 'boss', next: [], done: false }]);
-  const yOf = n => (n.r + 0.5) / n.rows;
-  for (let c = 0; c < cols.length - 1; c++) {
-    const A = cols[c], B = cols[c + 1];
-    A.forEach(a => {
-      const order = B.map((b, i) => [Math.abs(yOf(b) - yOf(a)), i]).sort((x, y) => x[0] - y[0]);
-      a.next.push(order[0][1]);
-      if (order[1] && Math.random() < 0.6) a.next.push(order[1][1]);
-    });
-    B.forEach((b, i) => {
-      if (A.some(a => a.next.includes(i))) return;
-      const nearest = A.slice().sort((x, y) => Math.abs(yOf(x) - yOf(b)) - Math.abs(yOf(y) - yOf(b)))[0];
-      nearest.next.push(i);
-    });
-  }
-  return cols;
-}
-function reachable() {
-  if (run.col < 0) return run.map[0];
-  return run.map[run.col][run.row].next.map(i => run.map[run.col + 1][i]);
-}
-function advanceTo(node) { node.done = true; run.col = node.c; run.row = node.r; }
-
-// ---------------- survival: wave N is N fighters, gear between waves ----------------
+// ---------------- survival: wave N is N fighters, a perk between waves, and the location's boss every tenth wave ----------------
 const SURV_LIVE = 8; // fighters in the air at once; the rest of the wave joins as they fall
 const SURV_TIERS = ['mig21', 'mig29', 'su27', 'su35', 'su57'];
+const BOSS_EVERY = 10;
 function startSurvival() {
   initAudio();
   clearCombat();
-  run = { survival: true, wave: 0, hull: 0, req: 0, items: {}, bonus: { thrust: 1, dmg: 1, hp: 0 }, kills: 0, cleared: 0, points: 0,
-    rerolls: Math.round(ws('rerolls')), phoenixUsed: 0, hitCount: 0, over: false, heat: 0, seen: {}, bossDown: false, victoryT: 0, deathT: 0, mission: null, note: '' };
+  run = { survival: true, wave: 0, hull: 0, perks: {}, bonus: { dmg: 1, hp: 0 }, kills: 0, cleared: 0, bosses: 0, unlocked: [],
+    rerolls: 1, phoenixUsed: 0, hitCount: 0, over: false, seen: {}, deathT: 0, mission: null };
   refreshMods();
-  for (let i = 0; i < Math.round(ws('startItems')); i++) addItem(randomItem().id);
   run.hull = maxHull();
-  nextWave();
+  offerPerks();
 }
 function nextWave() {
   run.wave++;
-  // enemy toughness climbs with the wave; depth feeds hull, damage and pilot skill like it does on the sortie map
+  // enemy toughness climbs with the wave; depth feeds hull, damage and pilot skill
   startMission('survival', { c: Math.min((run.wave - 1) * 0.45, 12) }, {});
 }
 // Wave w: w fighters. Every third is a newer jet (two steps newer from wave 8), and from wave 5 one in four is an ace.
@@ -2001,62 +1816,90 @@ function variantNote(list) {
 }
 function spawnSpec(s) { spawnEnemy(s.skill, !!s.ace, null, s.model, s.variant); }
 function survivalWaveDone() {
-  const max = player.maxHp;
-  run.hull = clamp(Math.max(player.hp, 1) + max * ws('repair'), 1, max);
+  run.hull = clamp(Math.max(player.hp, 1), 1, player.maxHp);
   run.cleared = run.wave;
   leaveCombat();
-  const minRarity = run.wave % 5 === 0 ? 'rare' : null;
-  let picks = rollItems(3, minRarity);
+  offerPerks();
+}
+
+// ---- perk picks: before wave 1 and after every wave ----
+const perkSlots = () => era.plane.perkSlots;
+const perksHeld = () => Object.keys(run.perks).length;
+// once every slot is full and every perk is at III, these fill the empty cards
+const BOOSTS = [
+  { k: 'Armorer', t: 'Tune the guns', d: '+8% gun damage for the rest of the run.', go: () => { run.bonus.dmg *= 1.08; } },
+  { k: 'Workshop', t: 'Reinforce', d: '+12 max hull for the rest of the run, and repair 12.', go: () => { run.bonus.hp += 12; run.hull += 12; } },
+  { k: 'Supply', t: 'Spare parts', d: 'Repair 25 hull.', go: () => { run.hull += 25; } },
+];
+// three offers: the next level of perks you hold, and new perks from your unlocked pool while a slot is free
+function perkChoices() {
+  const ups = shuffle(Object.keys(run.perks).filter(id => run.perks[id] < PERK_MAX)).map(id => ({ id, lvl: run.perks[id] + 1 }));
+  const fresh = perksHeld() < perkSlots() ? shuffle(PERKS.filter(p => perkOpen(p) && !run.perks[p.id])).map(p => ({ id: p.id, lvl: 1 })) : [];
+  // with both on offer, show at least one of each
+  const out = ups.length && fresh.length ? [ups.shift(), fresh.shift()] : [];
+  const rest = shuffle(ups.concat(fresh));
+  while (out.length < 3 && rest.length) out.push(rest.shift());
+  return shuffle(out);
+}
+function perkCard(c) {
+  const p = PERK_BY_ID[c.id], up = c.lvl > 1;
+  return { k: (up ? 'Level ' + ROMAN[c.lvl] : 'New perk') + ' · ' + p.cat, t: p.name + (up ? ' ' + ROMAN[c.lvl] : ''),
+    d: perkText(p, c.lvl) + (up ? ' Up from: ' + p.d(p.v[c.lvl - 2]) + '.' : ''), cls: up ? 'lv-up' : 'lv-new' };
+}
+function addPerk(id) {
+  const before = maxHull();
+  run.perks[id] = (run.perks[id] || 0) + 1;
+  refreshMods();
+  // extra max hull arrives filled
+  run.hull = clamp(run.hull + Math.max(0, maxHull() - before), 1, maxHull());
+}
+function offerPerks() {
+  let picks = perkChoices();
+  const first = run.wave === 0, next = run.wave + 1;
+  const go = f => () => { f(); run.hull = clamp(run.hull, 1, maxHull()); nextWave(); };
   const render = () => {
     const heal = Math.round(maxHull() * 0.4);
+    const cards = picks.map(c => Object.assign(perkCard(c), { onPick: go(() => addPerk(c.id)) }))
+      .concat(BOOSTS.slice(0, Math.max(0, 3 - picks.length)).map(b => ({ k: b.k, t: b.t, d: b.d, onPick: go(b.go) })));
+    if (!first) cards.push({ k: 'Ground crew', t: 'Field repair', d: 'Repair ' + heal + ' hull.', disabled: run.hull >= maxHull(), onPick: go(() => { run.hull += heal; }) });
+    const held = PERKS.filter(p => run.perks[p.id]).map(p => p.name + ' ' + ROMAN[run.perks[p.id]]);
     showChoice({
-      title: 'Wave ' + run.wave + ' cleared',
-      sub: 'Hull ' + Math.round(run.hull) + ' / ' + maxHull() + '. Pick one before wave ' + (run.wave + 1) + ', which brings ' + (run.wave + 1) + ' fighters.' + (minRarity ? ' Every fifth wave the gear is rare or better.' : ''),
-      cards: picks.map(it => Object.assign(itemCard(it), { onPick: nextPick(() => addItem(it.id)) }))
-        .concat([{ k: 'Ground crew', t: 'Field repair', d: 'Repair ' + heal + ' hull.', disabled: run.hull >= maxHull(), onPick: nextPick(() => { run.hull = Math.min(maxHull(), run.hull + heal); }) }]),
+      title: first ? 'Pick your first perk' : 'Wave ' + run.wave + ' cleared',
+      sub: (first ? 'The ' + era.plane.short + ' has ' + perkSlots() + ' perk slots. After every wave, pick another perk or level one up to III.'
+        : 'Hull ' + Math.round(run.hull) + ' / ' + maxHull() + '. Perks ' + perksHeld() + ' / ' + perkSlots() + (held.length ? ': ' + held.join(', ') : '') + '.') +
+        ' Wave ' + next + ' brings ' + plural(next, 'fighter', 'fighters') + (next % BOSS_EVERY === 0 ? ' and the ' + era.boss.name.toLowerCase() : '') + '.',
+      cards,
       buttons: [
-        run.rerolls > 0 && { label: 'Reroll (' + run.rerolls + ' left)', onClick: () => { run.rerolls--; picks = rollItems(3, minRarity); render(); } },
-        { label: 'End here and bank it', onClick: () => endRun('bail') },
+        run.rerolls > 0 && { label: 'Reroll (' + run.rerolls + ' left)', onClick: () => { run.rerolls--; picks = perkChoices(); render(); } },
+        !first && { label: 'End here and bank it', onClick: () => endRun('bail') },
       ].filter(Boolean),
     });
   };
   render();
 }
-const nextPick = f => () => { f(); nextWave(); };
 function endSurvival(reason) {
   run.over = true;
   const loc = era.loc.id, waves = run.cleared;
   const hadSkins = new Set(A.SKINS.filter(skinOwned).map(sk => sk.id));
   const prev = save.survBest[loc] || 0, record = waves > prev;
-  const pts = Math.floor(waves / 2);
-  const credits = Math.round((run.kills * 12 + waves * 30) * (0.8 + 0.2 * era.loc.threat) * (1 + ws('credits')));
-  save.points += pts; save.credits += credits; save.runs++; save.totalKills += run.kills;
+  const medals = Math.floor(waves / 2) + 3 * run.bosses;
+  const credits = Math.round((run.kills * 12 + waves * 30 + run.bosses * 250) * (0.8 + 0.2 * era.loc.threat));
+  save.points += medals; save.credits += credits; save.runs++; save.totalKills += run.kills;
   if (record) save.survBest[loc] = waves;
   const fresh = A.SKINS.filter(sk => skinOwned(sk) && !hadSkins.has(sk.id));
   persist();
-  $('dbTitle').textContent = reason === 'bail' ? 'Survival banked' : 'Shot down';
-  const gear = ITEMS.filter(it => run.items[it.id]).map(it => it.name + (run.items[it.id] > 1 ? ' ×' + run.items[it.id] : ''));
+  $('dbTitle').textContent = reason === 'bail' ? 'Run banked' : 'Shot down';
+  const held = PERKS.filter(p => run.perks[p.id]).map(p => p.name + ' ' + ROMAN[run.perks[p.id]]);
   $('dbSub').textContent = 'You survived ' + plural(waves, 'wave', 'waves') + ' over ' + era.name + ' in the ' + era.plane.short + '.' +
     (record ? (prev ? ' New best here, up from ' + prev + '.' : ' New best here.') : ' Best here is ' + prev + '.') +
-    (fresh.length ? ' New paint: ' + fresh.map(sk => sk.name).join(', ') + '.' : '') + (gear.length ? ' Gear: ' + gear.join(', ') + '.' : '');
-  $('dbStats').innerHTML = [['Waves', waves], ['Kills', run.kills], ['Credits', '+' + credits.toLocaleString()], ['Skill points', '+' + pts]].map(([l, v]) => '<div><b>' + v + '</b><span>' + l + '</span></div>').join('');
-  $('dbPts').textContent = 'One skill point for every two waves. You now have ' + save.points + ' skill points and ' + save.credits.toLocaleString() + ' credits.';
+    (run.bosses ? ' ' + plural(run.bosses, 'boss', 'bosses') + ' downed.' : '') + (run.unlocked.length ? ' You unlocked ' + run.unlocked.map(id => LOCS[id].name).join(' and ') + '.' : '') +
+    (fresh.length ? ' New paint: ' + fresh.map(sk => sk.name).join(', ') + '.' : '') + (held.length ? ' Perks: ' + held.join(', ') + '.' : '');
+  $('dbStats').innerHTML = [['Waves', waves], ['Kills', run.kills], ['Credits', '+' + credits.toLocaleString()], ['Medals', '+' + medals]].map(([l, v]) => '<div><b>' + v + '</b><span>' + l + '</span></div>').join('');
+  $('dbPts').textContent = 'A medal for every two waves and three for every boss. You now have ' + plural(save.points, 'medal', 'medals') + ' to unlock perks and ' + save.credits.toLocaleString() + ' credits.';
   leaveCombat();
   state = 'debrief'; showScreen('debrief');
 }
-
-function startRun() {
-  initAudio();
-  clearCombat();
-  run = { map: genMap(), col: -1, row: -1, hull: 0, req: 0, items: {}, bonus: { thrust: 1, dmg: 1, hp: 0 }, kills: 0, cleared: 0,
-    pointsMissions: 0, pointsElite: 0, points: 0, rerolls: Math.round(ws('rerolls')), phoenixUsed: 0, hitCount: 0, over: false, heat: selHeat(), seen: {},
-    bossDown: false, victoryT: 0, deathT: 0, mission: null, note: '' };
-  refreshMods();
-  run.req = Math.round(ws('startReq'));
-  for (let i = 0; i < Math.round(ws('startItems')); i++) addItem(randomItem().id);
-  run.hull = maxHull();
-  showMap();
-}
+function endRun(reason) { if (run && !run.over) endSurvival(reason); }
 
 // ---------------- missions ----------------
 function startMission(type, node, opts) {
@@ -2074,49 +1917,24 @@ function startMission(type, node, opts) {
   setAimFromDir(player.fwd);
   camQ.copy(player.quat);
   const depth = node.c;
-  run.mission = { type, node, opts: opts || {}, depth, t: 0, done: false, doneT: 0, bombers: 0, bombersDown: 0, bombersEscaped: 0 };
+  run.mission = { type, node, opts: opts || {}, depth, t: 0, done: false, doneT: 0 };
   run.guns = era.mounts.map(m => ({ hp: m.hp, gun: m.gun, cd: 0 }));
-  // a sortie mission starts with full rails; survival keeps whatever was left and how far the cooldown had run
-  if (run.survival && run.wave > 1) run.missiles = Math.min(run.missiles, st.missiles);
-  else { run.missiles = st.missiles; run.reloadT = 0; }
-  run.flares = 24 + Math.round(ws('flares')); run.flareCd = 0; run.warnT = 0; run.rocketCd = 2; run.tailCd = 0;
-  run.bossDown = false; run.victoryT = 0; run.deathT = 0;
+  run.heat = 0; run.overheat = false; run.coolT = 0;
+  // the first wave starts with full charges; later waves keep whatever was left and how far the cooldown had run
+  if (run.wave > 1) run.charges = Math.min(run.charges, st.charges);
+  else { run.charges = st.charges; run.reloadT = 0; }
+  run.flares = 24; run.flareCd = 0; run.warnT = 0; run.deathT = 0;
   for (let i = 0; i < run.mods.wingmen; i++) spawnAlly(i);
-  const heat = run.heat, skill = Math.min(0.2 + era.loc.threat * 0.06 + depth * 0.08 + heat * 0.05, 0.97);
-  let sub = '', vnote = { line: '', intro: '' };
-  if (type === 'patrol') {
-    const n = 2 + Math.floor(depth * 0.7) + (Math.random() < 0.5 ? 1 : 0) + Math.floor(heat / 2);
-    const specs = [];
-    for (let i = 0; i < n; i++) specs.push({ skill: skill * rand(0.85, 1.1), variant: sortieVariant(depth, heat) });
-    vnote = variantNote(specs);
-    specs.forEach(spawnSpec);
-    sub = n + ' fighters on patrol';
-  } else if (type === 'elite') {
-    spawnEnemy(Math.min(skill + 0.3, 1), true, 'fighter');
-    if (depth >= 4) spawnEnemy(Math.min(skill + 0.3, 1), true, 'boomer');
-    const specs = [];
-    for (let i = 0; i < 2 + Math.floor(heat / 3); i++) specs.push({ skill: Math.min(skill + 0.1, 1), variant: sortieVariant(depth + 1, heat) });
-    vnote = variantNote(specs);
-    specs.forEach(spawnSpec);
-    sub = 'Ace squadron. Expect a real fight';
-  } else if (type === 'intercept') {
-    const nb = 3 + Math.floor(depth / 2);
-    for (let i = 0; i < nb; i++) spawnBomber(i, nb, depth);
-    run.mission.bombers = nb;
-    for (let i = 0; i < 1 + Math.floor(depth / 2) + Math.floor(heat / 2); i++) spawnEnemy(skill, false);
-    sub = nb + ' bombers crossing west to east. Stop them before they reach the hills';
-  } else if (type === 'survival') {
-    run.mission.queue = survivalWave(run.wave, skill);
-    run.mission.spawnT = 0;
-    const tough = run.mission.queue.filter(s => s.ace || s.up).length;
-    vnote = variantNote(run.mission.queue);
-    for (let i = 0; i < SURV_LIVE && run.mission.queue.length; i++) spawnSpec(run.mission.queue.shift());
-    sub = plural(run.wave, 'fighter', 'fighters') + ' inbound' + (tough ? ', ' + tough + ' of them tougher than the rest' : '');
-  } else if (type === 'boss') {
-    spawnBoss(depth);
-    for (let i = 0; i < era.boss.escorts + Math.floor(heat / 2); i++) spawnEnemy(Math.min(skill, 0.9) * rand(0.9, 1.05), false);
-    sub = era.boss.name + ' with escorts';
-  }
+  const skill = Math.min(0.2 + era.loc.threat * 0.06 + depth * 0.08, 0.97);
+  // every tenth wave the location's boss flies in, with half the wave as escorts
+  const boss = run.wave % BOSS_EVERY === 0;
+  run.mission.queue = survivalWave(boss ? Math.ceil(run.wave / 2) : run.wave, skill);
+  run.mission.spawnT = 0;
+  const tough = run.mission.queue.filter(s => s.ace || s.up).length;
+  const vnote = variantNote(run.mission.queue);
+  if (boss) spawnBoss(depth, run.wave / BOSS_EVERY);
+  for (let i = 0; i < SURV_LIVE && run.mission.queue.length; i++) spawnSpec(run.mission.queue.shift());
+  let sub = (boss ? 'The ' + era.boss.name.toLowerCase() + ' and ' + plural(run.mission.queue.length + enemies.length - 1, 'escort', 'escorts') : plural(run.wave, 'fighter', 'fighters')) + ' inbound' + (tough ? ', ' + tough + ' of them tougher than the rest' : '');
   lockTarget = null; locked = false; shake = 0; hurtT = 0; timeScale = 1; slowmoT = 0;
   state = 'playing';
   showScreen(null);
@@ -2125,23 +1943,15 @@ function startMission(type, node, opts) {
   $('shieldRow').hidden = !era.shield;
   if (vnote.line) sub += ' · ' + vnote.line;
   if (vnote.intro) sub += '. ' + vnote.intro;
-  flashMsg(type === 'survival' ? 'WAVE ' + run.wave : NODE_INFO[type].label.toUpperCase(), sub + (mouseMode() && !isTouch && !document.pointerLockElement ? ' · click to capture the mouse' : ''), vnote.intro ? 5 : 2.6);
+  flashMsg((boss ? 'BOSS WAVE ' : 'WAVE ') + run.wave, sub + (mouseMode() && !isTouch && !document.pointerLockElement ? ' · click to capture the mouse' : ''), vnote.intro ? 5 : 2.6);
   beep(660, 0.12, 0.12); setTimeout(() => beep(880, 0.16, 0.12), 140);
 }
 function objectiveText(alive) {
   const m = run.mission;
-  if (m.type === 'intercept') { const left = enemies.filter(e => e.bomber && e.alive && !e.dying).length; return 'Bombers: ' + m.bombersDown + ' down · ' + m.bombersEscaped + ' escaped · ' + left + ' left'; }
-  if (m.type === 'boss') return 'Destroy the ' + era.boss.name.toLowerCase();
-  if (m.type === 'survival') { const q = m.queue.length; return (alive + q) + (alive + q === 1 ? ' hostile' : ' hostiles') + ' left' + (q ? ' · ' + q + ' still inbound' : ''); }
-  return alive + (alive === 1 ? ' hostile' : ' hostiles') + ' remaining';
+  const q = m.queue.length;
+  return (alive + q) + (alive + q === 1 ? ' hostile' : ' hostiles') + ' left' + (q ? ' · ' + q + ' still inbound' : '');
 }
 
-// a sortie fighter's odds of being a variant climb with the column and the heat
-function sortieVariant(depth, heat) {
-  const pool = VARIANT_ORDER.filter(v => VARIANTS[v].depth <= depth);
-  if (!pool.length || Math.random() > Math.min(0.12 * (depth - 1) + 0.05 * heat, 0.5)) return null;
-  return pool[Math.floor(Math.random() * pool.length)];
-}
 function enemyStats(skill, ace, model, variant) {
   const es = era.enemy, j = model ? ENEMY_JETS[model] : es, f = j.flight, v = VARIANTS[variant] || {};
   const turn = (0.75 + 0.25 * skill + (ace ? 0.12 : 0)) * (v.turn || 1);
@@ -2149,7 +1959,7 @@ function enemyStats(skill, ace, model, variant) {
   return {
     size: j.size, minSpeed: f.minSpeed, maxSpeed: f.maxSpeed * es.speedMul * (ace ? 1.05 : 1) * (v.speed || 1), corner: f.corner * (v.speed || 1),
     gmax: f.gmax * (ace ? 1 : 0.75 + 0.25 * skill), thrust: f.thrust * (v.thrust || 1), pitch: f.pitch * turn, roll: f.roll * turn, yaw: f.yaw * turn,
-    hp: j.hp * (ace ? 3 : 1) * (v.hp || 1) * (1 + depth * 0.06) * heatHp(run.heat), armor: v.armor || 0,
+    hp: j.hp * (ace ? 3 : 1) * (v.hp || 1) * (1 + depth * 0.06), armor: v.armor || 0,
   };
 }
 function initPilot(e, skill, kind) {
@@ -2186,26 +1996,15 @@ function spawnAlly(i) {
   initPilot(a, 0.75, 'fighter');
   allies.push(a);
 }
-function spawnBomber(i, n, depth) {
+// tier: 1 on wave 10, 2 on wave 20, and so on; each tier adds hull and gunners' damage
+function spawnBoss(depth, tier) {
   const b = era.boss;
-  const st = { size: 1.3, minSpeed: era.minSpeed, maxSpeed: era.maxSpeed, corner: era.corner, gmax: 3, thrust: era.thrust, pitch: 0.3, roll: 0.5, yaw: 0.2, hp: Math.round(b.hp * 0.17 * (1 + depth * 0.08) * heatHp(run.heat)) };
-  const mesh = bossMesh(b.kind, b.color, b.accent); mesh.scale.setScalar(0.45);
-  const e = new Plane(st, mesh, 1);
-  e.bomber = true; e.heavy = true; e.skill = 0.6;
-  e.pos.set(-3300 - i * 140, 1050 + rand(-80, 160), -500 + (i - (n - 1) / 2) * 260);
-  e.pathDir = new V3(1, 0, 0); e.pathSpeed = era.maxSpeed * 0.42;
-  e.turretRof = b.turretRof * 0.45; e.turretDmg = b.turretDmg * 0.6 * heatDmg(run.heat);
-  e.turrets = [[0, 2.6, -4], [0, 0.8, 15.5]].map(t => ({ p: new V3(t[0], t[1], t[2]).multiplyScalar(0.45), cd: rand(0, 2) }));
-  enemies.push(e);
-}
-function spawnBoss(depth) {
-  const b = era.boss;
-  const stats = { size: 2.6, minSpeed: era.minSpeed, maxSpeed: era.maxSpeed, corner: era.corner, gmax: 3, thrust: era.thrust, pitch: 0.3, roll: 0.5, yaw: 0.2, hp: Math.round(b.hp * heatHp(run.heat)) };
+  const stats = { size: 2.6, minSpeed: era.minSpeed, maxSpeed: era.maxSpeed, corner: era.corner, gmax: 3, thrust: era.thrust, pitch: 0.3, roll: 0.5, yaw: 0.2, hp: Math.round(b.hp * (0.7 + 0.3 * tier)) };
   const e = new Plane(stats, bossMesh(b.kind, b.color, b.accent), 1);
   e.boss = true; e.heavy = true; e.ace = true; e.name = b.name; e.skill = 1; e.throttle = 0.9;
   e.circR = 1700; e.alt = b.alt; e.circW = era.maxSpeed * b.speedFrac / e.circR;
   e.circA = Math.atan2(player.pos.z, player.pos.x) + Math.PI;
-  e.turretRof = b.turretRof; e.turretDmg = b.turretDmg * (0.7 + depth * 0.06) * heatDmg(run.heat);
+  e.turretRof = b.turretRof; e.turretDmg = b.turretDmg * (0.7 + depth * 0.06);
   e.turrets = BOSS_TURRETS.map(t => ({ p: new V3(t[0], t[1], t[2]), cd: rand(0, 1.5) }));
   e.pos.set(Math.cos(e.circA) * e.circR, e.alt, Math.sin(e.circA) * e.circR);
   enemies.push(e);
@@ -2215,18 +2014,17 @@ function heavyUpdate(e, dt) {
   if (e.boss) {
     e.circA += e.circW * dt;
     e.pos.set(Math.cos(e.circA) * e.circR, e.alt + Math.sin(e.circA * 3) * 60, Math.sin(e.circA) * e.circR);
-  } else e.pos.addScaledVector(e.pathDir, e.pathSpeed * dt);
+  }
   e.vel.subVectors(e.pos, prev).divideScalar(Math.max(dt, 1e-4));
   e.speed = e.vel.length();
   mm.lookAt(tv2.set(0, 0, 0), tv3.copy(e.vel).normalize(), Y_AXIS);
   e.quat.setFromRotationMatrix(mm);
   if (e.boss) e.mesh.rotateZ(-0.12);
   e.axes(); e.animate(dt); e.trails(dt);
-  if (e.bomber && e.pos.x > 3500) { e.remove(); run.mission.bombersEscaped++; popText('A bomber got through'); return; }
   // gunners shoot at whoever is closest
   let tgt = null, td = 1000;
   for (const t of [player].concat(allies)) { if (!t || !t.alive || t.dying) continue; const d = t.pos.distanceTo(e.pos); if (d < td) { td = d; tgt = t; } }
-  if (!tgt) return;
+  if (!tgt || e.stunT > 0) { e.stunT -= dt; return; }
   for (const t of e.turrets) {
     t.cd -= dt; if (t.cd > 0) continue;
     t.cd = rand(0.7, 1.4) / e.turretRof;
@@ -2244,14 +2042,22 @@ function onPlaneDown(p, from) {
   if (from === player || (from && from.ally)) {
     run.kills++;
     if (from === player) {
-      popText(p.boss ? 'Boss down' : p.bomber ? 'Bomber down' : p.ace ? 'Ace down' : 'Splash one');
+      popText(p.boss ? 'Boss down' : p.ace ? 'Ace down' : 'Splash one');
       if (run.mods.vamp && player.alive && !player.dying) player.hp = Math.min(player.maxHp, player.hp + run.mods.vamp);
-      if (run.mods.slowmo) slowmoT = 1.2;
-      if (!missileHit && player.s.missiles && run.missiles < player.s.missiles) run.reloadT += run.mods.gunRearm;
+      if (run.mods.slowmo) slowmoT = Math.max(slowmoT, run.mods.slowmo);
+      // gun kills (not secondary kills) knock time off the secondary cooldown
+      if (!missileHit && run.charges < player.s.charges) run.reloadT += run.mods.gunRearm;
     } else popText('Wingman got one');
   }
-  if (p.bomber) run.mission.bombersDown++;
-  if (p.boss) { run.bossDown = true; run.victoryT = 5; slowmoT = 1.6; flashMsg('TARGET DESTROYED', era.boss.name + ' is going down', 3); }
+  if (p.boss) {
+    // a downed boss opens the next location straight away, even if the run ends this wave
+    run.bosses++; slowmoT = 1.6;
+    const loc = era.loc.id, next = LOC_ORDER[LOC_ORDER.indexOf(loc) + 1];
+    save.bosses[loc] = true;
+    if (next && !save.locs[next]) { save.locs[next] = true; run.unlocked.push(next); }
+    persist();
+    flashMsg('TARGET DESTROYED', era.boss.name + ' is going down' + (run.unlocked.includes(next) ? ' · ' + LOCS[next].name + ' unlocked' : ''), 3);
+  }
 }
 
 // ---------------- pilots ----------------
@@ -2268,6 +2074,8 @@ function pickTarget(e) {
 }
 function aiControl(e, dt) {
   const c = { pitch: 0, roll: 0, yaw: 0, throttle: 0, fire: false };
+  // knocked out by an EMP: the jet drifts on with dead controls and guns
+  if (e.stunT > 0) { e.stunT -= dt; c.roll = 0.15; e.burstT = 0; return c; }
   e.targetT -= dt;
   if (e.targetT <= 0 || !validTarget(e.target)) { e.target = pickTarget(e); e.targetT = rand(3, 6); }
   const t = e.target;
@@ -2317,7 +2125,7 @@ function aiControl(e, dt) {
     e.mslCd = hunter ? rand(6, 9) : rand(9, 16);
     if (!(t === player && Math.random() < era.stealth)) {
       e.missiles--;
-      fireMissile(e, t, e.ally ? 60 : (26 + 4 * era.loc.threat) * heatDmg(run.heat), e.ally ? null : { turn: 2.0, max: 640, g: 62, lead: 1, life: 7, fuse: 20 });
+      fireMissile(e, t, e.ally ? 60 : 26 + 4 * era.loc.threat, e.ally ? null : { turn: 2.0, max: 640, g: 62, lead: 1, life: 7, fuse: 20 });
       if (t === player) popText('Missile launch!');
     }
   }
@@ -2358,35 +2166,6 @@ function noseTarget(range, cone) {
   }
   return best;
 }
-function firePods(st) {
-  for (let i = 0; i < run.mods.pods; i++) {
-    for (const side of [-1, 1]) {
-      const sz = player.s.size;
-      const start = tv.set(side * (1.6 + 0.7 * i) * sz, -0.8 * sz, -1.2 * sz).applyQuaternion(player.quat).add(player.pos);
-      const dir = tv3.copy(player.fwd).multiplyScalar(380).add(player.pos).sub(start).normalize();
-      dir.x += rand(-st.spread, st.spread) * 1.5; dir.y += rand(-st.spread, st.spread) * 1.5; dir.normalize();
-      spawnBullet(player, start, dir, era.gun, st.dmg * 0.8, era.gun.color, false);
-    }
-  }
-}
-function fireTailGunner(dt, st) {
-  run.tailCd -= dt;
-  if (run.tailCd > 0) return;
-  let best = null, bd = 650;
-  for (const e of enemies) {
-    if (!validTarget(e)) continue;
-    const d = e.pos.distanceTo(player.pos);
-    if (d < bd && player.fwd.dot(tv.subVectors(e.pos, player.pos).normalize()) < -0.1) { bd = d; best = e; }
-  }
-  if (!best) return;
-  run.tailCd = 0.12 / run.mods.tail;
-  const start = tv2.copy(player.fwd).multiplyScalar(-5 * player.s.size).add(player.pos);
-  const tt = bd / era.gun.speed;
-  const aim = tv3.copy(best.pos).addScaledVector(best.vel, tt).addScaledVector(player.vel, -tt).sub(start).normalize();
-  aim.x += rand(-0.012, 0.012); aim.y += rand(-0.012, 0.012); aim.normalize();
-  spawnBullet(player, start.clone(), aim, era.gun, st.dmg * 0.6, era.gun.color, false);
-}
-
 function updatePlaying(dt) {
   const m = run.mission; m.t += dt;
   const live = player.alive && !player.dying;
@@ -2396,24 +2175,32 @@ function updatePlaying(dt) {
     player.fly(dt, ctl);
     player.trails(dt);
     const st = player.s;
-    player.gunCd -= dt;
+    // guns share one heat gauge: holding the trigger fills it, and at the top they lock until it cools to HEAT_RESUME
+    const firing = ctl.fire && !run.overheat;
+    if (firing) {
+      run.heat = Math.min(1, run.heat + st.heatGen * dt); run.coolT = HEAT_DELAY;
+      if (run.heat >= 1) { run.overheat = true; popText('Guns overheated'); burst(0.35, 260, 0.2, 'lowpass'); }
+    } else {
+      run.coolT -= dt;
+      if (run.coolT <= 0 || run.overheat) run.heat = Math.max(0, run.heat - st.cool * dt);
+      if (run.overheat && run.heat <= HEAT_RESUME) { run.overheat = false; beep(760, 0.08, 0.07); }
+    }
     // every mounted gun keeps its own rate of fire
     for (const g of run.guns) {
-      if (!ctl.fire) { g.cd = Math.max(0, g.cd - dt); continue; }
+      if (!firing) { g.cd = Math.max(0, g.cd - dt); continue; }
       g.cd -= dt;
       while (g.cd <= 0) { fireGun(player, g.gun, g.gun.dmg * st.dmgMul, g.gun.spread * st.spreadMul, g.gun.color, g.hp.at); g.cd += 1 / (g.gun.rof * st.rofMul); }
     }
-    if (ctl.fire && player.gunCd <= 0) { firePods(st); player.gunCd = 1 / st.rof; }
     if (st.shield) {
       player.shieldDelay -= dt;
       if (player.shieldDelay <= 0) player.shield = Math.min(st.shield, player.shield + 12 * dt);
     }
     player.lastHitT += dt;
-    const regen = mods.regen + (player.lastHitT > 4 ? ws('regen') : 0);
-    if (regen) player.hp = Math.min(player.maxHp, player.hp + regen * dt);
-    if (st.missiles) {
-      if (run.missiles < st.missiles) { run.reloadT += dt; if (run.reloadT >= st.reload) { run.reloadT -= st.reload; run.missiles++; beep(990, 0.08, 0.06); if (run.missiles >= st.missiles) run.reloadT = 0; } }
-      else run.reloadT = 0;
+    if (mods.regen) player.hp = Math.min(player.maxHp, player.hp + mods.regen * dt);
+    // the secondary: charges refill one at a time
+    if (run.charges < st.charges) { run.reloadT += dt; if (run.reloadT >= st.reload) { run.reloadT -= st.reload; run.charges++; beep(990, 0.08, 0.06); if (run.charges >= st.charges) run.reloadT = 0; } }
+    else run.reloadT = 0;
+    if (st.secId === 'missile') {
       const best = noseTarget(era.lockRange, 0.33);
       if (best !== lockTarget) { lockTarget = best; lockT = 0; locked = false; }
       if (lockTarget) {
@@ -2421,18 +2208,10 @@ function updatePlaying(dt) {
         if (!locked && lockT > st.lockTime) { locked = true; beep(1320, 0.18, 0.1); }
         if (!locked && lockBeepT <= 0) { lockBeepT = 0.18; beep(880, 0.05, 0.06); }
       }
-      if (missileRequest && run.missiles > 0) { fireMissile(player, locked ? lockTarget : null, 75 * st.mslDmg, { turn: 3.6 * st.seeker, g: 120 * st.seeker }); run.missiles--; popText(locked ? 'Fox two' : 'Fox two, no lock'); }
-      else if (missileRequest) { popText('Missile rearming · ' + Math.ceil(st.reload - run.reloadT) + ' s'); beep(330, 0.08, 0.06); }
-    }
+    } else { lockTarget = null; locked = false; }
+    if (missileRequest && run.charges > 0) { fireSecondary(st); run.charges--; }
+    else if (missileRequest) { popText(era.sec.short.toLowerCase().replace(/^./, c => c.toUpperCase()) + ' rearming · ' + Math.ceil(st.reload - run.reloadT) + ' s'); beep(330, 0.08, 0.06); }
     missileRequest = false;
-    if (mods.rockets) {
-      run.rocketCd -= dt;
-      if (run.rocketCd <= 0) {
-        const tgt = noseTarget(1800, 0.7);
-        if (tgt) { for (let i = 0; i < Math.min(mods.salvo * mods.rockets, 6); i++) fireMissile(player, tgt, 45 * st.mslDmg); run.rocketCd = 5; }
-      }
-    }
-    if (mods.tail) fireTailGunner(dt, st);
     // flares: each salvo has a good chance to pull every missile chasing you
     run.flareCd -= dt;
     if (flareRequest && run.flares > 0 && run.flareCd <= 0) {
@@ -2450,7 +2229,7 @@ function updatePlaying(dt) {
     if (near < Infinity && run.warnT <= 0) { run.warnT = clamp(near / 4000, 0.08, 0.4); beep(1150, 0.06, 0.09); }
     // missiles still on the rails
     const rails = player.mesh.userData.msl;
-    for (let i = 0; i < rails.length; i++) rails[i].visible = i < run.missiles;
+    for (let i = 0; i < rails.length; i++) rails[i].visible = st.secId === 'missile' && i < run.charges;
     // wingtip vortices under load, and a vapour cone through the sound barrier
     const tip = JETS[era.plane.id].tip;
     if (player.g > 6 && tip) {
@@ -2467,7 +2246,7 @@ function updatePlaying(dt) {
     if (r > ARENA * 1.2) player.damage(12 * dt, null);
     for (const e of enemies) {
       if (!validTarget(e)) continue;
-      const rr = (e.boss ? 16 : e.bomber ? 9 : 8) * player.s.size;
+      const rr = (e.boss ? 16 : 8) * player.s.size;
       if (e.pos.distanceToSquared(player.pos) < rr * rr) {
         if (e.heavy) player.damage(999, e);
         else { e.damage(999, player); player.damage(45, e); }
@@ -2476,7 +2255,7 @@ function updatePlaying(dt) {
   } else if (player.dying && player.alive) {
     player.dyingUpdate(dt);
   }
-  const depthMul = (0.7 + m.depth * 0.06) * heatDmg(run.heat);
+  const depthMul = 0.7 + m.depth * 0.06;
   for (const list of [allies, enemies]) {
     for (const e of list) {
       if (!e.alive) continue;
@@ -2509,20 +2288,14 @@ function updatePlaying(dt) {
   }
   if (!m.done && live && m.t > 3) {
     const hostiles = enemies.filter(validTarget);
-    let finished = false;
-    if (m.type === 'intercept') {
-      if (!hostiles.some(e => e.bomber)) {
-        finished = true;
-        if (hostiles.length) { hostiles.forEach(e => e.remove()); popText('The escorts turned for home'); }
-      }
-    } else if (m.type === 'survival') finished = hostiles.length === 0 && !m.queue.length;
-    else if (m.type !== 'boss') finished = hostiles.length === 0;
-    if (finished && m.type === 'survival') { m.done = true; m.doneT = 2.4; slowmoT = 1.2; flashMsg('WAVE ' + run.wave + ' CLEARED', plural(run.wave + 1, 'fighter', 'fighters') + ' next', 2.2); }
-    else if (finished) { m.done = true; m.doneT = 2.4; slowmoT = 1.2; flashMsg('MISSION COMPLETE', m.type === 'intercept' ? m.bombersDown + ' of ' + m.bombers + ' bombers stopped' : '', 2.2); }
+    if (hostiles.length === 0 && !m.queue.length) {
+      const next = run.wave + 1;
+      m.done = true; m.doneT = 2.4; slowmoT = 1.2;
+      flashMsg('WAVE ' + run.wave + ' CLEARED', plural(next, 'fighter', 'fighters') + (next % BOSS_EVERY === 0 ? ' and a boss' : '') + ' next', 2.2);
+    }
   }
-  if (m.done && !run.over) { m.doneT -= dt; if (m.doneT <= 0) (run.survival ? survivalWaveDone : completeMission)(); }
-  if (run.victoryT > 0) { run.victoryT -= dt; if (run.victoryT <= 0 && !run.over) endRun('victory'); }
-  if (!live && !run.bossDown && !m.done) {
+  if (m.done && !run.over) { m.doneT -= dt; if (m.doneT <= 0) survivalWaveDone(); }
+  if (!live && !m.done) {
     run.deathT += dt;
     if (run.deathT > 3 && !run.over) endRun('dead');
   }
@@ -2629,9 +2402,9 @@ function drawHud(dt) {
 
   // DOM readouts
   const alive = enemies.filter(e => e.alive && !e.dying).length;
-  hEls.wave.textContent = run.survival ? 'WAVE ' + run.wave : NODE_INFO[run.mission.type].label.toUpperCase();
+  hEls.wave.textContent = 'WAVE ' + run.wave;
   hEls.en.textContent = objectiveText(alive);
-  hEls.kills.textContent = run.survival ? run.kills + ' kills · best wave ' + (save.survBest[era.loc.id] || 0) : run.req + ' requisition · ' + run.kills + ' kills';
+  hEls.kills.textContent = run.kills + ' kills · best wave ' + (save.survBest[era.loc.id] || 0);
   const hf = player.hp / player.maxHp;
   hEls.hull.style.width = (hf * 100) + '%'; hEls.hull.style.background = hf < 0.3 ? red : '';
   hEls.hullN.textContent = Math.ceil(player.hp);
@@ -2640,9 +2413,10 @@ function drawHud(dt) {
   hEls.alt.textContent = Math.max(0, Math.round(player.pos.y));
   hEls.thr.textContent = player.throttle > 1.001 ? 'AB' : Math.round(player.throttle * 100);
   hEls.g.textContent = Math.max(0, player.g).toFixed(1);
-  let wp = '<div>GUNS <b>' + era.short.toUpperCase() + '</b></div>';
-  if (player.s.missiles) wp += '<div>MISSILES <b>' + run.missiles + '/' + player.s.missiles + '</b>' + (run.missiles < player.s.missiles ? ' · ' + Math.ceil(player.s.reload - run.reloadT) + 's' : '') + '</div><div>' + (lockTarget ? (locked ? '<b>LOCKED</b>' : 'LOCKING…') : 'NO TARGET') + '</div>';
-  if (run.mods.rockets) wp += '<div>ROCKETS <b>' + (run.rocketCd <= 0 ? 'READY' : Math.ceil(run.rocketCd) + 's') + '</b></div>';
+  const st = player.s, heatTxt = run.overheat ? '<b style="color:' + red + '">OVERHEAT</b>' : '<b>' + Math.round(run.heat * 100) + '%</b>';
+  let wp = '<div>GUNS <b>' + era.mounts.length + '×</b> · HEAT ' + heatTxt + '</div>';
+  wp += '<div>' + era.sec.short + ' <b>' + run.charges + '/' + st.charges + '</b>' + (run.charges < st.charges ? ' · ' + Math.ceil(st.reload - run.reloadT) + 's' : '') + '</div>';
+  if (st.secId === 'missile') wp += '<div>' + (lockTarget ? (locked ? '<b>LOCKED</b>' : 'LOCKING…') : 'NO TARGET') + '</div>';
   wp += '<div>FLARES <b>' + run.flares + '</b></div>';
   if (allies.length) wp += '<div>WINGMEN <b>' + allies.filter(a => a.alive && !a.dying).length + '</b></div>';
   if (hEls.weap.innerHTML !== wp) hEls.weap.innerHTML = wp;
@@ -2686,6 +2460,12 @@ function drawHud(dt) {
     hud.beginPath(); hud.arc(rx, ry, 14, 0, Math.PI * 2); hud.stroke();
     hud.beginPath(); hud.moveTo(rx - 24, ry); hud.lineTo(rx - 17, ry); hud.moveTo(rx + 17, ry); hud.lineTo(rx + 24, ry); hud.moveTo(rx, ry + 17); hud.lineTo(rx, ry + 24); hud.stroke();
     hud.fillStyle = paper; hud.fillRect(rx - 1, ry - 1, 2, 2);
+    // gun heat, under the reticle once the guns warm up
+    if (run.heat > 0.02) {
+      hud.fillStyle = 'rgba(0,0,0,0.45)'; hud.fillRect(rx - 22, ry + 30, 44, 4);
+      hud.fillStyle = run.overheat ? red : run.heat > 0.7 ? amber : paper; hud.fillRect(rx - 22, ry + 30, 44 * run.heat, 4);
+      if (run.overheat) { hud.fillStyle = red; hud.fillText('OVERHEAT', rx, ry + 48); }
+    }
     if (hitMarkerT > 0) {
       hud.strokeStyle = amber; hud.lineWidth = 2.2;
       hud.beginPath(); hud.moveTo(rx - 10, ry - 10); hud.lineTo(rx - 5, ry - 5); hud.moveTo(rx + 10, ry - 10); hud.lineTo(rx + 5, ry - 5); hud.moveTo(rx - 10, ry + 10); hud.lineTo(rx - 5, ry + 5); hud.moveTo(rx + 10, ry + 10); hud.lineTo(rx + 5, ry + 5); hud.stroke();
@@ -2722,7 +2502,7 @@ function drawHud(dt) {
       const b = (x, y, dx, dy) => { hud.beginPath(); hud.moveTo(x + dx * s * 0.45, y); hud.lineTo(x, y); hud.lineTo(x, y + dy * s * 0.45); hud.stroke(); };
       b(p.x - s, p.y - s, 1, 1); b(p.x + s, p.y - s, -1, 1); b(p.x - s, p.y + s, 1, -1); b(p.x + s, p.y + s, -1, -1);
       hud.fillStyle = col;
-      hud.fillText((d >= 1000 ? (d / 1000).toFixed(1) + 'km' : Math.round(d) + 'm') + (e.boss ? ' BOSS' : e.bomber ? ' BOMBER' : e.ace ? ' ACE' : e.vdef ? ' ' + e.vdef.tag : ''), p.x, p.y + s + 14);
+      hud.fillText((d >= 1000 ? (d / 1000).toFixed(1) + 'km' : Math.round(d) + 'm') + (e.boss ? ' BOSS' : e.ace ? ' ACE' : e.vdef ? ' ' + e.vdef.tag : ''), p.x, p.y + s + 14);
       // health tick
       hud.fillStyle = 'rgba(0,0,0,0.5)'; hud.fillRect(p.x - s, p.y - s - 7, s * 2, 3);
       hud.fillStyle = col; hud.fillRect(p.x - s, p.y - s - 7, s * 2 * (e.hp / e.maxHp), 3);
@@ -2818,7 +2598,7 @@ function drawHud(dt) {
 }
 
 // ================= screens =================
-function showScreen(id) { ['hangar', 'perks', 'map', 'debrief', 'pause'].forEach(s => { $(s).hidden = s !== id; }); }
+function showScreen(id) { ['hangar', 'perks', 'debrief', 'pause'].forEach(s => { $(s).hidden = s !== id; }); }
 function setPaused(p) {
   if (p && state === 'playing') { state = 'paused'; showScreen('pause'); setEngine(false, 0, 0); if (document.exitPointerLock) document.exitPointerLock(); }
   else if (!p && state === 'paused') { state = 'playing'; showScreen(null); }
@@ -2835,7 +2615,7 @@ function leaveCombat() {
   if (!showcase) setupShowcase();
 }
 
-// ---- generic card picker used for loot, depot, airfield and signals ----
+// ---- the card picker used for perks between waves ----
 function showChoice(o) {
   state = 'choice'; showScreen('perks');
   $('perkTitle').textContent = o.title;
@@ -2856,198 +2636,8 @@ function showChoice(o) {
   (o.buttons || []).forEach(bt => { const b = document.createElement('button'); b.className = 'btn' + (bt.primary ? ' primary' : ''); b.textContent = bt.label; b.addEventListener('click', bt.onClick); btns.appendChild(b); });
   setTimeout(() => { const f = list.querySelector('.perk:not(:disabled)'); if (f) f.focus(); }, 50);
 }
-function randomItem(minRarity) {
-  if (!minRarity && Math.random() < ws('luck')) minRarity = 'rare';
-  const pool = ITEMS.filter(it => minRarity !== 'rare' || it.r !== 'common');
-  let r = Math.random() * pool.reduce((a, it) => a + RARITY[it.r].w, 0);
-  for (const it of pool) { r -= RARITY[it.r].w; if (r <= 0) return it; }
-  return pool[0];
-}
-function rollItems(n, minRarity) { const out = []; let guard = 0; while (out.length < n && guard++ < 50) { const it = randomItem(minRarity); if (!out.includes(it)) out.push(it); } return out; }
-function itemCard(it) {
-  const have = run.items[it.id] || 0;
-  return { k: RARITY[it.r].label + (have ? ' · you have ' + have : ''), t: it.name, d: it.d, cls: 'r-' + it.r };
-}
-function addItem(id) {
-  run.items[id] = (run.items[id] || 0) + 1;
-  refreshMods();
-  if (id === 'plate') run.hull += 25;
-  run.hull = Math.min(run.hull, maxHull());
-}
-
-function completeMission() {
-  const m = run.mission, node = m.node;
-  const max = player.maxHp;
-  run.hull = clamp(Math.max(player.hp, 1) + max * ws('repair'), 1, max);
-  let req = ({ patrol: 35, elite: 55, intercept: 15 + 18 * m.bombersDown })[m.type] + m.depth * 5;
-  req = Math.round(req * (m.opts.reqMul || 1) * (1 + ws('req')));
-  run.req += req;
-  run.cleared++;
-  run.pointsMissions += Math.ceil((node.c + 1) / 2);
-  if (m.type === 'elite') run.pointsElite += 2;
-  run.points = run.pointsMissions + run.pointsElite;
-  advanceTo(node);
-  leaveCombat();
-  let note = '+' + req + ' requisition';
-  if (m.opts.reward === 'wing') { addItem('wing'); note += '. The pilot you covered joins as a wingman'; }
-  offerLoot(m.type === 'elite' ? 'rare' : null, note);
-}
-function offerLoot(minRarity, note) {
-  let picks = rollItems(3, minRarity);
-  const render = () => showChoice({
-    title: 'Mission complete',
-    sub: note + '. Pick one piece of gear for the rest of this sortie.',
-    cards: picks.map(it => Object.assign(itemCard(it), { onPick: () => { addItem(it.id); showMap(); } })),
-    buttons: [
-      run.rerolls > 0 && { label: 'Reroll (' + run.rerolls + ' left)', onClick: () => { run.rerolls--; picks = rollItems(3, minRarity); render(); } },
-      { label: 'Skip for 20 requisition', onClick: () => { run.req += 20; showMap(); } },
-    ].filter(Boolean),
-  });
-  render();
-}
-function showDepot(node) {
-  const stock = rollItems(2).concat(rollItems(1, 'rare'));
-  const sold = new Set();
-  const render = () => showChoice({
-    title: 'Depot',
-    sub: 'You have ' + run.req + ' requisition and ' + Math.round(run.hull) + ' / ' + maxHull() + ' hull.',
-    cards: stock.map((it, i) => {
-      const price = Math.round(RARITY[it.r].price * (1 - Math.min(0.5, ws('discount'))));
-      return Object.assign(itemCard(it), { foot: sold.has(i) ? 'Sold' : price + ' requisition', disabled: sold.has(i) || run.req < price, onPick: () => { run.req -= price; addItem(it.id); sold.add(i); render(); } });
-    }).concat([{ k: 'Service', t: 'Patch the hull', d: 'Repair 35 hull.', foot: '30 requisition', disabled: run.req < 30 || run.hull >= maxHull(), onPick: () => { run.req -= 30; run.hull = Math.min(maxHull(), run.hull + 35); render(); } }]),
-    buttons: [{ label: 'Leave the depot', primary: true, onClick: () => { advanceTo(node); showMap(); } }],
-  });
-  render();
-}
-function showAirfield(node) {
-  const heal = Math.round(maxHull() * 0.45);
-  showChoice({
-    title: 'Forward airfield',
-    sub: 'The ground crew has time for one job. Hull ' + Math.round(run.hull) + ' / ' + maxHull() + '.',
-    cards: [
-      { k: 'Rest', t: 'Repair', d: 'Repair ' + heal + ' hull.', onPick: () => { run.hull = Math.min(maxHull(), run.hull + heal); advanceTo(node); showMap(); } },
-      { k: 'Workshop', t: 'Overhaul', d: '+15 max hull for the rest of this sortie, and repair 15.', onPick: () => { run.bonus.hp += 15; run.hull = Math.min(maxHull(), run.hull + 15); advanceTo(node); showMap(); } },
-      { k: 'Armorer', t: 'Rework the guns', d: '+10% gun damage for the rest of this sortie.', onPick: () => { run.bonus.dmg *= 1.1; advanceTo(node); showMap(); } },
-    ],
-  });
-}
-const EVENTS = [
-  { t: 'Downed pilot', d: 'A friendly pilot is in a raft below an enemy patrol.', opts: [
-    { k: 'Risky', t: 'Fly cover', d: 'Fight an elite squadron now. Win and the pilot joins you as a wingman.', go: n => { startMission('elite', n, { reward: 'wing' }); return 'mission'; } },
-    { k: 'Safe', t: 'Drop a raft and move on', d: 'Gain 25 requisition.', go: () => { run.req += 25; return 'You dropped a raft and logged the position. +25 requisition.'; } } ] },
-  { t: 'Black-market fuel', d: 'A smuggler offers high-octane fuel of uncertain quality.', opts: [
-    { k: 'Trade-off', t: 'Buy it', d: '+20% thrust for the rest of the sortie, but lose 15 max hull.', go: () => { run.bonus.thrust *= 1.2; run.bonus.hp -= 15; run.hull = Math.min(run.hull, maxHull()); return 'The engine runs hot and fast. +20% thrust, -15 max hull.'; } },
-    { k: 'Safe', t: 'Refuse', d: 'Nothing happens.', go: () => 'You sent the smuggler away.' } ] },
-  { t: 'Wrecked supply plane', d: 'A cargo plane went down in the hills. Some crates look intact.', opts: [
-    { k: 'Risky', t: 'Land and search it', d: 'Get a random rare item, but take 25 hull damage getting out.', go: () => { const it = randomItem('rare'); addItem(it.id); run.hull = Math.max(1, run.hull - 25); return 'You found ' + it.name + ' and took fire on the way out.'; } },
-    { k: 'Safe', t: 'Mark it for salvage', d: 'Gain 50 requisition.', go: () => { run.req += 50; return 'A salvage team will thank you. +50 requisition.'; } } ] },
-  { t: 'Ground crew volunteers', d: 'A crew at a forward strip offers to work through the night.', opts: [
-    { k: 'Repair', t: 'Full repair', d: 'Repair to full hull.', go: () => { run.hull = maxHull(); return 'Fully repaired.'; } },
-    { k: 'Upgrade', t: 'Rig the guns', d: '+15% gun damage for the rest of the sortie.', go: () => { run.bonus.dmg *= 1.15; return 'Guns reworked. +15% damage.'; } } ] },
-  { t: 'Radio intercept', d: 'You decoded the enemy’s patrol schedule.', opts: [
-    { k: 'Risky', t: 'Ambush them', d: 'Fight a patrol now for double requisition.', go: n => { startMission('patrol', n, { reqMul: 2 }); return 'mission'; } },
-    { k: 'Safe', t: 'Sell the codes', d: 'Gain 35 requisition.', go: () => { run.req += 35; return 'Intelligence paid well. +35 requisition.'; } } ] },
-  { t: 'Quartermaster’s bet', d: 'The quartermaster bets you can’t pick the right crate.', opts: [
-    { k: 'Gamble', t: 'Take the bet', d: 'Half the time you get a legendary item. Otherwise you lose 40 requisition.', go: () => {
-      if (Math.random() < 0.5) { const l = ITEMS.filter(i => i.r === 'legendary'); const it = l[Math.floor(Math.random() * l.length)]; addItem(it.id); return 'You won ' + it.name + '.'; }
-      run.req = Math.max(0, run.req - 40); return 'Wrong crate. -40 requisition.'; } },
-    { k: 'Safe', t: 'Walk away', d: 'Nothing happens.', go: () => 'You kept your requisition.' } ] },
-];
-function showSignal(node) {
-  const ev = EVENTS[Math.floor(Math.random() * EVENTS.length)];
-  showChoice({
-    title: ev.t, sub: ev.d,
-    cards: ev.opts.map(o => ({ k: o.k, t: o.t, d: o.d, onPick: () => { const res = o.go(node); if (res === 'mission') return; run.note = res; advanceTo(node); showMap(); } })),
-  });
-}
-function enterNode(node) {
-  run.note = '';
-  if (COMBAT.includes(node.type)) startMission(node.type, node, {});
-  else if (node.type === 'depot') showDepot(node);
-  else if (node.type === 'airfield') showAirfield(node);
-  else showSignal(node);
-}
-
-function showMap() {
-  state = 'map'; showScreen('map');
-  $('hud').hidden = true; $('touch').hidden = true;
-  if (!showcase) setupShowcase();
-  $('mapEra').innerHTML = '<span>' + era.name + ' · ' + era.plane.name + '</span>';
-  $('mapNote').textContent = run.note || '';
-  $('runStats').innerHTML = [['Hull', Math.round(run.hull) + ' / ' + maxHull()], ['Requisition', run.req], ['Missions', run.cleared], ['Skill points', run.points]].map(([l, v]) => '<div><b>' + v + '</b><span>' + l + '</span></div>').join('');
-  const view = $('mapView'); view.innerHTML = '';
-  const reach = reachable();
-  const xy = n => ({ x: (n.c + 0.5) / MAP_COLS * 100, y: (n.r + 0.5) / n.rows * 100 });
-  const svgNS = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(svgNS, 'svg'); svg.setAttribute('viewBox', '0 0 100 100'); svg.setAttribute('preserveAspectRatio', 'none');
-  run.map.forEach((col, c) => col.forEach(n => n.next.forEach(i => {
-    const m = run.map[c + 1][i], a = xy(n), b = xy(m);
-    const line = document.createElementNS(svgNS, 'line');
-    line.setAttribute('x1', a.x); line.setAttribute('y1', a.y); line.setAttribute('x2', b.x); line.setAttribute('y2', b.y);
-    line.setAttribute('vector-effect', 'non-scaling-stroke');
-    const here = run.col === n.c && run.row === n.r;
-    line.setAttribute('class', n.done && m.done ? 'walked' : here && reach.includes(m) ? 'open' : '');
-    svg.appendChild(line);
-  })));
-  view.appendChild(svg);
-  run.map.forEach(col => col.forEach(n => {
-    const p = xy(n), canGo = reach.includes(n), here = run.col === n.c && run.row === n.r;
-    const b = document.createElement('button');
-    b.className = 'mnode' + (canGo ? ' reach' : '') + (n.done ? ' done' : '') + (here ? ' here' : '') + (!canGo && !n.done && n.c <= run.col ? ' far' : '');
-    b.style.left = p.x + '%'; b.style.top = p.y + '%';
-    b.disabled = !canGo;
-    const info = NODE_INFO[n.type];
-    b.innerHTML = '<span class="gl g-' + n.type + '"></span><span>' + info.label + '</span>' + (n.type === 'boss' ? '<small>' + era.boss.name + '</small>' : '<small>' + info.desc + '</small>');
-    b.addEventListener('click', () => { if (reachable().includes(n)) enterNode(n); });
-    view.appendChild(b);
-  }));
-  const chips = $('itemChips'); chips.innerHTML = '';
-  const owned = ITEMS.filter(it => run.items[it.id]);
-  if (!owned.length) chips.innerHTML = '<p class="note">No gear yet. Win missions to pick some, or buy it at a depot.</p>';
-  owned.forEach(it => { const c = document.createElement('span'); c.className = 'chip r-' + it.r; c.title = it.d; c.textContent = it.name; if (run.items[it.id] > 1) { const b = document.createElement('b'); b.textContent = '×' + run.items[it.id]; c.appendChild(b); } chips.appendChild(c); });
-  setTimeout(() => { const f = view.querySelector('.mnode.reach'); if (f) f.focus(); }, 50);
-}
-let abandonArm = false;
-$('mapAbandon').addEventListener('click', () => {
-  if (!abandonArm) { abandonArm = true; $('mapAbandon').textContent = 'Click again to end the sortie and keep your points'; setTimeout(() => { abandonArm = false; $('mapAbandon').textContent = 'Abandon sortie'; }, 3000); return; }
-  abandonArm = false; $('mapAbandon').textContent = 'Abandon sortie'; endRun('bail');
-});
-
-function endRun(reason) {
-  if (!run || run.over) return;
-  if (run.survival) return endSurvival(reason);
-  run.over = true;
-  const victory = reason === 'victory', heat = run.heat, loc = era.loc.id;
-  const hadSkins = new Set(A.SKINS.filter(skinOwned).map(sk => sk.id));
-  if (victory) { run.cleared++; run.points += 6 + heat; }
-  const pts = run.points, threat = era.loc.threat;
-  const credits = Math.round((run.kills * 12 + run.cleared * 45 + (victory ? 400 : 0)) * (0.8 + 0.2 * threat) * (1 + 0.25 * heat) * (1 + ws('credits')));
-  save.points += pts; save.credits += credits; save.runs++; save.totalKills += run.kills;
-  save.best = Math.max(save.best, run.cleared);
-  let unlockNote = '';
-  if (victory) {
-    save.bosses[loc] = true;
-    if (heat > heatWon(loc)) { save.heatWon[loc] = heat; if (heat < HEAT_MAX) unlockNote += ' Heat ' + (heat + 1) + ' is open at ' + era.loc.name + '.'; }
-    const next = LOC_ORDER[LOC_ORDER.indexOf(loc) + 1];
-    if (next && !save.locs[next]) { save.locs[next] = true; unlockNote += ' You unlocked ' + LOCS[next].name + '.'; }
-  }
-  const fresh = A.SKINS.filter(sk => skinOwned(sk) && !hadSkins.has(sk.id));
-  if (fresh.length) unlockNote += ' New paint: ' + fresh.map(sk => sk.name).join(', ') + '.';
-  persist();
-  $('dbTitle').textContent = victory ? 'Sortie complete' : reason === 'bail' ? 'Sortie abandoned' : 'Shot down';
-  const gear = ITEMS.filter(it => run.items[it.id]).map(it => it.name + (run.items[it.id] > 1 ? ' ×' + run.items[it.id] : ''));
-  $('dbSub').textContent = (victory ? 'The ' + era.boss.name + ' is down.' + unlockNote : 'You cleared ' + run.cleared + ' of ' + MAP_COLS + ' missions over ' + era.name + (heat ? ' at heat ' + heat : '') + '.' + unlockNote) + (gear.length ? ' Gear: ' + gear.join(', ') + '.' : '');
-  $('dbStats').innerHTML = [['Missions', run.cleared], ['Kills', run.kills], ['Credits', '+' + credits.toLocaleString()], ['Skill points', '+' + pts]].map(([l, v]) => '<div><b>' + v + '</b><span>' + l + '</span></div>').join('');
-  const parts = [run.pointsMissions + ' from missions'];
-  if (run.pointsElite) parts.push(run.pointsElite + ' from elites');
-  if (victory) parts.push((6 + heat) + ' from the boss');
-  $('dbPts').textContent = 'Points: ' + parts.join(' + ') + '. You now have ' + save.points + ' skill points and ' + save.credits.toLocaleString() + ' credits.' + (heat ? ' Heat ' + heat + ' paid +' + 25 * heat + '% credits.' : ' Harder locations and higher heat pay more.');
-  leaveCombat();
-  state = 'debrief'; showScreen('debrief');
-}
-
 $('dbHangar').addEventListener('click', toHangar);
-$('dbAgain').addEventListener('click', () => (run && run.survival ? startSurvival() : startRun()));
+$('dbAgain').addEventListener('click', startSurvival);
 
 function toHangar() {
   clearCombat();
@@ -3074,32 +2664,22 @@ function selectPlane(id) {
   composeEra(); setupShowcase(); renderHangar();
 }
 
-// ---- heat: each boss you beat at a location opens the next heat level there ----
-const HEAT_MAX = 5;
-const heatWon = id => save.heatWon[id] == null ? -1 : save.heatWon[id];
-const heatOpen = id => Math.min(HEAT_MAX, heatWon(id) + 1);
-const selHeat = () => clamp(save.selHeat[save.loc] || 0, 0, heatOpen(save.loc));
-const heatHp = h => 1 + 0.15 * h, heatDmg = h => 1 + 0.12 * h;
-function heatText(h) {
-  if (!h) return 'Standard threat. Down the boss here to open heat 1.';
-  return 'Enemies have +' + Math.round((heatHp(h) - 1) * 100) + '% hull, deal +' + Math.round((heatDmg(h) - 1) * 100) + '% damage, fly sharper and come in bigger groups. Pays +' + 25 * h + '% credits and +' + h + ' boss skill points.';
-}
-
 // ---- paint: skins are bought once and can then go on any jet ----
 const skinEarned = s => {
   const u = s.unlock; if (!u) return false;
   if (u.kind === 'boss') return !!save.bosses[u.loc];
   if (u.kind === 'kills') return save.totalKills >= u.n;
-  return LOC_ORDER.some(id => heatWon(id) >= u.lvl);
+  return bestWave() >= u.n;
 };
+const bestWave = () => Math.max(0, ...LOC_ORDER.map(id => save.survBest[id] || 0));
 const skinOwned = s => s.id === 'factory' || !!save.skins[s.id] || skinEarned(s);
 const skinFor = pid => { const s = A.SKIN_BY_ID[save.skin[pid]]; return s && skinOwned(s) ? s.id : 'factory'; };
 function skinNeed(s) {
   if (s.price) return s.price.toLocaleString() + ' credits';
   const u = s.unlock;
-  if (u.kind === 'boss') return 'Down the ' + LOCS[u.loc].boss.name.toLowerCase();
+  if (u.kind === 'boss') return 'Down the ' + LOCS[u.loc].boss.name.toLowerCase() + ' on wave ' + BOSS_EVERY;
   if (u.kind === 'kills') return save.totalKills + ' / ' + u.n + ' kills';
-  return 'Down a boss at heat ' + u.lvl;
+  return 'Best wave ' + bestWave() + ' / ' + u.n;
 }
 const swatchCache = {};
 const swatchFor = (sid, pid) => swatchCache[sid + pid] || (swatchCache[sid + pid] = A.swatch(sid, PLANES[pid].livery, 132));
@@ -3157,14 +2737,15 @@ function planeTop(pid, sid) {
   return (thumbCache[key] = { src: snapshot(m, planCam, planW, planH), at: p => [0.5 + (p[0] - ctr.x) / (2 * hw), 0.5 + (p[2] - ctr.z) / (2 * hh)] });
 }
 
-let hangarTab = 'sortie', previewSkin = null, selNode = 'core';
+let hangarTab = 'survival', previewSkin = null, perkArm = null;
 function setTab(t) {
   if (hangarTab === t) return;
   hangarTab = t;
   if (previewSkin) { previewSkin = null; setupShowcase(); }
   renderHangar();
 }
-['sortie', 'survival', 'hangar', 'loadout', 'skills'].forEach((t, i, all) => {
+const TABS = ['survival', 'hangar', 'loadout', 'perks'];
+TABS.forEach((t, i, all) => {
   const b = $('tab-' + t);
   b.addEventListener('click', () => setTab(t));
   b.addEventListener('keydown', e => {
@@ -3173,72 +2754,47 @@ function setTab(t) {
   });
 });
 
-const KEYS_MOUSE = [['Mouse', 'Aim. The jet flies toward the circle. In the cockpit it moves the stick'], ['V (hold)', 'Free look'], ['W / S', 'Throttle. Keep holding W at 100% for afterburner'], ['A / D', 'Roll (overrides the aim)'], ['Q / E', 'Rudder'], ['↑ / ↓', 'Pitch override'], ['LMB · Space', 'Guns'], ['RMB · R', 'Missile, after lock-on'], ['F · MMB', 'Flares'], ['C', 'Chase / cockpit view'], ['P · Esc', 'Pause'], ['M', 'Mute']];
-const KEYS_DIRECT = [['W / S', 'Pitch (or ↑ ↓)'], ['A / D', 'Roll (or ← →)'], ['Q / E', 'Rudder'], ['Shift / X', 'Throttle. Hold Shift at 100% for afterburner'], ['Space · LMB', 'Guns'], ['R · RMB', 'Missile, after lock-on'], ['F', 'Flares'], ['V (hold) + mouse', 'Free look'], ['C', 'Chase / cockpit view'], ['P · Esc', 'Pause'], ['M', 'Mute']];
+const KEYS_MOUSE = [['Mouse', 'Aim. The jet flies toward the circle. In the cockpit it moves the stick'], ['V (hold)', 'Free look'], ['W / S', 'Throttle. Keep holding W at 100% for afterburner'], ['A / D', 'Roll (overrides the aim)'], ['Q / E', 'Rudder'], ['↑ / ↓', 'Pitch override'], ['LMB · Space', 'Guns'], ['RMB · R', 'Secondary weapon. Missiles need a lock first'], ['F · MMB', 'Flares'], ['C', 'Chase / cockpit view'], ['P · Esc', 'Pause'], ['M', 'Mute']];
+const KEYS_DIRECT = [['W / S', 'Pitch (or ↑ ↓)'], ['A / D', 'Roll (or ← →)'], ['Q / E', 'Rudder'], ['Shift / X', 'Throttle. Hold Shift at 100% for afterburner'], ['Space · LMB', 'Guns'], ['R · RMB', 'Secondary weapon. Missiles need a lock first'], ['F', 'Flares'], ['V (hold) + mouse', 'Free look'], ['C', 'Chase / cockpit view'], ['P · Esc', 'Pause'], ['M', 'Mute']];
 function renderHangar() {
-  ['sortie', 'survival', 'hangar', 'loadout', 'skills'].forEach(t => { $('tab-' + t).setAttribute('aria-selected', hangarTab === t ? 'true' : 'false'); $('tab-' + t).tabIndex = hangarTab === t ? 0 : -1; $('pane-' + t).hidden = hangarTab !== t; });
-  document.querySelector('#hangar .cols').classList.toggle('wide', hangarTab === 'skills');
-  $('ptsBadge').textContent = save.points; $('ptsBadge').hidden = !save.points;
-  const h = selHeat(), sk = A.SKIN_BY_ID[previewSkin || skinFor(era.plane.id)];
+  TABS.forEach(t => { $('tab-' + t).setAttribute('aria-selected', hangarTab === t ? 'true' : 'false'); $('tab-' + t).tabIndex = hangarTab === t ? 0 : -1; $('pane-' + t).hidden = hangarTab !== t; });
+  const cheap = PERKS.filter(p => !perkOpen(p) && p.cost <= save.points).length;
+  $('ptsBadge').textContent = cheap; $('ptsBadge').hidden = !cheap;
+  const sk = A.SKIN_BY_ID[previewSkin || skinFor(era.plane.id)];
   $('heroName').textContent = era.plane.name;
-  $('heroSub').textContent = sk.name + (previewSkin ? ' · preview' : '') + ' · ' + era.loc.name + (hangarTab === 'survival' ? ' · survival' : ' · heat ' + h);
-  $('wallet').innerHTML = [[save.credits.toLocaleString(), 'Credits'], [save.points, 'Skill points']].map(([v, l]) => '<div><b>' + v + '</b><span>' + l + '</span></div>').join('');
-  const surv = hangarTab === 'survival';
-  $('launch').querySelector('span').textContent = surv ? 'Launch survival' : 'Launch sortie';
-  $('launchEra').textContent = era.short + ' · ' + era.name.toUpperCase() + (surv ? ' · BEST WAVE ' + (save.survBest[save.loc] || 0) : h ? ' · HEAT ' + h : '');
-  const tiers = LOC_ORDER.reduce((a, id) => a + heatWon(id) + 1, 0);
-  $('record').innerHTML = [['Best run', save.best > WAVES ? 'Boss' : save.best], ['Kills', save.totalKills], ['Bosses', tiers + '/' + LOC_ORDER.length * (HEAT_MAX + 1)]].map(([l, v]) => '<div><b>' + v + '</b><span>' + l + '</span></div>').join('');
-  if (hangarTab === 'sortie') renderSortie();
-  else if (hangarTab === 'survival') renderSurvival();
+  $('heroSub').textContent = sk.name + (previewSkin ? ' · preview' : '') + ' · ' + era.loc.name;
+  $('wallet').innerHTML = [[save.credits.toLocaleString(), 'Credits'], [save.points, 'Medals']].map(([v, l]) => '<div><b>' + v + '</b><span>' + l + '</span></div>').join('');
+  $('launchEra').textContent = era.short + ' · ' + era.name.toUpperCase() + ' · BEST WAVE ' + (save.survBest[save.loc] || 0);
+  $('record').innerHTML = [['Best wave', bestWave()], ['Kills', save.totalKills], ['Bosses', LOC_ORDER.filter(id => save.bosses[id]).length + '/' + LOC_ORDER.length]].map(([l, v]) => '<div><b>' + v + '</b><span>' + l + '</span></div>').join('');
+  if (hangarTab === 'survival') renderSurvival();
   else if (hangarTab === 'hangar') renderAircraft();
   else if (hangarTab === 'loadout') renderLoadout();
-  else renderWeb();
+  else renderPerks();
   $('keysList').innerHTML = (mouseMode() ? KEYS_MOUSE : KEYS_DIRECT).map(([k, d]) => '<dt>' + k + '</dt><dd>' + d + '</dd>').join('');
   $('optCtlMouse').checked = mouseMode();
   $('optCtlKeys').checked = !mouseMode();
   $('optPull').checked = !!save.pullBack;
 }
-function renderLocs(el, prefix, tag) {
-  el.innerHTML = '';
+function renderSurvival() {
+  const el = $('survList'); el.innerHTML = '';
   LOC_ORDER.forEach((id, i) => {
-    const L = LOCS[id], open = !!save.locs[id], prev = LOCS[LOC_ORDER[i - 1]], won = heatWon(id);
-    const b = document.createElement('button'); b.className = 'era' + (open ? '' : ' locked'); b.id = prefix + id;
+    const L = LOCS[id], open = !!save.locs[id], prev = LOCS[LOC_ORDER[i - 1]], best = save.survBest[id] || 0;
+    const b = document.createElement('button'); b.className = 'era' + (open ? '' : ' locked'); b.id = 'sloc-' + id;
     b.setAttribute('aria-pressed', era.loc.id === id ? 'true' : 'false');
     b.disabled = !open;
-    let foot = '';
-    if (!open) foot = '<span class="cost">Down the ' + prev.boss.name.toLowerCase() + ' to open</span>';
-    else if (tag) foot = tag(id);
-    else if (won >= HEAT_MAX) foot = '<span class="tag">Mastered · heat 5 cleared</span>';
-    else if (won >= 0) foot = '<span class="tag">Heat ' + won + ' cleared</span>';
+    const foot = !open ? '<span class="cost">Down the ' + prev.boss.name.toLowerCase() + ' on wave ' + BOSS_EVERY + ' at ' + prev.name + ' to open</span>'
+      : '<span class="tag">' + (best ? 'Best: wave ' + best : 'Not flown yet') + (save.bosses[id] ? ' · boss down' : '') + '</span>';
     b.innerHTML = '<span class="yr">' + L.name + '</span><span class="nm">Threat ' + L.threat + ' · ' + ENEMY_JETS[L.enemy].name + 's</span><span class="bl">' + L.blurb + '</span>' + foot;
     b.addEventListener('click', () => selectLoc(id));
     el.appendChild(b);
   });
-}
-function renderSurvival() {
-  renderLocs($('survList'), 'sloc-', id => { const b = save.survBest[id] || 0; return '<span class="tag">' + (b ? 'Best: wave ' + b : 'Not flown yet') + '</span>'; });
-  $('survNote').textContent = 'You fly the ' + era.plane.name + ' with your skills from the web. Pick another jet in the Hangar tab.';
-}
-function renderSortie() {
-  renderLocs($('eraList'), 'loc-');
-  const h = selHeat(), top = heatOpen(save.loc), hl = $('heatList'); hl.innerHTML = '';
-  $('heatLoc').textContent = era.loc.name;
-  for (let lv = 0; lv <= HEAT_MAX; lv++) {
-    const b = document.createElement('button'); b.className = 'hb'; b.id = 'heat-' + lv;
-    b.setAttribute('aria-pressed', lv === h ? 'true' : 'false');
-    b.disabled = lv > top;
-    b.setAttribute('aria-label', 'Heat ' + lv + (lv > top ? ', locked' : ''));
-    b.innerHTML = lv + (heatWon(save.loc) >= lv ? '<i aria-hidden="true">✓</i>' : '');
-    b.addEventListener('click', () => { save.selHeat[save.loc] = lv; persist(); renderHangar(); const f = $('heat-' + lv); if (f) f.focus(); });
-    hl.appendChild(b);
-  }
-  $('heatNote').textContent = 'Heat ' + h + ': ' + heatText(h) + (top < HEAT_MAX ? ' Heat ' + (top + 1) + ' opens when you down the boss at heat ' + top + '.' : '');
+  $('survNote').textContent = 'You fly the ' + era.plane.name + ' with its ' + era.sec.name.toLowerCase() + ' and ' + plural(era.plane.perkSlots, 'perk slot', 'perk slots') + '. Pick another jet in the Hangar tab, and its guns in Loadout.';
 }
 function renderAircraft() {
   // the shop: stats are scaled against the best jet in the hangar
   const best = k => Math.max(...PLANE_ORDER.map(id => k(PLANES[id])));
   const turn = P => P.flight.gmax * 9.8 / P.flight.corner;
-  const bars = [['Speed', P => P.flight.maxSpeed], ['Turn', turn], ['Roll', P => P.flight.roll], ['Armor', P => P.hp], ['Payload', P => P.payload], ['Missiles', P => P.missiles]];
+  const bars = [['Speed', P => P.flight.maxSpeed], ['Turn', turn], ['Roll', P => P.flight.roll], ['Armor', P => P.hp], ['Payload', P => P.payload], ['Guns', P => P.maxGuns], ['Perks', P => P.perkSlots]];
   const pl = $('planeList'); pl.innerHTML = '';
   PLANE_ORDER.forEach(id => {
     const P = PLANES[id], owned = !!save.planes[id], afford = save.credits >= P.price;
@@ -3248,7 +2804,7 @@ function renderAircraft() {
     const stats = bars.map(([l, f]) => '<span>' + l + '</span><i><b style="width:' + Math.round(f(P) / best(f) * 100) + '%"></b></i>').join('');
     const foot = owned ? (era.plane.id === id ? '<span class="tag">Flying this one</span>' : '<span class="tag">Owned · click to fly</span>')
       : '<span class="cost">' + (afford ? 'Buy for ' : 'Costs ') + P.price.toLocaleString() + ' credits</span>';
-    b.innerHTML = '<img class="thumb" alt="" src="' + planeThumb(id, skinFor(id)) + '"><span class="pn">' + P.name + '</span><span class="pr">' + P.role + ' · ' + plural(P.hardpoints.length, 'hardpoint', 'hardpoints') + '</span><span class="bl">' + P.blurb + '</span><span class="stats">' + stats + '</span>' + foot;
+    b.innerHTML = '<img class="thumb" alt="" src="' + planeThumb(id, skinFor(id)) + '"><span class="pn">' + P.name + '</span><span class="pr">' + P.role + ' · ' + plural(P.maxGuns, 'gun', 'guns') + ' · ' + plural(P.perkSlots, 'perk slot', 'perk slots') + '</span><span class="bl">' + P.blurb + '</span><span class="stats">' + stats + '</span>' + foot;
     b.addEventListener('click', () => {
       if (!save.planes[id]) { if (save.credits < P.price) return; save.credits -= P.price; save.planes[id] = true; persist(); beep(990, 0.1, 0.08); }
       selectPlane(id);
@@ -3320,10 +2876,10 @@ function renderLoadout() {
     dg.appendChild(b);
   }
   $('loHp').textContent = hp.name + (hp.kind === 'pylon' ? ' · gun pods' : ' · cannons');
-  $('loWeight').textContent = 'Payload ' + r1(ls.weight) + ' / ' + P.payload;
+  $('loWeight').textContent = 'Guns ' + ls.guns + ' / ' + P.maxGuns + ' · payload ' + r1(ls.weight) + ' / ' + P.payload;
   // the gun list for this hardpoint; scales compare against the best gun of the same mount type
   const list = GUN_ORDER.filter(id => GUNS[id].mount === hp.kind), best = f => Math.max(...list.map(id => f(GUNS[id])));
-  const bars = [['Damage/s', g => g.rof * g.dmg, v => Math.round(v)], ['Per hit', g => g.dmg, v => r1(v)], ['Velocity', g => g.speed, v => v + ' m/s'], ['Weight', g => g.weight, v => r1(v)]];
+  const bars = [['Damage/s', g => g.rof * g.dmg, v => Math.round(v)], ['Per hit', g => g.dmg, v => r1(v)], ['Velocity', g => g.speed, v => v + ' m/s'], ['Fire time', g => 1 / g.heat, v => Math.round(v) + ' s'], ['Weight', g => g.weight, v => r1(v)]];
   const gl = $('loGuns'); gl.innerHTML = '';
   const others = Object.keys(lo).filter(k => k !== hp.id && lo[k]).length;
   const cards = [null].concat(list);
@@ -3339,14 +2895,15 @@ function renderLoadout() {
       return;
     }
     const allowed = P.guns.includes(gid), owned = gunOwned(gid);
-    const w = ls.weight - (lo[hp.id] ? GUNS[lo[hp.id]].weight : 0) + G.weight, heavy = w > P.payload + 1e-6;
+    const w = ls.weight - (lo[hp.id] ? GUNS[lo[hp.id]].weight : 0) + G.weight, heavy = w > P.payload + 1e-6, full = !lo[hp.id] && others >= P.maxGuns;
     let status, cls = '';
     if (on) { status = 'Fitted'; cls = ' on'; }
     else if (!allowed) status = 'Not on the ' + P.short;
+    else if (full) status = 'All ' + P.maxGuns + ' gun slots used';
     else if (heavy) status = 'Over payload by ' + r1(w - P.payload);
     else if (!owned) { status = gunArm === gid ? 'Click again to buy for ' + G.price.toLocaleString() : (save.credits >= G.price ? 'Buy and fit · ' : 'Costs ') + G.price.toLocaleString() + ' credits'; cls = ' cost'; }
     else status = 'Fit';
-    b.disabled = !on && (!allowed || heavy || (!owned && save.credits < G.price));
+    b.disabled = !on && (!allowed || full || heavy || (!owned && save.credits < G.price));
     const stats = bars.map(([l, f, fmt]) => '<span>' + l + '</span><i><b style="width:' + Math.round(f(G) / best(f) * 100) + '%"></b></i><em>' + fmt(f(G)) + '</em>').join('');
     b.innerHTML = '<span class="gn">' + G.name + '</span><span class="gk">' + G.kind + (G.drag ? ' · −' + pc(G.drag) + ' top speed' : '') + '</span><span class="gd">' + G.d + '</span><span class="stats">' + stats + '</span><span class="gs' + cls + '">' + status + '</span>';
     b.addEventListener('click', () => {
@@ -3361,21 +2918,47 @@ function renderLoadout() {
     });
     gl.appendChild(b);
   });
+  // secondary weapon: one per jet
+  const sl = $('loSec'); sl.innerHTML = '';
+  SEC_ORDER.forEach(id => {
+    const S = SECONDARIES[id], on = era.secId === id, owned = secOwned(id), b = document.createElement('button');
+    const ch = S.charges || Math.ceil(P.missiles / 2.5);
+    b.className = 'gun' + (gunArm === 'sec:' + id ? ' armed' : ''); b.id = 'sec-' + id;
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    let status = 'Fit', cls = '';
+    if (on) { status = 'Fitted'; cls = ' on'; }
+    else if (!owned) { status = gunArm === 'sec:' + id ? 'Click again to buy for ' + S.price.toLocaleString() : (save.credits >= S.price ? 'Buy and fit · ' : 'Costs ') + S.price.toLocaleString() + ' credits'; cls = ' cost'; }
+    b.disabled = !on && !owned && save.credits < S.price;
+    b.innerHTML = '<span class="gn">' + S.name + '</span><span class="gk">' + S.kind + ' · ' + plural(ch, 'charge', 'charges') + ' · ' + S.cd + ' s each</span><span class="gd">' + S.d + '</span><span class="gs' + cls + '">' + status + '</span>';
+    b.addEventListener('click', () => {
+      if (on || b.disabled) return;
+      if (!owned) {
+        if (gunArm !== 'sec:' + id) { gunArm = 'sec:' + id; renderHangar(); const f = $('sec-' + id); if (f) f.focus(); return; }
+        if (save.credits < S.price) return;
+        save.credits -= S.price; save.secs[id] = true; beep(990, 0.1, 0.08);
+      } else beep(880, 0.06, 0.06);
+      save.secondary[pid] = id; gunArm = null; persist(); composeEra(); renderHangar();
+      const f = $('sec-' + id); if (f) f.focus();
+    });
+    sl.appendChild(b);
+  });
   // spec sheet: the jet as you have fitted it
   $('loFor').textContent = P.short;
   const F = P.flight, sign = v => (v > 0.0005 ? '+' : v < -0.0005 ? '−' : '±') + pc(Math.abs(v));
   const fx = v => '<span class="' + (v > 0.0005 ? 'up' : v < -0.0005 ? 'dn' : '') + '">' + sign(v) + '</span>';
   const kinds = k => P.hardpoints.filter(h => h.kind === k).length;
   const spec = [
-    ['Guns fitted', ls.guns + ' of ' + P.hardpoints.length, kinds('bay') + ' bays · ' + kinds('pylon') + ' pylons'],
-    ['Firepower', Math.round(ls.dps) + ' dmg/s', 'Before skills and gear'],
+    ['Guns fitted', ls.guns + ' of ' + P.maxGuns, P.hardpoints.length + ' hardpoints: ' + kinds('bay') + ' bays · ' + kinds('pylon') + ' pylons'],
+    ['Firepower', Math.round(ls.dps) + ' dmg/s', 'Before perks'],
+    ['Gun heat', r1(1 / ls.heat) + ' s of fire', 'Then ' + r1((1 - HEAT_RESUME) / HEAT_COOL) + ' s to cool off'],
     ['Payload', r1(ls.weight) + ' / ' + P.payload, 'Factory fit ' + r1(loadWeight(pid, P.stock))],
     ['Handling', fx(ls.turn - 1) + ' turn', fx(ls.thrust - 1) + ' thrust · ' + fx(ls.speed - 1) + ' top speed'],
     ['Top speed', Math.round(F.maxSpeed * ls.speed * 3.6) + ' km/h', 'Afterburner pushes past it'],
     ['G limit', F.gmax + ' G', 'Corner speed ' + Math.round(F.corner * 3.6) + ' km/h'],
     ['Roll rate', Math.round(F.roll * 57.3 / 10) * 10 + '°/s', F.yaw >= 0.5 ? 'Strong rudder' : 'Light rudder'],
     ['Hull', P.hp, P.stallAoa ? 'Keeps nose authority at high AoA' : 'Standard airframe'],
-    ['Missiles', plural(missileSpec(P.missiles).missiles, 'charge', 'charges'), 'Each recharges in ' + Math.round(missileSpec(P.missiles).reload) + ' s · lock ' + P.lockTime + ' s'],
+    ['Secondary', era.sec.short.charAt(0) + era.sec.short.slice(1).toLowerCase() + ' · ' + plural(secondarySpec(pid).charges, 'charge', 'charges'), 'Each recharges in ' + Math.round(secondarySpec(pid).reload) + ' s' + (era.secId === 'missile' ? ' · lock ' + P.lockTime + ' s' : '')],
+    ['Perk slots', P.perkSlots, 'Filled during a run'],
   ];
   if (P.stealth) spec.push(['Stealth', Math.round(ls.stealth * 100) + '%', ls.pods ? 'Pods on the pylons halve it' : 'Clean airframe']);
   spec.push(['Takes', P.guns.map(g => GUNS[g].short).join(' · '), '']);
@@ -3383,107 +2966,52 @@ function renderLoadout() {
 }
 $('loStock').addEventListener('click', () => { delete save.loadout[era.plane.id]; gunArm = null; persist(); composeEra(); setupShowcase(); renderHangar(); });
 
-// ---- the skill web, drawn as SVG ----
-const WEB_R = [0, 80, 156, 234, 312, 392];
-const webXY = n => { const a = (n.ang - 90) * Math.PI / 180; return [Math.cos(a) * WEB_R[n.ring], Math.sin(a) * WEB_R[n.ring]]; };
-const NODE_R = { core: 22, minor: 14, notable: 18, keystone: 24, hybrid: 17 };
-const nodeCol = n => n.sector >= 0 ? SECTOR_COL[n.sector] : '#ebe4d2';
-const statText = (stats, mul) => Object.keys(stats).map(k => STAT_FMT[k](stats[k] * mul)).join(', ');
-function renderWeb() {
-  const f = v => v.toFixed(1);
-  let s = '<svg class="webs" viewBox="-560 -470 1120 940" aria-hidden="false">';
-  WEB_R.slice(1).forEach(r => { s += '<circle class="ring" r="' + r + '"/>'; });
-  SECTORS.forEach((nm, i) => {
-    const a = (i * 60 - 90) * Math.PI / 180, b = a + Math.PI / 6;
-    s += '<line class="spoke" x1="0" y1="0" x2="' + f(Math.cos(b) * 420) + '" y2="' + f(Math.sin(b) * 420) + '"/>';
-    const x = Math.cos(a) * 446, y = Math.sin(a) * 446;
-    s += '<text class="sec" x="' + f(x) + '" y="' + f(y) + '" fill="' + SECTOR_COL[i] + '" text-anchor="' + (Math.abs(x) < 40 ? 'middle' : x > 0 ? 'start' : 'end') + '">' + nm.toUpperCase() + '</text>';
+// ---- perk shop: unlock perks for good with medals; the run decides which ones you take ----
+function renderPerks() {
+  $('perkNote').textContent = 'You have ' + plural(save.points, 'medal', 'medals') + '. The ' + era.plane.short + ' has ' + plural(era.plane.perkSlots, 'perk slot', 'perk slots') + '; ' +
+    PLANE_ORDER.filter(id => PLANES[id].perkSlots > 3).map(id => PLANES[id].short).join(', ') + ' have 4. ' + PERKS.filter(perkOpen).length + ' of ' + PERKS.length + ' perks unlocked.';
+  const el = $('perkShop'); el.innerHTML = '';
+  PERKS.forEach(p => {
+    const open = perkOpen(p), b = document.createElement('button');
+    b.className = 'gun pk' + (open ? '' : ' locked') + (perkArm === p.id ? ' armed' : ''); b.id = 'perk-' + p.id;
+    b.setAttribute('aria-pressed', open ? 'true' : 'false');
+    let status, cls = '';
+    if (open) { status = p.cost ? 'Unlocked' : 'Starter perk'; cls = ' on'; }
+    else { status = perkArm === p.id ? 'Click again to unlock for ' + plural(p.cost, 'medal', 'medals') : (save.points >= p.cost ? 'Unlock · ' : 'Needs ') + plural(p.cost, 'medal', 'medals'); cls = ' cost'; }
+    b.disabled = !open && save.points < p.cost;
+    b.innerHTML = '<span class="gn">' + p.name + '</span><span class="gk">' + p.cat + '</span><span class="lv">' +
+      [1, 2, 3].map(l => '<b>' + ROMAN[l] + '</b><span>' + perkText(p, l) + '</span>').join('') + '</span><span class="gs' + cls + '">' + status + '</span>';
+    b.addEventListener('click', () => {
+      if (open || b.disabled) return;
+      if (perkArm !== p.id) { perkArm = p.id; renderHangar(); const f = $('perk-' + p.id); if (f) f.focus(); return; }
+      save.points -= p.cost; save.perks[p.id] = true; perkArm = null; persist(); beep(990, 0.1, 0.08); renderHangar();
+      const f = $('perk-' + p.id); if (f) f.focus();
+    });
+    el.appendChild(b);
   });
-  const done = new Set();
-  for (const n of WEB_LIST) for (const id of n.links) {
-    const k = n.id < id ? n.id + '|' + id : id + '|' + n.id;
-    if (done.has(k)) continue; done.add(k);
-    const m = WEB[id], a = webXY(n), b = webXY(m), ra = skill(n.id) > 0, rb = skill(id) > 0;
-    s += '<line class="ln' + (ra && rb ? ' on' : ra || rb ? ' open' : '') + '" x1="' + f(a[0]) + '" y1="' + f(a[1]) + '" x2="' + f(b[0]) + '" y2="' + f(b[1]) + '"/>';
-  }
-  for (const n of WEB_LIST) {
-    const [x, y] = webXY(n), r = skill(n.id), rad = NODE_R[n.kind];
-    const st = n.kind === 'core' ? 'trained' : r >= n.max ? 'trained maxed' : r ? 'trained' : webOpen(n) ? 'avail' : 'locked';
-    const label = n.name + ', ' + (n.kind === 'core' ? 'start' : 'rank ' + r + ' of ' + n.max);
-    s += '<g class="wn ' + n.kind + ' ' + st + (selNode === n.id ? ' selected' : '') + '" data-id="' + n.id + '" transform="translate(' + f(x) + ' ' + f(y) + ')" style="--sc:' + nodeCol(n) + '" tabindex="0" role="button" aria-label="' + label + '">' +
-      '<circle class="sel" r="' + (rad + 6) + '"/><circle class="b" r="' + rad + '"/>' +
-      (n.kind === 'keystone' || n.kind === 'hybrid' ? '<circle class="in" r="' + (rad - 5) + '"/>' : '') +
-      '<text>' + (n.kind === 'core' ? '★' : r ? r : '') + '</text><title>' + n.name + '</title></g>';
-  }
-  s += '</svg>';
-  $('web').innerHTML = s;
-  // on narrow screens the web scrolls sideways; start with the core in view
-  const wrap = $('web').parentNode;
-  if (!wrap.dataset.centered && wrap.scrollWidth > wrap.clientWidth) { wrap.scrollLeft = (wrap.scrollWidth - wrap.clientWidth) / 2; wrap.dataset.centered = '1'; }
-  renderWebDetail();
-  const tot = Object.keys(STAT_FMT).filter(k => ws(k)).map(k => '<span class="chip">' + STAT_FMT[k](ws(k)) + '</span>');
-  $('wTotals').innerHTML = tot.length ? tot.join('') : '<p class="note">Nothing trained yet.</p>';
-  const trained = WEB_LIST.filter(n => n.kind !== 'core' && skill(n.id) > 0).length;
-  const spent = WEB_LIST.reduce((a, n) => a + (n.kind === 'core' ? 0 : skill(n.id) * n.cost), 0);
-  $('webCount').textContent = trained + ' of ' + (WEB_LIST.length - 1) + ' skills trained · ' + spent + ' of ' + WEB_TOTAL + ' points spent.' + (save.webNote ? ' Your old skill ranks came back as points for the new web.' : '');
 }
-function renderWebDetail() {
-  const n = WEB[selNode] || WEB.core, r = skill(n.id), el = $('wDetail');
-  if (n.kind === 'core') {
-    el.innerHTML = '<div class="wd-k">Core</div><h3>Flight school</h3><p>Where every pilot starts. Train any of the six skills around it, then work outward. A skill opens as soon as one next to it has a rank.</p>';
-    return;
-  }
-  const kind = { minor: 'Skill', notable: 'Notable', keystone: 'Keystone', hybrid: 'Hybrid' }[n.kind];
-  const sec = n.sector >= 0 ? SECTORS[n.sector] : SECTORS[n.pair[0]] + ' and ' + SECTORS[n.pair[1]];
-  const open = webOpen(n), maxed = r >= n.max;
-  const why = maxed ? 'Fully trained.' : !open ? 'Locked. Train a skill connected to it first.' : save.points < n.cost ? 'Needs ' + n.cost + ' points. You have ' + save.points + '.' : '';
-  el.innerHTML = '<div class="wd-k" style="color:' + nodeCol(n) + '">' + sec + ' · ' + kind + '</div><h3>' + n.name + '</h3>' +
-    (n.flavor ? '<p>' + n.flavor + '</p>' : '') +
-    '<p><b>Each rank:</b> ' + statText(n.stats, 1) + '.</p>' +
-    '<p><b>Now:</b> ' + (r ? statText(n.stats, r) : 'untrained') + '.</p>' +
-    '<div class="wd-foot"><span class="pips">' + Array.from({ length: n.max }, (_, k) => '<i class="' + (k < r ? 'on' : '') + '"></i>').join('') + '</span>' +
-    (maxed ? '' : '<button class="btn primary" id="wTrain"' + (canTrain(n) ? '' : ' disabled') + '>Train rank ' + (r + 1) + ' · ' + n.cost + (n.cost === 1 ? ' pt' : ' pts') + '</button>') +
-    '<span class="note">' + why + '</span></div>';
-  const b = $('wTrain'); if (b) b.addEventListener('click', () => { trainNode(n.id); const again = $('wTrain'); if (again) again.focus(); });
-}
-function trainNode(id) {
-  const n = WEB[id];
-  if (!n || !canTrain(n)) return false;
-  save.points -= n.cost; save.skills[id] = skill(id) + 1; save.webNote = false;
-  persist(); refreshWeb(); beep(990, 0.08, 0.08); renderHangar();
-  return true;
-}
-function pickNode(id, focus) {
-  if (!WEB[id]) return;
-  selNode = id;
-  // only the highlight and the detail change, so the nodes stay put for a double click
-  $('web').querySelectorAll('.wn').forEach(g => g.classList.toggle('selected', g.dataset.id === id));
-  renderWebDetail();
-  if (focus) { const g = $('web').querySelector('[data-id="' + id + '"]'); if (g) g.focus(); }
-}
-$('web').addEventListener('click', e => { const g = e.target.closest('.wn'); if (g) pickNode(g.dataset.id, false); });
-$('web').addEventListener('dblclick', e => { const g = e.target.closest('.wn'); if (g) { selNode = g.dataset.id; trainNode(selNode); } });
-$('web').addEventListener('keydown', e => {
-  const g = e.target.closest('.wn'); if (!g) return;
-  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (selNode === g.dataset.id) trainNode(selNode); pickNode(g.dataset.id, true); }
-});
 
 $('optPull').addEventListener('change', e => { save.pullBack = e.target.checked; persist(); });
 $('optCtlMouse').addEventListener('change', () => { save.ctl = 'mouse'; persist(); renderHangar(); });
 $('optCtlKeys').addEventListener('change', () => { save.ctl = 'keys'; persist(); renderHangar(); });
-$('launch').addEventListener('click', () => (hangarTab === 'survival' ? startSurvival() : startRun()));
-let refundArm = false;
-$('refundBtn').addEventListener('click', () => {
-  if (!refundArm) { refundArm = true; $('refundBtn').textContent = 'Click again to refund every rank'; setTimeout(() => { refundArm = false; $('refundBtn').textContent = 'Refund all points'; }, 3000); return; }
-  for (const n of WEB_LIST) if (n.kind !== 'core') save.points += skill(n.id) * n.cost;
-  save.skills = {}; persist(); refreshWeb(); refundArm = false; $('refundBtn').textContent = 'Refund all points'; renderHangar();
-});
+$('launch').addEventListener('click', startSurvival);
 let resetArm = false;
 $('resetBtn').addEventListener('click', () => {
-  if (!resetArm) { resetArm = true; $('resetBtn').textContent = 'Click again to wipe points, credits, jets, paint and skills'; setTimeout(() => { resetArm = false; $('resetBtn').textContent = 'Reset all progress'; }, 3000); return; }
-  save = defaultSave(); persist(); refreshWeb(); composeEra(); resetArm = false; $('resetBtn').textContent = 'Reset all progress';
-  previewSkin = null; selNode = 'core';
+  if (!resetArm) { resetArm = true; $('resetBtn').textContent = 'Click again to wipe medals, credits, jets, guns, paint and perks'; setTimeout(() => { resetArm = false; $('resetBtn').textContent = 'Reset all progress'; }, 3000); return; }
+  save = defaultSave(); persist(); composeEra(); resetArm = false; $('resetBtn').textContent = 'Reset all progress';
+  previewSkin = null; perkArm = null;
   buildWorld(); setupShowcase(); renderHangar();
+});
+// testing: open every location, jet, gun, secondary, perk and paint scheme
+$('unlockBtn').addEventListener('click', () => {
+  for (const id of LOC_ORDER) save.locs[id] = true;
+  for (const id of PLANE_ORDER) save.planes[id] = true;
+  for (const id of GUN_ORDER) save.guns[id] = true;
+  for (const id of SEC_ORDER) save.secs[id] = true;
+  for (const p of PERKS) save.perks[p.id] = true;
+  for (const sk of A.SKINS) save.skins[sk.id] = true;
+  persist(); beep(990, 0.1, 0.08); renderHangar();
+  $('unlockBtn').textContent = 'Everything unlocked';
 });
 
 // ================= cockpit =================
@@ -3644,8 +3172,8 @@ function drawGauges() {
     // right display: flight data
     c.fillStyle = bg; c.fillRect(684, 30, 300, 260); c.strokeStyle = '#444'; c.lineWidth = 6; c.strokeRect(684, 30, 300, 260);
     c.fillStyle = ink; c.font = '700 26px "Chakra Petch", sans-serif';
-    const lines = [['SPD', Math.round(spd)], ['ALT', Math.round(alt)], ['HDG', String(Math.round(heading)).padStart(3, '0')], ['G', p.g.toFixed(1)], ['THR', p.throttle > 1.001 ? 'AB' : Math.round(p.throttle * 100) + '%'], ['HULL', Math.round(hullF * 100) + '%'], ['MSL', run.missiles + '/' + p.s.missiles + (run.missiles < p.s.missiles ? ' ' + Math.ceil(p.s.reload - run.reloadT) + 's' : '') + ' FLR ' + run.flares]];
-    lines.forEach(([k, v], i) => { c.textAlign = 'left'; c.fillText(k, 704, 66 + i * 33); c.textAlign = 'right'; c.fillText(String(v), 964, 66 + i * 33); });
+    const lines = [['SPD', Math.round(spd)], ['ALT', Math.round(alt)], ['HDG', String(Math.round(heading)).padStart(3, '0')], ['G', p.g.toFixed(1)], ['THR', p.throttle > 1.001 ? 'AB' : Math.round(p.throttle * 100) + '%'], ['HULL', Math.round(hullF * 100) + '%'], [era.sec.tag, run.charges + '/' + p.s.charges + (run.charges < p.s.charges ? ' ' + Math.ceil(p.s.reload - run.reloadT) + 's' : '') + ' FLR ' + run.flares], ['GUN', run.overheat ? 'HOT' : Math.round(run.heat * 100) + '%']];
+    lines.forEach(([k, v], i) => { c.textAlign = 'left'; c.fillText(k, 704, 62 + i * 29); c.textAlign = 'right'; c.fillText(String(v), 964, 62 + i * 29); });
   }
   gaugeTex.needsUpdate = true;
   if (era.style === 'jet' && hudCtx) {
@@ -3729,15 +3257,14 @@ buildWorld();
 toHangar();
 loadManifest();
 requestAnimationFrame(frame);
-window.__skybreak = { get fps() { return fpsAvg; }, get state() { return state; }, get player() { return player; }, get enemies() { return enemies; }, get allies() { return allies; }, get run() { return run; }, startRun, startSurvival, nextWave, survivalWave, endRun, showMap, addItem, enterNode,
-  go(type, col) { const n = { c: col || 2, r: 0, rows: 1, type, next: [] }; startMission(type, n, {}); },
+window.__skybreak = { get fps() { return fpsAvg; }, get state() { return state; }, get player() { return player; }, get enemies() { return enemies; }, get allies() { return allies; }, get run() { return run; }, startSurvival, nextWave, survivalWave, endRun, addPerk, offerPerks,
+  wave(w) { run.wave = w - 1; nextWave(); },
   nudge(dx, dy) { nudgeAim(dx, dy); }, setAim(y, p) { aimYaw = y; aimPitch = p; updateAimDir(); }, cam(m) { camMode = m; },
   setup(loc, plane) { save.locs[loc] = true; save.planes[plane] = true; save.loc = loc; save.plane = plane; composeEra(); buildWorld(); setupShowcase(); renderHangar(); },
   stick(x, y) { vStick.x = x; vStick.y = y; }, setCam(m) { setCamMode(m); }, head(y, p) { headYaw = y; headPitch = p; },
   get missiles() { return missiles; }, get locked() { return locked; }, flare() { flareRequest = true; }, get era() { return era; }, get save() { return save; },
   step(n, dt) { for (let i = 0; i < n && state === 'playing'; i++) updatePlaying(dt || 1 / 60); },
-  get web() { return webCache; }, WEB, train: trainNode, get manifest() { return manifest; }, applySky, gfx: { renderer, scene, sun, camera }, tab: setTab, pick: pickNode, A, thumb: planeThumb,
-  heat(h) { save.heatWon[save.loc] = Math.max(heatWon(save.loc), h - 1); save.selHeat[save.loc] = h; renderHangar(); }, renderHangar,
+  get manifest() { return manifest; }, applySky, gfx: { renderer, scene, sun, camera }, tab: setTab, A, thumb: planeThumb, renderHangar, PERKS, SECONDARIES,
   fitGun, selectPlane, GUNS, PLANES };
 })();
 </script>
