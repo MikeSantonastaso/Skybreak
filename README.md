@@ -47,6 +47,17 @@ Old saves carry over: ranks trained in the old skill web come back as medals, an
 
 **Play:** open `index.html` in a browser, or use the GitHub Pages link for this repository.
 
+## Online co-op
+
+Survival for one to four pilots over the internet, with no server of our own. On the Survival tab, one pilot picks **Host a room** and shares the four-letter code (or the invite link); the others type it and **Join**. The host picks the location and launches, and everyone flies their own jet, loadout and perks.
+
+- **Difficulty** goes up with every pilot past the first: 60% more fighters per wave, 25% more enemy hull (bosses too), and three more fighters in the air at once.
+- **Friendly fire is on.** Guns, missiles and flak hit teammates, and your missiles can lock a teammate (the HUD marks it FRIENDLY).
+- **Going down** doesn't end your run while a teammate is still flying. You watch them until the wave is cleared, then come back with half hull and one perk level lost at random. If the whole team goes down, the run ends for everyone.
+- After every wave each pilot picks a perk, and the next wave starts when everyone has picked. Pause doesn't stop the game in co-op. Co-op runs pay credits and medals but don't count toward your solo best wave.
+
+How it works: `net.js` uses [PeerJS](https://peerjs.com) (loaded from cdnjs only when you open a room) and its free public broker to introduce the browsers, then the game talks peer to peer over WebRTC, falling back to PeerJS's relay when a firewall blocks a direct link. The host's game flies the enemies and runs the waves; each pilot's game flies their own jet and decides when enemy fire hits them, and the shooter's game decides friendly fire. If the host leaves, the run ends and everyone banks what they earned. Add `?peer=host:port` to the URL to use your own [peerjs-server](https://github.com/peers/peerjs-server) instead.
+
 ## Controls (mouse aim)
 
 | Input | Action |

@@ -244,6 +244,24 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
 .tbtns button { height: 64px; border-radius: 50%; border: 1px solid rgba(235,228,210,0.4); background: rgba(0,0,0,0.35); color: var(--paper); font-weight: 700; font-size: 13px; }
 .tbtns button.fire { background: rgba(255,91,74,0.45); }
 @media (prefers-reduced-motion: reduce) { .msg, .bar .track i { transition: none; } }
+.coop { border: 1px solid rgba(235,228,210,0.14); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.coopidle { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.coop input { background: rgba(0,0,0,0.3); border: 1px solid rgba(235,228,210,0.2); color: var(--paper); padding: 11px 10px; font: inherit; font-size: 14px; min-width: 0; flex: 1 1 120px; }
+.coop input.code { flex: 0 1 92px; text-transform: uppercase; letter-spacing: 0.2em; font-weight: 600; }
+.coop input:focus { outline: none; border-color: var(--amber); }
+.coop .or { font-size: 12px; color: var(--muted); }
+.coophead { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.coophead span { font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+.coophead b { font-family: var(--display); font-size: 30px; font-weight: 900; color: var(--amber); letter-spacing: 0.18em; margin-right: auto; }
+.coophead .ghost { align-self: center; }
+.roster { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.roster li { display: flex; gap: 10px; align-items: baseline; padding: 8px 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(235,228,210,0.1); font-size: 14px; }
+.roster li b { color: var(--paper); }
+.roster li .r { margin-left: auto; font-size: 12px; color: var(--muted); }
+.roster li.me { border-color: var(--amber-dim); }
+.hud-tl .team { margin-top: 6px; display: grid; gap: 2px; font-size: 12px; }
+.coop .note.bad { color: var(--danger); }
+.hud-tl .team .dn { color: var(--danger, #ff5b4a); }
 </style>
 </head>
 <body>
@@ -258,6 +276,7 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
     <div class="wave" id="hWave">WAVE 1</div>
     <div id="hEnemies">0 bandits</div>
     <div id="hKills">0 kills</div>
+    <div id="hTeam" class="team" hidden></div>
   </div>
   <button class="hud-pause" id="pauseBtn">PAUSE</button>
   <div class="hud-bl">
@@ -308,6 +327,21 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
             <div class="eras" id="survList"></div>
           </div>
           <p class="note" id="survNote"></p>
+          <div class="coop" id="coopBox">
+            <div class="label" style="margin:0"><span>Online co-op · 1 to 4 pilots</span><span id="coopTag"></span></div>
+            <div class="coopidle" id="coopIdle">
+              <input id="coopName" maxlength="16" placeholder="Callsign" aria-label="Callsign" autocomplete="off">
+              <button class="btn" id="coopHost">Host a room</button>
+              <span class="or">or</span>
+              <input id="coopCode" class="code" maxlength="4" placeholder="CODE" aria-label="Room code" autocomplete="off">
+              <button class="btn" id="coopJoin">Join</button>
+            </div>
+            <div class="cooproom" id="coopRoom" hidden>
+              <div class="coophead"><span>Room</span><b id="coopCodeShow"></b><button class="ghost" id="coopCopy">Copy invite link</button><button class="ghost" id="coopLeave">Leave room</button></div>
+              <ul class="roster" id="coopRoster"></ul>
+            </div>
+            <p class="note" id="coopNote">Fly survival together over the internet. One pilot hosts and shares the four-letter code. Enemies get tougher and more numerous for every pilot, friendly fire and friendly missile locks are on, and a pilot who goes down comes back after the wave with half hull and one perk level lost.</p>
+          </div>
         </div>
         <div id="pane-hangar" class="col" role="tabpanel" aria-labelledby="tab-hangar" hidden>
           <div>
@@ -392,7 +426,7 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
 <section id="pause" class="screen" hidden>
   <div class="panel mid">
     <h2>Paused</h2>
-    <p class="sub">Press P or Esc to resume.</p>
+    <p class="sub" id="psSub">Press P or Esc to resume.</p>
     <div class="row">
       <button class="btn primary" id="psResume">Resume</button>
       <button class="btn" id="psQuit">Bail out (keep points)</button>
@@ -404,6 +438,7 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/RGBELoader.js"></script>
 <script src="assets.js"></script>
+<script src="net.js"></script>
 <script>
 (() => {
 'use strict';
@@ -651,11 +686,11 @@ const LOCS = {
 const LOC_ORDER = ['arctic', 'desert', 'ocean', 'city', 'canyon'];
 
 // The game reads one combined profile: the plane you fly in the place you picked.
-let era = null;
+let era = null, coopLoc = null; // coopLoc: the host's location while flying co-op
 function composeEra() {
   if (!LOCS[save.loc] || !save.locs[save.loc]) save.loc = 'arctic';
   if (!PLANES[save.plane] || !save.planes[save.plane]) save.plane = 'f5';
-  const L = LOCS[save.loc], P = PLANES[save.plane], E = ENEMY_JETS[L.enemy];
+  const L = LOCS[coopLoc || save.loc], P = PLANES[save.plane], E = ENEMY_JETS[L.enemy];
   // the mounted guns, each firing from its own hardpoint. era.gun is the main one (most damage per second),
   // used for the lead sight and your wingmen
   const lo = loadoutOf(P.id), ls = loadoutSpec(P.id, lo);
@@ -1365,7 +1400,7 @@ function spawnBullet(owner, start, dir, gun, dmg, color, crit) {
   mesh.position.copy(start);
   mesh.lookAt(tv2.copy(start).add(dir));
   scene.add(mesh);
-  bullets.push({ mesh, pos: mesh.position, prev: start.clone(), vel: dir.clone().multiplyScalar(gun.speed).add(owner.vel), life: gun.range / gun.speed * (owner === player ? run.mods.range : 1), dmg, team: owner.team, owner, crit });
+  bullets.push({ mesh, pos: mesh.position, prev: start.clone(), vel: dir.clone().multiplyScalar(gun.speed).add(owner.vel), life: gun.range / gun.speed * (owner === player ? run.mods.range : 1), dmg, team: owner.team, owner, crit, fake: coopFake });
 }
 let gunSoundAt = 0;
 function fireGun(p, gun, dmg, spread, color, at) {
@@ -1403,7 +1438,8 @@ function updateBullets(dt) {
     b.pos.addScaledVector(b.vel, dt);
     b.life -= dt;
     let hit = false;
-    if (b.team === 0) {
+    if (b.fake) hit = coopFakeHit(b);
+    else if (b.team === 0) {
       for (const e of enemies) {
         if (!e.alive || e.dying) continue;
         if (segSphere(b.prev, b.pos, e.pos, 9 * e.s.size)) {
@@ -1414,6 +1450,7 @@ function updateBullets(dt) {
           break;
         }
       }
+      if (!hit && b.owner === player) hit = coopBulletHitsMate(b);
     } else {
       if (player.alive && !player.dying && segSphere(b.prev, b.pos, player.pos, 4 * player.s.size) && Math.random() >= run.mods.ghost) {
         player.damage(b.dmg, b.owner); hit = true; hurtT = 0.35; shake = Math.max(shake, 0.35);
@@ -1480,7 +1517,8 @@ function fireMissile(p, target, dmg, o) {
   m.quaternion.copy(p.quat);
   scene.add(m);
   missiles.push({ mesh: m, pos: m.position, dir: (o.dir || p.fwd).clone(), speed: p.speed + (o.boost || 0), target, life: o.life || 8, smokeT: 0, owner: p, team: p.team, dmg: dmg || 75,
-    turn: o.turn || 3.6, max: o.max || 720, g: o.g || 120, lead: o.lead == null ? 1 : o.lead, fuse: o.fuse || 16, flareChecked: false, burst: o.burst || 0, small: !!o.small });
+    turn: o.turn || 3.6, max: o.max || 720, g: o.g || 120, lead: o.lead == null ? 1 : o.lead, fuse: o.fuse || 16, flareChecked: false, burst: o.burst || 0, small: !!o.small, fake: coopFake });
+  coopMissileOut(p, target, dmg, o, missiles[missiles.length - 1]);
   if (p === player || p.team === 0) burst(0.6, 600, 0.35, 'lowpass');
   else { const d = camera.position.distanceTo(p.pos); burst(0.5, 500, clamp(0.4 - d / 6000, 0.05, 0.3), 'lowpass'); }
 }
@@ -1488,6 +1526,7 @@ function fireMissile(p, target, dmg, o) {
 function flakBurst(m) {
   spawnFx(m.pos, { add: true, color: 0xffc070, size: m.burst * 0.7, grow: 1.6, life: 0.35 });
   spawnFx(m.pos, { color: 0x3a3a3a, opacity: 0.7, size: m.burst * 0.5, grow: 2, life: 1.8, rise: 3 });
+  if (m.fake) return;
   missileHit = true;
   for (const e of enemies) {
     if (!e.alive || e.dying) continue;
@@ -1495,6 +1534,7 @@ function flakBurst(m) {
     if (d < r) e.damage(m.dmg * (1 - 0.5 * d / r), m.owner);
   }
   missileHit = false;
+  if (m.owner === player) coopFlakHitsMates(m);
 }
 // fire the jet's secondary weapon (one charge)
 function fireSecondary(st) {
@@ -1554,7 +1594,7 @@ function updateMissiles(dt) {
         if (ang > 1e-4) { tv2.crossVectors(m.dir, want).normalize(); m.dir.applyAxisAngle(tv2, Math.min(ang, maxTurn)); }
       }
       // enemies may pop flares once when a player missile closes in
-      if (m.team === 0 && !m.flareChecked && dist < 1300 && !t.heavy) {
+      if (m.team === 0 && !m.flareChecked && dist < 1300 && !t.heavy && t.team === 1 && !m.fake) {
         m.flareChecked = true;
         if (Math.random() < (t.ace ? 0.55 : 0.12 + 0.2 * (t.skill || 0))) { dropFlares(t); m.target = null; popText('Bandit flared'); }
         if (t.state) { t.state = 'evade'; t.stateT = rand(1.5, 2.5); t.jinkT = 0; }
@@ -1569,12 +1609,16 @@ function updateMissiles(dt) {
       for (const e of enemies) {
         if (!e.alive || e.dying) continue;
         const r = e.heavy ? 22 * (e.boss ? 1 : 0.6) + (m.burst ? m.fuse : 0) : m.fuse;
-        if (e.pos.distanceToSquared(m.pos) < r * r) { if (!m.burst) { missileHit = true; e.damage(m.dmg, m.owner); missileHit = false; } done = true; break; }
+        if (e.pos.distanceToSquared(m.pos) < r * r) { if (!m.burst && !m.fake) { missileHit = true; e.damage(m.dmg, m.owner); missileHit = false; } done = true; break; }
       }
+      if (!done) done = coopMissileHitsMate(m);
     } else {
+      if (coopMissileHitsMate(m)) done = true;
+      else
       for (const a of [player].concat(allies)) {
         if (!a || !a.alive || a.dying) continue;
         if (a.pos.distanceToSquared(m.pos) < m.fuse * m.fuse) {
+          if (m.fake) { done = true; break; }
           a.damage(m.dmg, m.owner); done = true;
           if (a === player) { hurtT = 0.6; shake = Math.max(shake, 0.9); popText('Hit by a missile'); }
           break;
@@ -1624,7 +1668,7 @@ window.addEventListener('keydown', e => {
   }
 });
 window.addEventListener('keyup', e => { keys[e.code] = false; });
-window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; if (state === 'playing') setPaused(true); });
+window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; if (state === 'playing' && !coopOn()) setPaused(true); });
 glCanvas.addEventListener('mousedown', e => {
   initAudio();
   if (state !== 'playing') return;
@@ -1644,7 +1688,7 @@ document.addEventListener('mousemove', e => {
 });
 document.addEventListener('pointerlockchange', () => {
   if (document.pointerLockElement === glCanvas) { hadLock = true; return; }
-  if (hadLock && state === 'playing') setPaused(true);
+  if (hadLock && state === 'playing' && !coopOn()) setPaused(true);
   hadLock = false;
 });
 
@@ -1766,6 +1810,7 @@ function clearCombat() {
   missiles.length = 0;
   if (player && player.mesh.parent) scene.remove(player.mesh);
   player = null;
+  coopClear();
 }
 
 // ---------------- survival: wave N is N fighters, a perk between waves, and the location's boss every tenth wave ----------------
@@ -1776,12 +1821,14 @@ function startSurvival() {
   initAudio();
   clearCombat();
   run = { survival: true, wave: 0, hull: 0, perks: {}, bonus: { dmg: 1, hp: 0 }, kills: 0, cleared: 0, bosses: 0, unlocked: [],
-    rerolls: 1, phoenixUsed: 0, hitCount: 0, over: false, seen: {}, deathT: 0, mission: null };
+    rerolls: 1, phoenixUsed: 0, hitCount: 0, over: false, seen: {}, deathT: 0, mission: null, coop: !!(net && net.active), downNote: '' };
   refreshMods();
   run.hull = maxHull();
   offerPerks();
 }
 function nextWave() {
+  // in co-op every pilot picks a perk, then the host starts the wave for everyone
+  if (run.coop && !coopGo) return coopReady();
   run.wave++;
   // enemy toughness climbs with the wave; depth feeds hull, damage and pilot skill
   startMission('survival', { c: Math.min((run.wave - 1) * 0.45, 12) }, {});
@@ -1817,6 +1864,7 @@ function variantNote(list) {
 function spawnSpec(s) { spawnEnemy(s.skill, !!s.ace, null, s.model, s.variant); }
 function survivalWaveDone() {
   run.hull = clamp(Math.max(player.hp, 1), 1, player.maxHp);
+  if (run.coop && !(player.alive && !player.dying)) coopRespawnPenalty();
   run.cleared = run.wave;
   leaveCombat();
   offerPerks();
@@ -1866,12 +1914,12 @@ function offerPerks() {
     showChoice({
       title: first ? 'Pick your first perk' : 'Wave ' + run.wave + ' cleared',
       sub: (first ? 'The ' + era.plane.short + ' has ' + perkSlots() + ' perk slots. After every wave, pick another perk or level one up to III.'
-        : 'Hull ' + Math.round(run.hull) + ' / ' + maxHull() + '. Perks ' + perksHeld() + ' / ' + perkSlots() + (held.length ? ': ' + held.join(', ') : '') + '.') +
+        : run.downNote + 'Hull ' + Math.round(run.hull) + ' / ' + maxHull() + '. Perks ' + perksHeld() + ' / ' + perkSlots() + (held.length ? ': ' + held.join(', ') : '') + '.') +
         ' Wave ' + next + ' brings ' + plural(next, 'fighter', 'fighters') + (next % BOSS_EVERY === 0 ? ' and the ' + era.boss.name.toLowerCase() : '') + '.',
       cards,
       buttons: [
         run.rerolls > 0 && { label: 'Reroll (' + run.rerolls + ' left)', onClick: () => { run.rerolls--; picks = perkChoices(); render(); } },
-        !first && { label: 'End here and bank it', onClick: () => endRun('bail') },
+        !first && { label: run.coop ? 'Leave the team and bank it' : 'End here and bank it', onClick: () => endRun('bail') },
       ].filter(Boolean),
     });
   };
@@ -1879,19 +1927,21 @@ function offerPerks() {
 }
 function endSurvival(reason) {
   run.over = true;
+  coopRunOver(reason);
   const loc = era.loc.id, waves = run.cleared;
   const hadSkins = new Set(A.SKINS.filter(skinOwned).map(sk => sk.id));
-  const prev = save.survBest[loc] || 0, record = waves > prev;
+  // a co-op run pays out like a solo one but doesn't count toward your solo best
+  const prev = save.survBest[loc] || 0, record = waves > prev && !run.coop;
   const medals = Math.floor(waves / 2) + 3 * run.bosses;
   const credits = Math.round((run.kills * 12 + waves * 30 + run.bosses * 250) * (0.8 + 0.2 * era.loc.threat));
   save.points += medals; save.credits += credits; save.runs++; save.totalKills += run.kills;
   if (record) save.survBest[loc] = waves;
   const fresh = A.SKINS.filter(sk => skinOwned(sk) && !hadSkins.has(sk.id));
   persist();
-  $('dbTitle').textContent = reason === 'bail' ? 'Run banked' : 'Shot down';
+  $('dbTitle').textContent = reason === 'bail' ? 'Run banked' : run.coop ? 'Team shot down' : 'Shot down';
   const held = PERKS.filter(p => run.perks[p.id]).map(p => p.name + ' ' + ROMAN[run.perks[p.id]]);
-  $('dbSub').textContent = 'You survived ' + plural(waves, 'wave', 'waves') + ' over ' + era.name + ' in the ' + era.plane.short + '.' +
-    (record ? (prev ? ' New best here, up from ' + prev + '.' : ' New best here.') : ' Best here is ' + prev + '.') +
+  $('dbSub').textContent = (run.coop ? 'Your team survived ' : 'You survived ') + plural(waves, 'wave', 'waves') + ' over ' + era.name + ' in the ' + era.plane.short + '.' +
+    (run.coop ? ' Co-op runs don\'t count toward your solo best.' : record ? (prev ? ' New best here, up from ' + prev + '.' : ' New best here.') : ' Best here is ' + prev + '.') +
     (run.bosses ? ' ' + plural(run.bosses, 'boss', 'bosses') + ' downed.' : '') + (run.unlocked.length ? ' You unlocked ' + run.unlocked.map(id => LOCS[id].name).join(' and ') + '.' : '') +
     (fresh.length ? ' New paint: ' + fresh.map(sk => sk.name).join(', ') + '.' : '') + (held.length ? ' Perks: ' + held.join(', ') + '.' : '');
   $('dbStats').innerHTML = [['Waves', waves], ['Kills', run.kills], ['Credits', '+' + credits.toLocaleString()], ['Medals', '+' + medals]].map(([l, v]) => '<div><b>' + v + '</b><span>' + l + '</span></div>').join('');
@@ -1909,7 +1959,7 @@ function startMission(type, node, opts) {
   const st = playerStats();
   player = new Plane(st, fitPods(planeMesh(era.plane.id, skinFor(era.plane.id), era.plane.livery), era.plane.id), 0);
   player.hp = clamp(run.hull, 1, st.hp);
-  player.pos.set(0, Math.max(1000, groundAt(0, 2600) + 550), 2600);
+  player.pos.set(coopSpawnX(), Math.max(1000, groundAt(0, 2600) + 550), 2600);
   player.quat.setFromRotationMatrix(mm.lookAt(player.pos, new V3(0, player.pos.y, 0), Y_AXIS));
   player.axes();
   player.speed = st.maxSpeed * 0.75; player.throttle = 0.8;
@@ -1928,13 +1978,14 @@ function startMission(type, node, opts) {
   const skill = Math.min(0.2 + era.loc.threat * 0.06 + depth * 0.08, 0.97);
   // every tenth wave the location's boss flies in, with half the wave as escorts
   const boss = run.wave % BOSS_EVERY === 0;
-  run.mission.queue = survivalWave(boss ? Math.ceil(run.wave / 2) : run.wave, skill);
+  // co-op: the host flies the enemies and every guest sees copies, so a guest's wave starts empty
+  run.mission.queue = coopGuest() ? [] : coopScaleWave(survivalWave(boss ? Math.ceil(run.wave / 2) : run.wave, skill), boss ? Math.ceil(run.wave / 2) : run.wave, skill);
   run.mission.spawnT = 0;
   const tough = run.mission.queue.filter(s => s.ace || s.up).length;
-  const vnote = variantNote(run.mission.queue);
-  if (boss) spawnBoss(depth, run.wave / BOSS_EVERY);
-  for (let i = 0; i < SURV_LIVE && run.mission.queue.length; i++) spawnSpec(run.mission.queue.shift());
-  let sub = (boss ? 'The ' + era.boss.name.toLowerCase() + ' and ' + plural(run.mission.queue.length + enemies.length - 1, 'escort', 'escorts') : plural(run.wave, 'fighter', 'fighters')) + ' inbound' + (tough ? ', ' + tough + ' of them tougher than the rest' : '');
+  const vnote = coopGuest() ? { line: '', intro: '' } : variantNote(run.mission.queue);
+  if (boss && !coopGuest()) spawnBoss(depth, run.wave / BOSS_EVERY);
+  for (let i = 0; i < survLive() && run.mission.queue.length; i++) spawnSpec(run.mission.queue.shift());
+  let sub = (boss ? 'The ' + era.boss.name.toLowerCase() + ' and ' + plural(run.mission.queue.length + enemies.length - 1, 'escort', 'escorts') : plural(run.mission.queue.length + enemies.length, 'fighter', 'fighters')) + ' inbound' + (tough ? ', ' + tough + ' of them tougher than the rest' : '');
   lockTarget = null; locked = false; shake = 0; hurtT = 0; timeScale = 1; slowmoT = 0;
   state = 'playing';
   showScreen(null);
@@ -1943,12 +1994,14 @@ function startMission(type, node, opts) {
   $('shieldRow').hidden = !era.shield;
   if (vnote.line) sub += ' · ' + vnote.line;
   if (vnote.intro) sub += '. ' + vnote.intro;
+  if (coopGuest()) sub = coop.sub;
+  run.mission.sub = sub;
   flashMsg((boss ? 'BOSS WAVE ' : 'WAVE ') + run.wave, sub + (mouseMode() && !isTouch && !document.pointerLockElement ? ' · click to capture the mouse' : ''), vnote.intro ? 5 : 2.6);
   beep(660, 0.12, 0.12); setTimeout(() => beep(880, 0.16, 0.12), 140);
 }
 function objectiveText(alive) {
   const m = run.mission;
-  const q = m.queue.length;
+  const q = coopGuest() ? coop.queue || 0 : m.queue.length;
   return (alive + q) + (alive + q === 1 ? ' hostile' : ' hostiles') + ' left' + (q ? ' · ' + q + ' still inbound' : '');
 }
 
@@ -1959,7 +2012,7 @@ function enemyStats(skill, ace, model, variant) {
   return {
     size: j.size, minSpeed: f.minSpeed, maxSpeed: f.maxSpeed * es.speedMul * (ace ? 1.05 : 1) * (v.speed || 1), corner: f.corner * (v.speed || 1),
     gmax: f.gmax * (ace ? 1 : 0.75 + 0.25 * skill), thrust: f.thrust * (v.thrust || 1), pitch: f.pitch * turn, roll: f.roll * turn, yaw: f.yaw * turn,
-    hp: j.hp * (ace ? 3 : 1) * (v.hp || 1) * (1 + depth * 0.06), armor: v.armor || 0,
+    hp: j.hp * (ace ? 3 : 1) * (v.hp || 1) * (1 + depth * 0.06) * coopHpMul(), armor: v.armor || 0,
   };
 }
 function initPilot(e, skill, kind) {
@@ -1972,18 +2025,19 @@ function spawnEnemy(skill, ace, kind, model, variant) {
   model = model || era.enemy.model;
   if (ace) variant = null;
   kind = kind || (run.mission.depth >= 1 && Math.random() < 0.3 ? 'boomer' : 'fighter');
-  // spawn ahead of the player so fights open with a merge
-  const a = Math.atan2(player.fwd.z, player.fwd.x) + rand(-0.9, 0.9), d = rand(1700, 2500);
-  const x = clamp(player.pos.x + Math.cos(a) * d, -ARENA, ARENA), z = clamp(player.pos.z + Math.sin(a) * d, -ARENA, ARENA);
-  const y = Math.max(groundAt(x, z) + 400, player.pos.y + (kind === 'boomer' ? rand(300, 600) : rand(-150, 250)));
+  // spawn ahead of a pilot so fights open with a merge
+  const pl = coopAnchor();
+  const a = Math.atan2(pl.fwd.z, pl.fwd.x) + rand(-0.9, 0.9), d = rand(1700, 2500);
+  const x = clamp(pl.pos.x + Math.cos(a) * d, -ARENA, ARENA), z = clamp(pl.pos.z + Math.sin(a) * d, -ARENA, ARENA);
+  const y = Math.max(groundAt(x, z) + 400, pl.pos.y + (kind === 'boomer' ? rand(300, 600) : rand(-150, 250)));
   const mesh = planeMesh(model, ace ? 'ace' : variant || model);
   const e = new Plane(enemyStats(skill, ace, model, variant), mesh, 1);
   e.pos.set(x, y, z);
-  const look = tv.copy(player.pos).add(tv2.set(rand(-500, 500), rand(-100, 100), rand(-500, 500)));
+  const look = tv.copy(pl.pos).add(tv2.set(rand(-500, 500), rand(-100, 100), rand(-500, 500)));
   e.quat.setFromRotationMatrix(mm.lookAt(e.pos, look, Y_AXIS));
   e.axes();
   e.vel.copy(e.fwd).multiplyScalar(e.speed);
-  e.ace = ace; e.variant = variant || null; e.vdef = VARIANTS[variant] || null;
+  e.ace = ace; e.variant = variant || null; e.vdef = VARIANTS[variant] || null; e.model = model;
   initPilot(e, skill, kind);
   enemies.push(e);
 }
@@ -1999,11 +2053,11 @@ function spawnAlly(i) {
 // tier: 1 on wave 10, 2 on wave 20, and so on; each tier adds hull and gunners' damage
 function spawnBoss(depth, tier) {
   const b = era.boss;
-  const stats = { size: 2.6, minSpeed: era.minSpeed, maxSpeed: era.maxSpeed, corner: era.corner, gmax: 3, thrust: era.thrust, pitch: 0.3, roll: 0.5, yaw: 0.2, hp: Math.round(b.hp * (0.7 + 0.3 * tier)) };
+  const stats = { size: 2.6, minSpeed: era.minSpeed, maxSpeed: era.maxSpeed, corner: era.corner, gmax: 3, thrust: era.thrust, pitch: 0.3, roll: 0.5, yaw: 0.2, hp: Math.round(b.hp * (0.7 + 0.3 * tier) * coopHpMul()) };
   const e = new Plane(stats, bossMesh(b.kind, b.color, b.accent), 1);
   e.boss = true; e.heavy = true; e.ace = true; e.name = b.name; e.skill = 1; e.throttle = 0.9;
   e.circR = 1700; e.alt = b.alt; e.circW = era.maxSpeed * b.speedFrac / e.circR;
-  e.circA = Math.atan2(player.pos.z, player.pos.x) + Math.PI;
+  e.circA = Math.atan2(coopAnchor().pos.z, coopAnchor().pos.x) + Math.PI;
   e.turretRof = b.turretRof; e.turretDmg = b.turretDmg * (0.7 + depth * 0.06);
   e.turrets = BOSS_TURRETS.map(t => ({ p: new V3(t[0], t[1], t[2]), cd: rand(0, 1.5) }));
   e.pos.set(Math.cos(e.circA) * e.circR, e.alt, Math.sin(e.circA) * e.circR);
@@ -2021,7 +2075,10 @@ function heavyUpdate(e, dt) {
   e.quat.setFromRotationMatrix(mm);
   if (e.boss) e.mesh.rotateZ(-0.12);
   e.axes(); e.animate(dt); e.trails(dt);
-  // gunners shoot at whoever is closest
+  turretFire(e, dt);
+}
+// gunners shoot at whoever is closest
+function turretFire(e, dt) {
   let tgt = null, td = 1000;
   for (const t of [player].concat(allies)) { if (!t || !t.alive || t.dying) continue; const d = t.pos.distanceTo(e.pos); if (d < td) { td = d; tgt = t; } }
   if (!tgt || e.stunT > 0) { e.stunT -= dt; return; }
@@ -2037,27 +2094,30 @@ function heavyUpdate(e, dt) {
 }
 
 function onPlaneDown(p, from) {
-  if (p === player) { run.deathT = 0; flashMsg('SHOT DOWN', '', 2.4); return; }
+  if (p === player) { run.deathT = 0; flashMsg('SHOT DOWN', run.coop ? coopDownLine(from) : '', run.coop ? 4 : 2.4); coopDown(from); return; }
   if (p.ally) { popText('Wingman down'); return; }
-  if (from === player || (from && from.ally)) {
-    run.kills++;
-    if (from === player) {
-      popText(p.boss ? 'Boss down' : p.ace ? 'Ace down' : 'Splash one');
-      if (run.mods.vamp && player.alive && !player.dying) player.hp = Math.min(player.maxHp, player.hp + run.mods.vamp);
-      if (run.mods.slowmo) slowmoT = Math.max(slowmoT, run.mods.slowmo);
-      // gun kills (not secondary kills) knock time off the secondary cooldown
-      if (!missileHit && run.charges < player.s.charges) run.reloadT += run.mods.gunRearm;
-    } else popText('Wingman got one');
-  }
-  if (p.boss) {
-    // a downed boss opens the next location straight away, even if the run ends this wave
-    run.bosses++; slowmoT = 1.6;
-    const loc = era.loc.id, next = LOC_ORDER[LOC_ORDER.indexOf(loc) + 1];
-    save.bosses[loc] = true;
-    if (next && !save.locs[next]) { save.locs[next] = true; run.unlocked.push(next); }
-    persist();
-    flashMsg('TARGET DESTROYED', era.boss.name + ' is going down' + (run.unlocked.includes(next) ? ' · ' + LOCS[next].name + ' unlocked' : ''), 3);
-  }
+  if (from === player) creditKill(p, missileHit);
+  else if (from && from.ally) { run.kills++; popText('Wingman got one'); }
+  else if (from && from.mateSlot != null) coopKillBy(from.mateSlot, p);
+  if (p.boss) bossDown(p);
+}
+function creditKill(p, msl) {
+  run.kills++;
+  popText(p.boss ? 'Boss down' : p.ace ? 'Ace down' : 'Splash one');
+  if (run.mods.vamp && player.alive && !player.dying) player.hp = Math.min(player.maxHp, player.hp + run.mods.vamp);
+  if (run.mods.slowmo && !run.coop) slowmoT = Math.max(slowmoT, run.mods.slowmo);
+  // gun kills (not secondary kills) knock time off the secondary cooldown
+  if (!msl && run.charges < player.s.charges) run.reloadT += run.mods.gunRearm;
+}
+// a downed boss opens the next location straight away, even if the run ends this wave (in co-op, for every pilot)
+function bossDown() {
+  coopBossDown();
+  run.bosses++; if (!run.coop) slowmoT = 1.6;
+  const loc = era.loc.id, next = LOC_ORDER[LOC_ORDER.indexOf(loc) + 1];
+  save.bosses[loc] = true;
+  if (next && !save.locs[next]) { save.locs[next] = true; run.unlocked.push(next); }
+  persist();
+  flashMsg('TARGET DESTROYED', era.boss.name + ' is going down' + (run.unlocked.includes(next) ? ' · ' + LOCS[next].name + ' unlocked' : ''), 3);
 }
 
 // ---------------- pilots ----------------
@@ -2068,8 +2128,8 @@ function pickTarget(e) {
     for (const o of enemies) { if (!validTarget(o)) continue; const d = o.pos.distanceTo(e.pos) * (o.heavy ? 1.5 : 1); if (d < bd) { bd = d; best = o; } }
     return best;
   }
-  const others = allies.filter(validTarget);
-  if (validTarget(player) && (!others.length || Math.random() < 0.65)) return player;
+  const others = allies.filter(validTarget), pilots = [player].concat(coopMatePlanes()).filter(validTarget);
+  if (pilots.length && (!others.length || Math.random() < 0.65)) return pilots[Math.floor(Math.random() * pilots.length)];
   return others.length ? others[Math.floor(Math.random() * others.length)] : null;
 }
 function aiControl(e, dt) {
@@ -2158,7 +2218,8 @@ function steer(e, desired, c) {
 const lockable = e => !(e.vdef && e.vdef.noLock);
 function noseTarget(range, cone) {
   let best = null, bestA = cone;
-  for (const e of enemies) {
+  // teammates can be locked too: friendly fire is on
+  for (const e of enemies.concat(coopMatePlanes())) {
     if (!validTarget(e) || !lockable(e)) continue;
     if (e.pos.distanceTo(player.pos) > range) continue;
     const a = player.fwd.angleTo(tv.subVectors(e.pos, player.pos).normalize());
@@ -2177,6 +2238,7 @@ function updatePlaying(dt) {
     const st = player.s;
     // guns share one heat gauge: holding the trigger fills it, and at the top they lock until it cools to HEAT_RESUME
     const firing = ctl.fire && !run.overheat;
+    run.firing = firing;
     if (firing) {
       run.heat = Math.min(1, run.heat + st.heatGen * dt); run.coolT = HEAT_DELAY;
       if (run.heat >= 1) { run.overheat = true; popText('Guns overheated'); burst(0.35, 260, 0.2, 'lowpass'); }
@@ -2216,7 +2278,7 @@ function updatePlaying(dt) {
     run.flareCd -= dt;
     if (flareRequest && run.flares > 0 && run.flareCd <= 0) {
       run.flares--; run.flareCd = 0.45;
-      dropFlares(player);
+      dropFlares(player); coopSend({ t: 'fl' });
       let fooled = 0;
       for (const ms of missiles) if (ms.target === player && ms.pos.distanceTo(player.pos) < 3000 && Math.random() < 0.8) { ms.target = null; fooled++; }
       if (fooled) popText(fooled > 1 ? 'Missiles decoyed' : 'Missile decoyed');
@@ -2260,18 +2322,15 @@ function updatePlaying(dt) {
     for (const e of list) {
       if (!e.alive) continue;
       if (e.dying) { e.dyingUpdate(dt); continue; }
+      if (e.puppet) { coopPuppetUpdate(e, dt); continue; }
       if (e.heavy) { heavyUpdate(e, dt); continue; }
       const c = aiControl(e, dt);
       e.fly(dt, c);
       e.trails(dt);
-      e.gunCd -= dt;
+      e.gunCd -= dt; e.firing = c.fire;
       if (c.fire && e.gunCd <= 0) {
-        const es = era.enemy;
         if (e.ally) { fireGun(e, era.gun, era.gun.dmg * 0.9, era.gun.spread * 2, era.gun.color); e.gunCd = 1 / (era.gun.rof * 0.6); }
-        else {
-          fireGun(e, es.gun, es.dmg * (e.ace ? 1.4 : 1) * (e.vdef && e.vdef.gunDmg || 1) * depthMul, (es.gun.spread * (2.5 - 1.5 * e.skill) + 0.014 * (1.25 - e.skill)) * (e.target === player ? 1 + era.stealth : 1), es.color || 0xff9a6b);
-          e.gunCd = 1 / (es.rof * (e.ace ? 1.3 : 1));
-        }
+        else enemyGun(e, depthMul, e.target === player);
       }
       if (e.pos.y < groundAt(e.pos.x, e.pos.z) + 2) { e.hp = 0; e.dying = true; onPlaneDown(e, null); explosion(e.pos, 1.2); e.remove(); }
     }
@@ -2281,24 +2340,32 @@ function updatePlaying(dt) {
   updateBullets(dt);
   updateMissiles(dt);
 
-  // mission flow
-  if (m.queue && m.queue.length && live) {
+  // mission flow (in co-op the host runs it while any pilot is still flying, and tells the guests)
+  const teamLive = live || coopAnyMateUp();
+  if (m.queue && m.queue.length && teamLive) {
     m.spawnT -= dt;
-    if (m.spawnT <= 0 && enemies.filter(validTarget).length < SURV_LIVE) { spawnSpec(m.queue.shift()); m.spawnT = 1.2; }
+    if (m.spawnT <= 0 && enemies.filter(validTarget).length < survLive()) { spawnSpec(m.queue.shift()); m.spawnT = 1.2; }
   }
-  if (!m.done && live && m.t > 3) {
+  if (!m.done && teamLive && m.t > 3 && !coopGuest()) {
     const hostiles = enemies.filter(validTarget);
-    if (hostiles.length === 0 && !m.queue.length) {
-      const next = run.wave + 1;
-      m.done = true; m.doneT = 2.4; slowmoT = 1.2;
-      flashMsg('WAVE ' + run.wave + ' CLEARED', plural(next, 'fighter', 'fighters') + (next % BOSS_EVERY === 0 ? ' and a boss' : '') + ' next', 2.2);
-    }
+    if (hostiles.length === 0 && !m.queue.length) { waveCleared(); coopSend({ t: 'clear', n: run.wave }); }
   }
   if (m.done && !run.over) { m.doneT -= dt; if (m.doneT <= 0) survivalWaveDone(); }
-  if (!live && !m.done) {
+  if (!teamLive && !m.done && !coopGuest()) {
     run.deathT += dt;
-    if (run.deathT > 3 && !run.over) endRun('dead');
+    if (run.deathT > 3 && !run.over) { coopSend({ t: 'over', why: 'dead' }); endRun('dead'); }
   }
+  coopUpdate(dt);
+}
+function waveCleared() {
+  const m = run.mission, next = run.wave + 1;
+  m.done = true; m.doneT = 2.4; slowmoT = 1.2;
+  flashMsg('WAVE ' + run.wave + ' CLEARED', plural(next, 'fighter', 'fighters') + (next % BOSS_EVERY === 0 ? ' and a boss' : '') + ' next', 2.2);
+}
+function enemyGun(e, depthMul, atMe) {
+  const es = era.enemy;
+  fireGun(e, es.gun, es.dmg * (e.ace ? 1.4 : 1) * (e.vdef && e.vdef.gunDmg || 1) * depthMul, (es.gun.spread * (2.5 - 1.5 * e.skill) + 0.014 * (1.25 - e.skill)) * (atMe ? 1 + era.stealth : 1), es.color || 0xff9a6b);
+  e.gunCd = 1 / (es.rof * (e.ace ? 1.3 : 1));
 }
 
 // ================= camera =================
@@ -2335,9 +2402,16 @@ function updateCamera(dt) {
     camera.fov = lerp(camera.fov, 62 + sf * 12 + ab * 6, dt * 2);
   } else {
     player.mesh.visible = true;
-    const target = player.pos;
-    camera.position.lerp(tv.copy(target).add(tv2.set(30, 18, 30)), dt * 0.8);
-    camera.lookAt(target);
+    const mate = run && run.coop && run.deathT > 2.5 ? coopWatch() : null;
+    if (mate) {
+      // spectate: ride behind a teammate until the wave ends
+      camera.position.lerp(tv.copy(mate.pos).addScaledVector(mate.fwd, -26 * mate.s.size).addScaledVector(mate.up, 7 * mate.s.size), 1 - Math.exp(-4 * dt));
+      camera.lookAt(tv2.copy(mate.pos).addScaledVector(mate.fwd, 60));
+    } else {
+      const target = player.pos;
+      camera.position.lerp(tv.copy(target).add(tv2.set(30, 18, 30)), dt * 0.8);
+      camera.lookAt(target);
+    }
   }
   if (shake > 0) {
     camera.position.x += rand(-1, 1) * shake * 1.2; camera.position.y += rand(-1, 1) * shake * 1.2;
@@ -2404,7 +2478,8 @@ function drawHud(dt) {
   const alive = enemies.filter(e => e.alive && !e.dying).length;
   hEls.wave.textContent = 'WAVE ' + run.wave;
   hEls.en.textContent = objectiveText(alive);
-  hEls.kills.textContent = run.kills + ' kills · best wave ' + (save.survBest[era.loc.id] || 0);
+  hEls.kills.textContent = run.kills + ' kills' + (run.coop ? '' : ' · best wave ' + (save.survBest[era.loc.id] || 0));
+  coopHudTeam();
   const hf = player.hp / player.maxHp;
   hEls.hull.style.width = (hf * 100) + '%'; hEls.hull.style.background = hf < 0.3 ? red : '';
   hEls.hullN.textContent = Math.ceil(player.hp);
@@ -2443,6 +2518,7 @@ function drawHud(dt) {
     hud.fillStyle = red; hud.fillRect(bx, by, bw * boss.hp / boss.maxHp, 8);
     hud.fillStyle = paper; hud.fillText(boss.name.toUpperCase(), W / 2, by - 6);
   }
+  if (run.coop) coopHud(live);
   if (!live) return;
 
   // mouse aim marker
@@ -2572,13 +2648,13 @@ function drawHud(dt) {
   hud.beginPath(); hud.arc(cx, cy, R / 2, 0, Math.PI * 2); hud.stroke();
   const heading = Math.atan2(player.fwd.x, -player.fwd.z);
   const rr = 3000;
-  for (const e of sorted.concat(allies.filter(a => a.alive && !a.dying))) {
+  for (const e of sorted.concat(allies.filter(a => a.alive && !a.dying), coopMatePlanes().filter(validTarget))) {
     if (e.vdef && e.vdef.seen && e.pos.distanceTo(player.pos) > e.vdef.seen) continue;
     const dx = e.pos.x - player.pos.x, dz = e.pos.z - player.pos.z;
     const east = dx, north = -dz, sh = Math.sin(heading), ch = Math.cos(heading);
     const ahead = east * sh + north * ch, rt = east * ch - north * sh;
     const dd = Math.min(Math.hypot(ahead, rt) / rr * R, R - 3), a2 = Math.atan2(ahead, rt);
-    hud.fillStyle = e.ally ? '#8fd69a' : e.ace ? red : e.vdef && e.vdef.noLock ? ghostCol : amber;
+    hud.fillStyle = e.ally || e.mateSlot != null ? '#8fd69a' : e.ace ? red : e.vdef && e.vdef.noLock ? ghostCol : amber;
     hud.fillRect(cx + Math.cos(a2) * dd - 2.5, cy - Math.sin(a2) * dd - 2.5, 5, 5);
   }
   for (const m of missiles) {
@@ -2600,7 +2676,11 @@ function drawHud(dt) {
 // ================= screens =================
 function showScreen(id) { ['hangar', 'perks', 'debrief', 'pause'].forEach(s => { $(s).hidden = s !== id; }); }
 function setPaused(p) {
-  if (p && state === 'playing') { state = 'paused'; showScreen('pause'); setEngine(false, 0, 0); if (document.exitPointerLock) document.exitPointerLock(); }
+  if (p && state === 'playing') {
+    state = 'paused'; showScreen('pause'); setEngine(false, 0, 0); if (document.exitPointerLock) document.exitPointerLock();
+    $('psSub').textContent = run && run.coop ? 'The fight goes on in co-op, and your jet holds its course. Press P or Esc to get back in.' : 'Press P or Esc to resume.';
+    $('psQuit').textContent = run && run.coop ? 'Leave the team (keep points)' : 'Bail out (keep points)';
+  }
   else if (!p && state === 'paused') { state = 'playing'; showScreen(null); }
 }
 $('pauseBtn').addEventListener('click', () => setPaused(true));
@@ -2637,7 +2717,7 @@ function showChoice(o) {
   setTimeout(() => { const f = list.querySelector('.perk:not(:disabled)'); if (f) f.focus(); }, 50);
 }
 $('dbHangar').addEventListener('click', toHangar);
-$('dbAgain').addEventListener('click', startSurvival);
+$('dbAgain').addEventListener('click', () => (coopRoom() ? coopLaunch() : startSurvival()));
 
 function toHangar() {
   clearCombat();
@@ -2774,6 +2854,7 @@ function renderHangar() {
   $('optCtlMouse').checked = mouseMode();
   $('optCtlKeys').checked = !mouseMode();
   $('optPull').checked = !!save.pullBack;
+  coopRender();
 }
 function renderSurvival() {
   const el = $('survList'); el.innerHTML = '';
@@ -2994,7 +3075,7 @@ function renderPerks() {
 $('optPull').addEventListener('change', e => { save.pullBack = e.target.checked; persist(); });
 $('optCtlMouse').addEventListener('change', () => { save.ctl = 'mouse'; persist(); renderHangar(); });
 $('optCtlKeys').addEventListener('change', () => { save.ctl = 'keys'; persist(); renderHangar(); });
-$('launch').addEventListener('click', startSurvival);
+$('launch').addEventListener('click', () => (coopRoom() ? coopLaunch() : startSurvival()));
 let resetArm = false;
 $('resetBtn').addEventListener('click', () => {
   if (!resetArm) { resetArm = true; $('resetBtn').textContent = 'Click again to wipe medals, credits, jets, guns, paint and perks'; setTimeout(() => { resetArm = false; $('resetBtn').textContent = 'Reset all progress'; }, 3000); return; }
@@ -3212,15 +3293,547 @@ function renderCockpit(dt) {
 }
 
 // ================= main loop =================
+// ================= online co-op =================
+// Survival for up to four pilots, peer to peer through net.js. The host's game flies every enemy and runs the waves.
+// Each pilot flies their own jet and sends where it is 20 times a second. Guests see copies of the host's enemies
+// (puppets) and send their hits to the host. A pilot's own game decides when enemy fire hits them, and the shooter's
+// game decides when friendly fire does, so what you see on your screen is what counts for you.
+const COOP_HP = 0.25, COOP_COUNT = 0.6, COOP_LIVE = 3; // for every pilot past the first: enemy hull, fighters per wave, fighters in the air at once
+const COOP_SEND = 1 / 20, COOP_WORLD = 1 / 15;
+let net = null, coopFake = false, coopGo = false;
+const coop = { members: new Set(), ready: new Set(), mates: new Map(), pup: new Map(), defs: {}, sub: '', queue: 0, nid: 0, sendT: 0, worldT: 0, worldN: 0,
+  info: '', status: '', err: '', waiting: false, ending: false, downBy: -1, ffAt: 0 };
+const coopQ = new THREE.Quaternion();
+const coopRoom = () => !!(net && net.active);
+const coopOn = () => !!(run && run.coop && coopRoom());
+const coopHost = () => coopOn() && net.isHost;
+const coopGuest = () => coopOn() && !net.isHost;
+function coopSend(msg, to) { if (coopOn()) net.send(msg, to); }
+const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const nameOf = slot => { const r = net && net.roster.find(x => x.slot === slot); return r ? r.name : 'Pilot ' + (slot + 1); };
+const coopPilots = () => (coopOn() ? Math.max(1, coop.members.size) : 1);
+const coopMatePlanes = () => (coopOn() ? [...coop.mates.values()].map(m => m.p).filter(Boolean) : []);
+const n1 = v => Math.round(v * 10) / 10, n4 = v => Math.round(v * 1e4) / 1e4;
+const packPose = p => [n1(p.pos.x), n1(p.pos.y), n1(p.pos.z), n4(p.quat.x), n4(p.quat.y), n4(p.quat.z), n4(p.quat.w), n1(p.vel.x), n1(p.vel.y), n1(p.vel.z)];
+const nidOf = e => e.nid || (e.nid = ++coop.nid);
+
+// ---- difficulty: more pilots, more and tougher fighters ----
+function coopHpMul() { return coopHost() ? 1 + COOP_HP * (coopPilots() - 1) : 1; }
+function survLive() { return SURV_LIVE + (coopHost() ? COOP_LIVE * (coopPilots() - 1) : 0); }
+function coopScaleWave(list, w, skill) {
+  const n = coopHost() ? coopPilots() : 1;
+  if (n < 2) return list;
+  const want = list.length + Math.round(w * COOP_COUNT * (n - 1));
+  let out = list.slice();
+  while (out.length < want) out = out.concat(survivalWave(w, skill).slice(0, want - out.length));
+  return shuffle(out);
+}
+// where new fighters spawn: ahead of a pilot who's still flying
+function coopAnchor() {
+  if (player && player.alive && !player.dying) return player;
+  return coopMatePlanes().find(validTarget) || player;
+}
+function coopSpawnX() {
+  if (!coopOn()) return 0;
+  const order = [...coop.members].sort((a, b) => a - b), i = Math.max(0, order.indexOf(net.slot));
+  return (i - (order.length - 1) / 2) * 160;
+}
+function coopAnyMateUp() {
+  if (!coopOn()) return false;
+  return [...coop.members].some(sl => { if (sl === net.slot) return false; const m = coop.mates.get(sl); return !m || !m.dn; });
+}
+const coopWatch = () => coopMatePlanes().find(validTarget) || null;
+function coopClear() {
+  for (const m of coop.mates.values()) { if (m.p) scene.remove(m.p.mesh); m.p = null; }
+  coop.pup.clear();
+}
+
+// ---- every frame: send our jet, the host sends the world, move everyone else's jets ----
+function coopUpdate(dt) {
+  if (!coopOn() || !player) return; // a wave that just ended has already cleared the sky
+  coop.sendT -= dt;
+  if (coop.sendT <= 0) {
+    coop.sendT = COOP_SEND;
+    const live = player.alive && !player.dying;
+    net.send({ t: 's', p: packPose(player), th: n1(player.throttle), fi: live && run.firing ? 1 : 0, hp: Math.ceil(player.hp), mh: Math.round(player.maxHp),
+      dn: live ? 0 : 1, by: coop.downBy, pl: era.plane.id, sk: skinFor(era.plane.id) });
+  }
+  if (net.isHost) { coop.worldT -= dt; if (coop.worldT <= 0) { coop.worldT = COOP_WORLD; coopSendWorld(); } }
+  for (const m of coop.mates.values()) coopMateUpdate(m, dt);
+}
+function enemyDef(e) {
+  if (e.boss) return { b: 1, hp: Math.round(e.maxHp), td: e.turretDmg, tr: e.turretRof };
+  return { m: e.model, ace: e.ace ? 1 : 0, v: e.variant, hp: Math.round(e.maxHp), sz: e.s.size, sk: n1(e.skill || 0.5), ar: e.s.armor || 0 };
+}
+function coopSendWorld() {
+  const list = [], defs = {}, all = ++coop.worldN % 30 === 0;
+  for (const e of enemies) {
+    if (!e.alive) continue;
+    const fresh = !e.nid, id = nidOf(e);
+    if (fresh || all) defs[id] = enemyDef(e);
+    const tg = e.target === player ? net.slot : e.target && e.target.mateSlot != null ? e.target.mateSlot : -1;
+    list.push([id].concat(packPose(e), [Math.round(clamp(e.hp / e.maxHp, 0, 1) * 1000), (e.dying ? 1 : 0) | (e.firing && !e.dying ? 2 : 0) | (e.stunT > 0 ? 4 : 0), tg]));
+  }
+  net.send({ t: 'w', e: list, d: defs, q: run.mission.queue.length });
+}
+// glide a copy toward where the last update says it is now
+function coopInterp(p, s, dt) {
+  if (!s) return;
+  const age = Math.min((performance.now() - s.at) / 1000, 0.3);
+  p.vel.set(s.v[0], s.v[1], s.v[2]); p.speed = p.vel.length();
+  tv.set(s.p[0], s.p[1], s.p[2]).addScaledVector(p.vel, age);
+  if (p.pos.distanceToSquared(tv) > 250 * 250) p.pos.copy(tv);
+  else { p.pos.addScaledVector(p.vel, dt); p.pos.lerp(tv, 1 - Math.exp(-6 * dt)); }
+  coopQ.set(s.q[0], s.q[1], s.q[2], s.q[3]);
+  p.quat.slerp(coopQ, 1 - Math.exp(-14 * dt)); p.axes();
+}
+
+// ---- guests: the host's enemies ----
+function makePuppet(id, d) {
+  let e;
+  if (d.b) {
+    const b = era.boss;
+    e = new Plane({ size: 2.6, maxSpeed: era.maxSpeed, hp: d.hp }, bossMesh(b.kind, b.color, b.accent), 1);
+    e.boss = true; e.heavy = true; e.ace = true; e.name = b.name; e.skill = 1;
+    e.turretRof = d.tr; e.turretDmg = d.td; e.turrets = BOSS_TURRETS.map(t => ({ p: new V3(t[0], t[1], t[2]), cd: rand(0, 1.5) }));
+  } else {
+    const j = ENEMY_JETS[d.m] || ENEMY_JETS[era.enemy.model];
+    e = new Plane({ size: d.sz, maxSpeed: j.flight.maxSpeed, hp: d.hp, armor: d.ar }, planeMesh(d.m, d.ace ? 'ace' : d.v || d.m), 1);
+    e.ace = !!d.ace; e.variant = d.v || null; e.vdef = VARIANTS[d.v] || null; e.skill = d.sk; e.model = d.m;
+  }
+  e.puppet = true; e.nid = id; e.gunCd = rand(0, 0.3);
+  e.damage = function (amount, from) { coopHitEnemy(this, amount, from); };
+  coop.pup.set(id, e); enemies.push(e);
+  return e;
+}
+function coopWorld(msg) {
+  if (!coopGuest() || !run.mission || !(state === 'playing' || state === 'paused')) return;
+  Object.assign(coop.defs, msg.d);
+  coop.queue = msg.q;
+  const seen = new Set(), now = performance.now();
+  for (const r of msg.e) {
+    const id = r[0]; seen.add(id);
+    let e = coop.pup.get(id), fresh = false;
+    if (!e) { const d = coop.defs[id]; if ((r[12] & 1) || !d) continue; e = makePuppet(id, d); fresh = true; }
+    if (!e.alive) continue;
+    e.snap = { at: now, p: r.slice(1, 4), q: r.slice(4, 8), v: r.slice(8, 11) };
+    if (fresh) { e.pos.set(r[1], r[2], r[3]); e.quat.set(r[4], r[5], r[6], r[7]); e.axes(); }
+    const hp = r[11] / 1000 * e.maxHp;
+    if (now - (e.hitAt || 0) > 400 || hp < e.hp) e.hp = hp;
+    e.firing = !!(r[12] & 2); e.stunned = !!(r[12] & 4); e.tgt = r[13];
+    if ((r[12] & 1) && !e.dying) { e.dying = true; e.dieT = 0; e.fall = 0; explosion(e.pos, e.boss ? 2 : 0.6); }
+  }
+  for (const [id, e] of coop.pup) {
+    if (seen.has(id)) continue;
+    coop.pup.delete(id);
+    if (e.alive && !e.dying) { explosion(e.pos, 1.2); e.remove(); }
+  }
+}
+function coopPuppetUpdate(e, dt) {
+  coopInterp(e, e.snap, dt);
+  e.animate(dt); e.trails(dt);
+  if (e.stunned) return;
+  // the copy fires real rounds here when the host's fighter fires, so its guns can hit you
+  if (e.heavy) { if (e.turrets) turretFire(e, dt); return; }
+  e.gunCd -= dt;
+  if (e.firing && e.gunCd <= 0) enemyGun(e, 0.7 + run.mission.depth * 0.06, e.tgt === net.slot);
+}
+// a guest's hit on a copy goes to the host, who owns the real thing
+function coopHitEnemy(e, amount, from) {
+  if (!e.alive || e.dying) return;
+  e.hp = Math.max(1, e.hp - amount * (1 - (e.s.armor || 0))); e.hitAt = performance.now();
+  const stun = e.stunT > 0 ? e.stunT : 0; e.stunT = 0; // an EMP sets this just before it hits
+  net.send({ t: 'h', id: e.nid, d: amount, m: missileHit ? 1 : 0, s: stun }, 0);
+}
+
+// ---- teammates' jets ----
+function makeMate(m) {
+  const P = PLANES[m.pl] || PLANES.f5;
+  const p = new Plane({ size: P.size, maxSpeed: P.flight.maxSpeed, hp: m.mh || P.hp }, planeMesh(P.id, m.sk, P.livery), 0);
+  p.mateSlot = m.slot; p.planeId = P.id; p.skinId = m.sk;
+  p.pos.set(m.snap.p[0], m.snap.p[1], m.snap.p[2]); p.quat.set(m.snap.q[0], m.snap.q[1], m.snap.q[2], m.snap.q[3]); p.axes();
+  for (const r of p.mesh.userData.msl || []) r.visible = false;
+  p.damage = function (amount, from) { coopHitMate(this, amount, from); };
+  return p;
+}
+function coopMateUpdate(m, dt) {
+  if (!m.snap) return;
+  if (m.p && (m.p.planeId !== m.pl || m.p.skinId !== m.sk)) { scene.remove(m.p.mesh); m.p = null; }
+  if (!m.p) { if (m.dn) return; m.p = makeMate(m); }
+  const p = m.p;
+  if (m.dn) {
+    if (p.alive && !p.dying) {
+      p.dying = true; p.dieT = 0; p.fall = 0; explosion(p.pos, 0.6);
+      popText(nameOf(m.slot) + ' is down' + (m.by === net.slot ? ' · you shot them' : m.by >= 0 ? ' · ' + nameOf(m.by) + ' shot them' : ''));
+    }
+  } else if (!p.alive || p.dying) {
+    p.alive = true; p.dying = false; scene.add(p.mesh);
+    p.pos.set(m.snap.p[0], m.snap.p[1], m.snap.p[2]); p.quat.set(m.snap.q[0], m.snap.q[1], m.snap.q[2], m.snap.q[3]); p.axes();
+  }
+  if (!p.alive) return;
+  if (p.dying) { p.dyingUpdate(dt); return; }
+  coopInterp(p, m.snap, dt);
+  p.hp = m.hp; p.maxHp = m.mh; p.throttle = m.th;
+  p.animate(dt); p.trails(dt);
+  // their tracers, for show: the shooter's own game decides what they hit
+  m.fireT = (m.fireT || 0) - dt;
+  if (m.fi && m.fireT <= 0) {
+    m.fireT = 1 / 16;
+    coopFake = true; fireGun(p, era.gun, 0, 0.004, era.gun.color, [0, -0.4 * p.s.size, -4 * p.s.size]); coopFake = false;
+  }
+}
+function coopMateState(f, msg) {
+  if (!coopOn() || !run.mission || !coop.members.has(f)) return;
+  let m = coop.mates.get(f);
+  if (!m) coop.mates.set(f, m = { slot: f, p: null });
+  m.snap = { at: performance.now(), p: msg.p.slice(0, 3), q: msg.p.slice(3, 7), v: msg.p.slice(7, 10) };
+  m.th = msg.th; m.fi = msg.fi; m.hp = msg.hp; m.mh = msg.mh; m.dn = !!msg.dn; m.by = msg.by; m.pl = msg.pl; m.sk = msg.sk;
+}
+function coopDropMate(slot) {
+  const m = coop.mates.get(slot);
+  if (m && m.p) { scene.remove(m.p.mesh); if (lockTarget === m.p) { lockTarget = null; locked = false; } }
+  coop.mates.delete(slot);
+}
+
+// ---- friendly fire: the shooter's game decides, and tells the pilot it hit ----
+function coopHitMate(p, amount, from) {
+  if (from !== player || !p.alive || p.dying) return;
+  net.send({ t: 'ff', d: amount }, p.mateSlot);
+  const now = performance.now();
+  if (now - coop.ffAt > 1500) { coop.ffAt = now; popText('Friendly fire! That\'s ' + nameOf(p.mateSlot)); }
+}
+function coopBulletHitsMate(b) {
+  for (const p of coopMatePlanes()) {
+    if (!validTarget(p) || !segSphere(b.prev, b.pos, p.pos, 5 * p.s.size)) continue;
+    spawnFx(tv3, { add: true, color: 0xfff1c0, size: 4, life: 0.14 });
+    hitMarkerT = 0.12; p.damage(b.dmg, player);
+    return true;
+  }
+  return false;
+}
+// another pilot's tracers only spark on what they touch
+function coopFakeHit(b) {
+  for (const e of enemies) if (validTarget(e) && segSphere(b.prev, b.pos, e.pos, 9 * e.s.size)) { spawnFx(tv3, { add: true, color: 0xfff1c0, size: 4, life: 0.14 }); return true; }
+  return false;
+}
+function coopMissileHitsMate(m) {
+  if (!coopOn()) return false;
+  if (m.fake && m.target === player && validTarget(player) && player.pos.distanceToSquared(m.pos) < m.fuse * m.fuse) return true;
+  for (const p of coopMatePlanes()) {
+    if (!validTarget(p) || p.pos.distanceToSquared(m.pos) > m.fuse * m.fuse) continue;
+    if (m.owner === player && !m.fake && !m.burst) { missileHit = true; p.damage(m.dmg, player); missileHit = false; }
+    return true;
+  }
+  return false;
+}
+function coopFlakHitsMates(m) {
+  for (const p of coopMatePlanes()) {
+    if (!validTarget(p)) continue;
+    const d = p.pos.distanceTo(m.pos);
+    if (d < m.burst) p.damage(m.dmg * (1 - 0.5 * d / m.burst), player);
+  }
+}
+const coopDownLine = from => (from && from.mateSlot != null ? 'Shot down by ' + nameOf(from.mateSlot) + '. ' : '') + 'You\'re back in after this wave';
+function coopDown(from) { if (run.coop) coop.downBy = from && from.mateSlot != null ? from.mateSlot : -1; }
+function coopKillBy(slot, p) { if (coopHost()) net.send({ t: 'k', b: p.boss ? 1 : 0, a: p.ace ? 1 : 0, m: missileHit ? 1 : 0 }, slot); }
+function coopBossDown() { if (coopHost()) coopSend({ t: 'bd' }); }
+
+// ---- missiles: everyone sees everyone's, but only the shooter's copy (or the host's, for enemies) does damage ----
+function missileRef(t) {
+  if (!t) return null;
+  if (t === player) return { m: net.slot };
+  if (t.mateSlot != null) return { m: t.mateSlot };
+  if (t.team === 1) return { e: nidOf(t) };
+  return null;
+}
+function missileTarget(ref) {
+  if (!ref) return null;
+  if (ref.m != null) { if (ref.m === net.slot) return player; const m = coop.mates.get(ref.m); return m ? m.p : null; }
+  return enemies.find(e => e.nid === ref.e) || null;
+}
+function coopMissileOut(p, target, dmg, o, ms) {
+  if (!coopOn() || coopFake) return;
+  const pack = () => Object.assign({}, o, { dir: o.dir ? [n4(o.dir.x), n4(o.dir.y), n4(o.dir.z)] : null });
+  if (p === player) net.send({ t: 'pm', tg: missileRef(target), o: pack() });
+  else if (p.team === 1 && net.isHost) {
+    // the host's copy of a missile chasing a guest can't hurt anyone; the guest's own copy does the damage
+    if (target && target.mateSlot != null) ms.fake = true;
+    net.send({ t: 'em', id: nidOf(p), tg: missileRef(target), d: dmg, o: pack() });
+  }
+}
+function coopMissileIn(src, msg, real) {
+  if (!src || !src.alive || src.dying) return;
+  const o = Object.assign({}, msg.o);
+  o.dir = o.dir ? new V3(o.dir[0], o.dir[1], o.dir[2]) : null;
+  if (!o.dir) delete o.dir;
+  coopFake = !real; fireMissile(src, missileTarget(msg.tg), msg.d || 0, o); coopFake = false;
+}
+
+// ---- the wave gate: every pilot picks a perk, then the host starts the next wave for everyone ----
+function coopReady() {
+  coop.ready.add(net.slot);
+  coop.waiting = true;
+  if (net.isHost) coopCheckReady(); else net.send({ t: 'ready', n: run.wave + 1 }, 0);
+  coopWaiting();
+}
+function coopWaiting() {
+  if (!coop.waiting || !run || run.over) return;
+  const all = [...coop.members].sort((a, b) => a - b), left = all.filter(s => !coop.ready.has(s));
+  showChoice({
+    title: 'Waiting for your team', cards: [],
+    sub: (all.length - left.length) + ' of ' + all.length + ' pilots ready.' + (left.length ? ' Still picking: ' + left.map(nameOf).join(', ') + '.' : '') + ' Wave ' + (run.wave + 1) + ' starts when everyone has picked.',
+    buttons: [{ label: 'Leave the team and bank it', onClick: () => endRun('bail') }],
+  });
+}
+function coopCheckReady() {
+  if (!coopHost()) return;
+  for (const s of [...coop.ready]) if (!coop.members.has(s)) coop.ready.delete(s);
+  net.send({ t: 'rd', r: [...coop.ready] });
+  coopWaiting();
+  if (!coop.waiting || ![...coop.members].every(s => coop.ready.has(s))) return;
+  coop.ready.clear(); coop.waiting = false;
+  run.downNote = ''; coop.downBy = -1;
+  coopGo = true; nextWave(); coopGo = false;
+  net.send({ t: 'wave', n: run.wave, sub: run.mission.sub, pilots: coop.members.size });
+}
+function coopRespawnPenalty() {
+  const ids = Object.keys(run.perks);
+  let lost = '';
+  if (ids.length) {
+    const id = ids[Math.floor(Math.random() * ids.length)], p = PERK_BY_ID[id];
+    run.perks[id]--;
+    lost = run.perks[id] ? p.name + ' drops to ' + ROMAN[run.perks[id]] : 'you lose ' + p.name;
+    if (!run.perks[id]) delete run.perks[id];
+    refreshMods();
+  }
+  run.hull = Math.max(1, Math.round(maxHull() * 0.5));
+  run.downNote = 'You went down: back at half hull' + (lost ? ', and ' + lost : '') + '. ';
+}
+function coopMemberGone(slot) {
+  if (!coop.members.has(slot) && !coop.mates.has(slot)) return;
+  coop.members.delete(slot); coop.ready.delete(slot); coopDropMate(slot);
+  if (run && run.coop && !run.over) popText(nameOf(slot) + ' left the fight');
+  if (coopHost()) { net.send({ t: 'gone', s: slot }); coopCheckReady(); }
+  coopWaiting();
+}
+function coopRunOver(reason) {
+  if (!run.coop) return;
+  if (coopRoom() && !coop.ending) {
+    if (net.isHost) net.send({ t: 'over', why: reason === 'dead' ? 'dead' : 'bail' });
+    else net.send({ t: 'quit' });
+  }
+  coop.ending = false; coop.waiting = false; coop.members.clear(); coop.ready.clear(); coop.mates.clear();
+  coopSyncInfo();
+}
+
+// ---- messages ----
+function coopMessage(f, msg) {
+  switch (msg.t) {
+    case 's': coopMateState(f, msg); break;
+    case 'w': coopWorld(msg); break;
+    case 'h': {
+      if (!coopHost()) break;
+      const e = enemies.find(x => x.nid === msg.id);
+      if (!validTarget(e)) break;
+      if (msg.s) e.stunT = msg.s;
+      const m = coop.mates.get(f);
+      missileHit = !!msg.m; e.damage(msg.d, (m && m.p) || { mateSlot: f }); missileHit = false;
+      break;
+    }
+    case 'k': if (coopOn()) creditKill({ boss: msg.b, ace: msg.a }, msg.m); break;
+    case 'bd': if (coopGuest() && !run.over) bossDown(); break;
+    case 'ff':
+      if (coopOn() && player && validTarget(player)) {
+        const m = coop.mates.get(f);
+        player.damage(msg.d, (m && m.p) || { mateSlot: f });
+        hurtT = 0.4; shake = Math.max(shake, 0.4); burst(0.05, 2000, 0.2, 'highpass');
+        const now = performance.now();
+        if (now - coop.ffAt > 1500) { coop.ffAt = now; popText('Hit by ' + nameOf(f) + '!'); }
+      }
+      break;
+    case 'fl': {
+      if (!coopOn()) break;
+      const m = coop.mates.get(f), p = m && m.p;
+      if (!validTarget(p)) break;
+      dropFlares(p);
+      for (const ms of missiles) if (ms.target === p && Math.random() < 0.8) ms.target = null;
+      break;
+    }
+    case 'pm': if (coopOn()) { const m = coop.mates.get(f); coopMissileIn(m && m.p, msg, false); } break;
+    case 'em': {
+      if (!coopGuest()) break;
+      const tgt = missileTarget(msg.tg);
+      if (tgt === player) {
+        if (Math.random() < era.stealth) break;
+        popText('Missile launch!');
+      }
+      coopMissileIn(coop.pup.get(msg.id), msg, tgt === player);
+      break;
+    }
+    case 'ready': if (coopHost()) { coop.ready.add(f); coopCheckReady(); } break;
+    case 'rd': if (coopGuest()) { coop.ready = new Set(msg.r); coopWaiting(); } break;
+    case 'wave':
+      if (!coopGuest() || run.over) break;
+      coop.sub = msg.sub; coop.queue = 0; coop.ready.clear(); coop.waiting = false;
+      run.wave = msg.n - 1; run.downNote = ''; coop.downBy = -1;
+      coopGo = true; nextWave(); coopGo = false;
+      break;
+    case 'clear': if (coopGuest() && run.mission && !run.mission.done && msg.n === run.wave) waveCleared(); break;
+    case 'over':
+      if (!coopGuest() || run.over) break;
+      coop.ending = true; endRun(msg.why === 'dead' ? 'dead' : 'bail');
+      if (msg.why !== 'dead') $('dbSub').textContent = 'The host ended the run. ' + $('dbSub').textContent;
+      break;
+    case 'quit': coopMemberGone(f); break;
+    case 'gone': coopMemberGone(msg.s); break;
+    case 'leave': coopMemberGone(f); break;
+    case 'start': coopStart(msg); break;
+  }
+}
+
+// ---- the room: lobby on the Survival tab ----
+function coopNet() {
+  if (!net) net = window.SkyNet({ message: coopMessage, roster: () => coopRender(), status: t => { coop.status = t; coopRender(); }, closed: coopClosed });
+  return net;
+}
+function coopClosed(reason) {
+  coop.err = reason || ''; coop.status = ''; coop.info = '';
+  const wasRun = run && run.coop && !run.over && state !== 'hangar' && state !== 'debrief';
+  coop.members.clear(); coop.ready.clear(); coop.waiting = false;
+  for (const m of coop.mates.values()) if (m.p) scene.remove(m.p.mesh);
+  coop.mates.clear();
+  if (wasRun) { coop.ending = true; endRun('bail'); $('dbSub').textContent = (reason || 'The room closed.') + ' ' + $('dbSub').textContent; }
+  coopRender();
+}
+const callsign = () => (($('coopName').value || '').trim() || save.callsign || 'Pilot').slice(0, 16);
+function coopSyncInfo() {
+  if (!coopRoom()) return;
+  const info = { plane: era.plane.short, loc: save.loc, busy: !!(run && run.coop && !run.over) };
+  const k = JSON.stringify(info);
+  if (k !== coop.info) { coop.info = k; net.setInfo(info); }
+}
+function coopLaunch() {
+  if (!coopRoom() || !net.isHost) return;
+  coop.members = new Set(net.roster.map(r => r.slot));
+  coop.ready.clear(); coop.mates.clear(); coop.ending = false; coop.downBy = -1;
+  net.send({ t: 'start', loc: save.loc, members: [...coop.members] });
+  startSurvival();
+  coopSyncInfo();
+}
+function coopStart(msg) {
+  if (net.isHost || !msg.members.includes(net.slot)) return;
+  if (run && !run.over) return; // already flying
+  coop.members = new Set(msg.members);
+  coop.ready.clear(); coop.mates.clear(); coop.ending = false; coop.downBy = -1;
+  if (coopLoc !== msg.loc || era.loc.id !== msg.loc) { coopLoc = msg.loc; composeEra(); buildWorld(); }
+  startSurvival();
+  coopSyncInfo();
+}
+function coopRender() {
+  if (!$('coopBox')) return;
+  // back in the hangar a guest returns to their own location
+  if (state === 'hangar' && coopLoc && !(run && run.coop && !run.over)) { coopLoc = null; composeEra(); buildWorld(); setupShowcase(); }
+  const live = coopRoom(), busy = !!(net && net.connecting);
+  $('coopIdle').hidden = live; $('coopRoom').hidden = !live;
+  $('coopHost').disabled = $('coopJoin').disabled = busy;
+  if (document.activeElement !== $('coopName')) $('coopName').value = save.callsign || '';
+  const launch = $('launch'), ls = launch.querySelector('span');
+  if (live) {
+    const ros = net.roster, host = ros.find(r => r.slot === 0), hostInfo = host && host.info || {};
+    $('coopCodeShow').textContent = net.code;
+    $('coopTag').textContent = net.isHost ? 'You host' : 'Host: ' + nameOf(0);
+    $('coopRoster').innerHTML = ros.map(r => '<li class="' + (r.slot === net.slot ? 'me' : '') + '"><b>' + esc(r.name) + '</b><span>' + esc((r.info && r.info.plane) || '') + '</span><span class="r">' +
+      (r.slot === 0 ? 'host' : r.ping ? r.ping + ' ms' : '') + (r.slot === net.slot ? ' · you' : '') + (r.info && r.info.busy ? ' · flying' : '') + '</span></li>').join('') +
+      (ros.length < 4 ? '<li><span class="r" style="margin-left:0">' + (4 - ros.length) + ' open ' + (ros.length === 3 ? 'slot' : 'slots') + '. Share the code or the invite link.</span></li>' : '');
+    if (net.isHost) {
+      ls.textContent = 'Launch co-op'; launch.disabled = !!hostInfo.busy;
+      $('launchEra').textContent = era.short + ' · ' + era.name.toUpperCase() + ' · ' + ros.length + (ros.length === 1 ? ' PILOT' : ' PILOTS');
+      $('coopNote').textContent = coop.status || (ros.length === 1 ? 'Waiting for pilots. You can launch alone too.' : 'You pick the location. Everyone flies their own jet, loadout and perks. Enemy numbers and hull go up with every pilot.');
+    } else {
+      ls.textContent = 'Waiting for the host'; launch.disabled = true;
+      const L = LOCS[hostInfo.loc];
+      $('launchEra').textContent = era.short + (L ? ' · ' + L.name.toUpperCase() : '');
+      $('coopNote').textContent = coop.status || (hostInfo.busy ? 'The host is mid-run. You\'ll fly from their next launch.' : 'The host picks the location' + (L ? ' (' + L.name + ' for now)' : '') + ' and launches. You fly your own ' + era.plane.short + '.');
+    }
+  } else {
+    ls.textContent = 'Launch survival'; launch.disabled = false;
+    $('coopTag').textContent = '';
+    $('coopNote').textContent = coop.err || coop.status || 'Fly survival together over the internet. One pilot hosts and shares the four-letter code. Enemy numbers and hull go up with every pilot, friendly fire and friendly missile locks are on, and a pilot who goes down comes back after the wave with half hull and one perk level lost.';
+    $('coopNote').classList.toggle('bad', !!coop.err);
+  }
+  coopSyncInfo();
+}
+function coopAct(p) {
+  coop.err = '';
+  save.callsign = callsign(); persist();
+  p.then(() => { coop.status = ''; coopRender(); }, e => { coop.err = e.message; coop.status = ''; coopRender(); });
+  coopRender();
+}
+$('coopHost').addEventListener('click', () => coopAct(coopNet().host(callsign(), {})));
+$('coopJoin').addEventListener('click', () => coopAct(coopNet().join($('coopCode').value, callsign(), {})));
+$('coopCode').addEventListener('keydown', e => { if (e.key === 'Enter') $('coopJoin').click(); });
+$('coopLeave').addEventListener('click', () => { if (net) net.leave(); });
+$('coopCopy').addEventListener('click', () => {
+  const q = new URLSearchParams(location.search); q.set('room', net.code);
+  const link = location.origin + location.pathname + '?' + q.toString();
+  const done = ok => { $('coopCopy').textContent = ok ? 'Link copied' : 'Code: ' + net.code; setTimeout(() => { $('coopCopy').textContent = 'Copy invite link'; }, 2000); };
+  try { navigator.clipboard.writeText(link).then(() => done(true), () => done(false)); } catch (e) { done(false); }
+});
+{ const r = new URLSearchParams(location.search).get('room'); if (r) $('coopCode').value = r.toUpperCase().slice(0, 4); }
+
+// ---- HUD: the team list, teammates' tags, and a warning when you lock one up ----
+function coopHudTeam() {
+  const el = $('hTeam');
+  if (!run.coop) { el.hidden = true; return; }
+  el.hidden = false;
+  const rows = [...coop.members].filter(s => coopRoom() && s !== net.slot).sort((a, b) => a - b).map(s => {
+    const m = coop.mates.get(s);
+    const down = m && m.dn;
+    return '<div' + (down ? ' class="dn"' : '') + '>' + esc(nameOf(s)) + ' · ' + (down ? 'DOWN' : m && m.mh ? Math.round(100 * m.hp / m.mh) + '%' : '…') + '</div>';
+  });
+  const html = '<div>TEAM · ' + plural(coopPilots(), 'pilot', 'pilots') + '</div>' + rows.join('');
+  if (el.innerHTML !== html) el.innerHTML = html;
+}
+function coopHud(live) {
+  const green = '#8fd69a', red = '#ff5b4a', paper = '#ebe4d2';
+  if (!live && player) {
+    hud.fillStyle = paper; hud.font = '700 16px "Chakra Petch", sans-serif';
+    const w = coopWatch();
+    hud.fillText(coopRoom() ? 'YOU\'RE DOWN · BACK IN AFTER THIS WAVE' : 'YOU\'RE DOWN', W / 2, H - 80);
+    hud.font = '600 12px "Chakra Petch", sans-serif';
+    if (w) hud.fillText('Watching ' + nameOf(w.mateSlot) + ' · lose a perk level and half your hull on the way back', W / 2, H - 60);
+    hud.font = '600 11px "Chakra Petch", sans-serif';
+  }
+  const camInv = camera.matrixWorldInverse;
+  for (const p of coopMatePlanes()) {
+    if (!validTarget(p)) continue;
+    tv.copy(p.pos).applyMatrix4(camInv);
+    const s = project(p.pos);
+    if (!(tv.z < 0 && s.x > 0 && s.x < W && s.y > 0 && s.y < H)) continue;
+    const d = player ? p.pos.distanceTo(player.pos) : 0;
+    hud.fillStyle = green; hud.beginPath(); hud.moveTo(s.x, s.y - 12); hud.lineTo(s.x + 6, s.y - 20); hud.lineTo(s.x - 6, s.y - 20); hud.closePath(); hud.fill();
+    hud.fillText(nameOf(p.mateSlot).toUpperCase() + (d ? ' · ' + (d >= 1000 ? (d / 1000).toFixed(1) + 'km' : Math.round(d) + 'm') : ''), s.x, s.y - 26);
+    hud.fillStyle = 'rgba(0,0,0,0.5)'; hud.fillRect(s.x - 16, s.y - 38, 32, 3);
+    hud.fillStyle = green; hud.fillRect(s.x - 16, s.y - 38, 32 * clamp(p.hp / p.maxHp, 0, 1), 3);
+    if (live && lockTarget === p) {
+      const r = 22 + (locked ? 0 : (1 - (lockT % 0.3) / 0.3) * 10);
+      hud.strokeStyle = red; hud.lineWidth = locked ? 2.4 : 1.2;
+      hud.beginPath(); hud.moveTo(s.x, s.y - r); hud.lineTo(s.x + r, s.y); hud.lineTo(s.x, s.y + r); hud.lineTo(s.x - r, s.y); hud.closePath(); hud.stroke();
+      hud.lineWidth = 1.6; hud.fillStyle = red; hud.fillText(locked ? 'FRIENDLY · LOCKED' : 'FRIENDLY', s.x, s.y + r + 14);
+    }
+  }
+}
+
 let last = performance.now(), fpsAvg = 60;
 function frame(now) {
   requestAnimationFrame(frame);
   let dt = Math.min((now - last) / 1000, 0.05);
   fpsAvg = lerp(fpsAvg, 1000 / Math.max(1, now - last), 0.05); last = now;
+  if (run && run.coop) slowmoT = 0; // slow motion would knock co-op pilots out of step
   if (slowmoT > 0) { slowmoT -= dt; timeScale = lerp(0.3, 1, 1 - clamp(slowmoT / 1.2, 0, 1)); } else timeScale = 1;
   const gdt = dt * timeScale;
   if (state !== 'hangar' && camera.view && camera.view.enabled) camera.clearViewOffset();
-  if (state === 'playing') {
+  if (state === 'playing' || (state === 'paused' && run && run.coop && run.mission)) {
     updatePlaying(gdt);
     updateCamera(dt);
     setEngine(player && player.alive && !player.dying, player ? player.throttle : 0, player ? player.speed / player.s.maxSpeed : 0);
@@ -3243,7 +3856,7 @@ function frame(now) {
       camera.updateProjectionMatrix();
     }
   }
-  if (state !== 'paused') { updateFx(gdt); updateArcs(gdt); }
+  if (state !== 'paused' || (run && run.coop)) { updateFx(gdt); updateArcs(gdt); }
   updateSpeedLines();
   sky.position.copy(camera.position);
   placeSun(player && player.alive ? player.pos : showcase && showcase.parent ? showcase.position : camera.position);
@@ -3265,7 +3878,8 @@ window.__skybreak = { get fps() { return fpsAvg; }, get state() { return state; 
   get missiles() { return missiles; }, get locked() { return locked; }, flare() { flareRequest = true; }, get era() { return era; }, get save() { return save; },
   step(n, dt) { for (let i = 0; i < n && state === 'playing'; i++) updatePlaying(dt || 1 / 60); },
   get manifest() { return manifest; }, applySky, gfx: { renderer, scene, sun, camera }, tab: setTab, A, thumb: planeThumb, renderHangar, PERKS, SECONDARIES,
-  fitGun, selectPlane, GUNS, PLANES };
+  fitGun, selectPlane, GUNS, PLANES,
+  get net() { return net; }, coop, fireMissile, dbg: () => ({ members: [...coop.members], ready: [...coop.ready], roster: net && net.roster.map(r => r.slot), runCoop: run && run.coop }) };
 })();
 </script>
 
