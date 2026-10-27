@@ -7,7 +7,9 @@ A browser prototype of a roguelike jet dogfighting game. Pick a location, a heat
 - **Locations** open one at a time: down the boss at one to open the next.
 - **Heat 0 to 5** at each location. Downing the boss at a heat level opens the next one there. Each level adds enemy hull, damage, skill and numbers, and pays more credits and boss skill points.
 - **Skill web:** 61 permanent skills in five rings around a core, across six sectors (Airframe, Engine, Guns, Missiles, Pilot, Logistics). Train any skill connected to one you already have. Each sector ends in a keystone, and hybrid skills on the rim join neighbouring sectors.
-- **Survival:** a separate mode on its own tab. Wave 1 is one fighter, wave 2 is two, and so on. From wave 3 every third fighter is a newer jet type, and from wave 5 one in four is an ace. After each wave pick a piece of gear or a field repair. The best wave at each location is saved, and every wave pays credits, with a skill point for every two.
+- **Survival:** a separate mode on its own tab. Wave 1 is one fighter, wave 2 is two, and so on. From wave 3 every third fighter is a newer jet type, and from wave 5 one in four is an ace. From wave 3 about half of the rest are variants (see below). After each wave pick a piece of gear or a field repair. Hull, missiles and the missile cooldown carry over between waves. The best wave at each location is saved, and every wave pays credits, with a skill point for every two.
+- **Enemy variants** mix in from survival wave 3, and from the middle of a sortie map. Interceptors (FAST) are quick and fragile, heavy fighters (HEAVY) are armored and hit hard, ghosts (GHOST) can't be locked and only show on the HUD and radar inside 1.5 km but carry no missiles, and hunters (HUNTER) carry four missiles and fire them from long range.
+- **Missiles are a special.** Each jet carries one to three on the rails, and each refills on a 24 s cooldown. Gun kills take 2 s off the cooldown. The Missiles sector of the skill web and the Ordnance crew, Ready rack and Gun-kill bounty gear cut the cooldown or add missiles.
 - **Hangar:** five jets to buy with credits, and a paint shop with schemes bought with credits or earned by downing bosses, racking up kills or clearing heat 5.
 
 **Play:** open `index.html` in a browser, or use the GitHub Pages link for this repository.
@@ -20,7 +22,7 @@ A browser prototype of a roguelike jet dogfighting game. Pick a location, a heat
 | W / S | Throttle. Keep holding W at 100% for afterburner |
 | A / D, Q / E | Roll, rudder |
 | Left mouse / Space | Guns |
-| Right mouse / R | Missile, after lock-on |
+| Right mouse / R | Missile, after lock-on. Each one refills on a cooldown |
 | F / middle mouse | Flares |
 | V (hold) | Free look |
 | C | Chase / cockpit view |

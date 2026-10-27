@@ -138,7 +138,12 @@ window.SkyAssets = function (THREE) {
     su27: { pattern: 'blotch', c: [0x9fb5c8, 0x6d8aa6, 0xc2d0db], accent: 0x3f5f80 },
     su35: { pattern: 'digital', c: [0x6f8292, 0x4c5d6b, 0x36434e], accent: 0x2b3a44 },
     su57: { pattern: 'digital', c: [0x7d8a93, 0x5c6870, 0xa3adb3], accent: 0x9fb6c4 },
-    ace: { pattern: 'stripes', c: [0x2a2d31, 0xa3161f, 0xa3161f], accent: 0xc8102e },
+    ace: { pattern: 'stripes', c: [0x2a2d31, 0xa3161f, 0xa3161f], accent: 0xc8102e, repaint: true },
+    // enemy variants: each reads at a glance, whatever airframe it flies
+    fast: { pattern: 'twotone', c: [0xd9dde0, 0xb9c1c8, 0xd9dde0], accent: 0xf2c230, repaint: true },
+    heavy: { pattern: 'blotch', c: [0x5a6340, 0x3f4630, 0x6f7650], accent: 0x23261a, rough: 0.85, repaint: true },
+    ghost: { pattern: 'solid', c: [0x1b1e22, 0x16181b, 0x22262b], accent: 0x2b3036, rough: 0.95, repaint: true },
+    hunter: { pattern: 'splinter', c: [0x8f8676, 0x5e5649, 0xb3a88f], accent: 0xff6a1a, repaint: true },
   };
   // the paint a skin resolves to on a given plane (factory paint uses the plane's own colours)
   function resolvePaint(skin, livery) {
@@ -565,8 +570,8 @@ window.SkyAssets = function (THREE) {
     const p = typeof paint === 'string' && ENEMY_PAINT[paint] ? ENEMY_PAINT[paint] : resolvePaint(paint || 'factory', livery || [0x9aa3ad, 0x2c3e66]);
     const key = model + '|' + p.pattern + p.c.join(',') + p.accent;
     if (!templates[key]) {
-      // an imported model keeps its own paint for factory and enemy schemes; skins and the ace scheme repaint it
-      const own = !paint || paint === 'factory' || (typeof paint === 'string' && ENEMY_PAINT[paint] && paint !== 'ace');
+      // an imported model keeps its own paint for factory and enemy schemes; skins and the ace and variant schemes repaint it
+      const own = !paint || paint === 'factory' || (typeof paint === 'string' && ENEMY_PAINT[paint] && !ENEMY_PAINT[paint].repaint);
       templates[key] = custom[model] ? buildCustom(model, p, !own) : buildJet(JETS[model], materialsFor(p));
     }
     return collectParts(templates[key].clone(true));
