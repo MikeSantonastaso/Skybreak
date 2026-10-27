@@ -42,3 +42,17 @@ The five player jets use detailed glTF models from Sketchfab, listed in `assets/
 | F-35C | [F-35A Lightning II](https://sketchfab.com/3d-models/f-35a-lightning-ii-a06d6113cfb44a0aa7b8f17106aca9c4) | shangus930 | [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/) |
 
 The modified model files in `assets/jets/` are shared under the same license as their originals. The F-14 and F/A-18 models are non-commercial only, so swap them out before the game is ever sold.
+
+## Sky photos
+
+Each location's sky is a real photo from [Poly Haven](https://polyhaven.com), listed under `skies` in `assets/manifest.json`. The game reads the photo's sun position and horizon colour to set the sunlight, fog and reflections, so the ground and the jets sit in the same light. Without the file it keeps the painted gradient sky.
+
+| Location | Sky | License |
+| --- | --- | --- |
+| Arctic Circle | [Syferfontein 0d Clear (Pure Sky)](https://polyhaven.com/a/syferfontein_0d_clear_puresky) | CC0 |
+| Desert Storm | [Rustig Koppie (Pure Sky)](https://polyhaven.com/a/rustig_koppie_puresky) | CC0 |
+| Pacific Fleet | [Kloofendal 48d Partly Cloudy (Pure Sky)](https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky) | CC0 |
+| Metro Strike | [Belfast Sunset (Pure Sky)](https://polyhaven.com/a/belfast_sunset_puresky) | CC0 |
+| Canyon Run | [Goegap](https://polyhaven.com/a/goegap) | CC0 |
+
+The files in `assets/skies/` are the 2K versions with everything below the horizon filled with one colour, since the game never shows it. That halves each file to about 2.5 MB. `exposure` brightens or darkens a sky, `rot` turns it, and `keepFog` keeps the location's own fog colour instead of the photo's.
