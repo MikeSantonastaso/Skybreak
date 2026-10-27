@@ -1,21 +1,21 @@
 # Skybreak
 
-A browser prototype of a roguelike jet dogfighting game. Pick a location and a jet, survive as many waves of enemy fighters as you can, pick perks between waves, and bring home credits for jets, guns and paint, and medals for unlocking perks.
+A browser prototype of a roguelike jet dogfighting game. Pick a location and a jet, survive as many waves of enemy fighters as you can, pick field upgrades between waves, and bring home credits for jets, guns and paint, and medals for unlocking and upgrading perks.
 
 ## Survival
 
 - Wave 1 is one fighter, wave 2 is two, and so on. From wave 3 every third fighter is a newer jet type, and from wave 5 one in four is an ace. From wave 3 about half of the rest are variants (see below).
 - **Every tenth wave brings the location's boss** with half the wave as escorts, and each boss after the first is tougher. Downing a location's boss opens the next location.
-- Hull and secondary charges carry over between waves. The best wave at each location is saved, and every wave pays credits.
+- Hull and special charges carry over between waves. The best wave at each location is saved, and every wave pays credits.
 - **Enemy variants:** interceptors (FAST) are quick and fragile, heavy fighters (HEAVY) are armored and hit hard, ghosts (GHOST) can't be locked and only show on the HUD and radar inside 1.5 km but carry no missiles, and hunters (HUNTER) carry four missiles and fire them from long range.
 
 ## Weapons
 
-- **Guns:** each jet has a gun limit: 2 on the F-5E, 3 on the F-16C and F-35C, and 4 on the F-14B and F/A-18E. In-run perks make your guns better but never add more.
-- **Heat:** all guns share one heat gauge. Firing fills it, and a gun's Fire time in the Loadout tab is how long that gun alone can fire from cold. At full the guns lock until the gauge cools back to 30%, so more guns hit harder but overheat sooner. It cools 0.3 s after you let go.
-- **Secondary weapon:** one per jet, on the right mouse button or R. Each holds a few charges that refill one at a time, and gun kills take 2 s off the cooldown.
+- **Gun groups:** every fitted gun is in the primary or the secondary fire group (set per hardpoint in Loadout; bays default to primary, pods to secondary). Only the selected group fires. Swap with the mouse wheel, Tab or G, 1 / 2, gamepad X, or the SWAP touch button.
+- **Heat:** each group has its own heat gauge. At full that group locks until it cools to 30%, and you swap to the other group automatically while it cools. The group you aren't firing cools the whole time.
+- **Special:** one per jet, on the right mouse button or R, like a grenade: a few charges that refill one at a time, and gun kills take 2 s off the cooldown.
 
-| Secondary | Charges | Cooldown | Price | What it does |
+| Special | Charges | Cooldown | Price | What it does |
 | --- | --- | --- | --- | --- |
 | Heat-seeking missiles | 1 to 3, by jet | 22 s | Free | Lock on, then fire. Flares and hard breaks can shake them |
 | Rocket pod | 2 | 12 s | Free | Eight unguided rockets down the nose |
@@ -24,24 +24,24 @@ A browser prototype of a roguelike jet dogfighting game. Pick a location and a j
 
 ## Perks
 
-- **During a run:** before wave 1 and after every wave you pick a new perk for an empty slot, or the next level of a perk you already hold, up to level III. Field repair and one reroll a run are also on offer. Once every slot is full and every perk is at III, plain boosts fill the cards.
-- **Slots:** the F-5E and F-16C have 3 perk slots, and the F-14B, F/A-18E and F-35C have 4.
-- **Unlocks:** 7 perks are open from the start. The other 15 are unlocked for good in the Perks tab with medals. You earn a medal for every two waves you survive and three for every boss.
-- Perks cover guns (damage, rate of fire, heat, spread, crits, explosive and arc rounds, glass cannon), the secondary (cooldown, charges, damage, gun-kill bounty), the airframe (hull, repairs, dodging, Phoenix), flight (thrust and roll) and tactics (wingmen, killing time).
+- **Slots:** perks are equipped in the hangar's Perks tab and work on every jet. You start with 3 slots, get a 4th for downing your first boss and a 5th for downing the bosses of 3 locations.
+- **Tiers:** unlock perks with medals, then raise each from tier I to V (2, 3, 5 and 8 medals). You earn a medal for every wave you survive and three for every boss.
+- **Field upgrades:** after every wave you pick a field upgrade that lasts for the rest of the run (gun damage, rate of fire, heat, special cooldown and charges, hull, thrust), or a field repair. One reroll a run.
+- **Wingman:** the Wingman perk brings one wingman per pilot (in co-op too). Tiers give them more hull and firepower; a downed wingman is back next wave. Wingman field upgrades (armor, guns, missiles, Cover me) only show up while you have one.
 
 ## Hangar and loadout
 
 - **Hangar:** five jets to buy with credits, and a paint shop with schemes bought with credits or earned by downing bosses, racking up kills or surviving 30 waves.
-- **Loadout:** each jet has its own gun hardpoints (bays inside the airframe for cannons, wing pylons for gun pods), a payload limit, a gun limit and a list of guns it can take. The Loadout tab shows the jet from above with a marker on every hardpoint: pick one and fit a gun. Seven guns, from the light M3 .50 cal to the ADEN 30 mm and the SUU-23 pod, are bought once with credits; a gun that comes fitted on a jet you own is free. Weight above the factory fit costs turn and thrust (lighter gives a little back), pods add drag, and pods on the F-35 halve its stealth. In combat every gun fires from its own hardpoint at its own rate. Pick the secondary weapon below the guns.
+- **Loadout:** each jet has its own gun hardpoints (bays inside the airframe for cannons, wing pylons for gun pods), a payload limit, a gun limit and a list of guns it can take. The Loadout tab shows the jet from above with a marker on every hardpoint: pick one and fit a gun. Seven guns, from the light M3 .50 cal to the ADEN 30 mm and the SUU-23 pod, are bought once with credits; a gun that comes fitted on a jet you own is free. Weight above the factory fit costs turn and thrust (lighter gives a little back), pods add drag, and pods on the F-35 halve its stealth. In combat every gun fires from its own hardpoint at its own rate. Set each gun's fire group and pick the special below the guns.
 - **Testing:** Settings has an Unlock everything button that opens every location, jet, gun, secondary, perk and paint scheme.
 
-| Jet | Hardpoints | Gun limit | Payload | Perk slots | Factory guns |
-| --- | --- | --- | --- | --- | --- |
-| F-5E | 2 nose bays, 2 pylons | 2 | 3 | 3 | 2 × M39 |
-| F-16C | 2 root bays, 2 pylons | 3 | 4 | 3 | M61 |
-| F-14B | 2 nose bays, 4 pylons | 4 | 5.5 | 4 | M61 |
-| F/A-18E | 1 nose bay, 4 pylons | 4 | 5 | 4 | M61 |
-| F-35C | 1 internal bay, 3 pylons | 3 | 4.5 | 4 | GAU-22 |
+| Jet | Hardpoints | Gun limit | Payload | Factory guns (primary / secondary) |
+| --- | --- | --- | --- | --- |
+| F-5E | 2 nose bays, 2 pylons | 2 | 3 | M39 / M39 |
+| F-16C | 2 root bays, 2 pylons | 3 | 4 | M61 / M3 |
+| F-14B | 2 nose bays, 4 pylons | 4 | 5.5 | M61 / M3 |
+| F/A-18E | 1 nose bay, 4 pylons | 4 | 5 | M61 / minigun pod |
+| F-35C | 1 internal bay, 3 pylons | 3 | 4.5 | GAU-22 / none |
 
 Old saves carry over: ranks trained in the old skill web come back as medals, and a heat 5 clear keeps the Gold standard paint.
 
@@ -53,8 +53,8 @@ Survival for one to four pilots over the internet, with no server of our own. On
 
 - **Difficulty** goes up with every pilot past the first: 60% more fighters per wave, 25% more enemy hull (bosses too), and three more fighters in the air at once.
 - **Friendly fire is on.** Guns, missiles and flak hit teammates, and your missiles can lock a teammate (the HUD marks it FRIENDLY).
-- **Going down** doesn't end your run while a teammate is still flying. You watch them until the wave is cleared, then come back with half hull and one perk level lost at random. If the whole team goes down, the run ends for everyone.
-- After every wave each pilot picks a perk, and the next wave starts when everyone has picked. Pause doesn't stop the game in co-op. Co-op runs pay credits and medals but don't count toward your solo best wave.
+- **Going down** doesn't end your run while a teammate is still flying. You watch them until the wave is cleared, then come back with half hull and one field upgrade lost at random. If the whole team goes down, the run ends for everyone.
+- After every wave each pilot picks a field upgrade, and the next wave starts when everyone has picked. Pause doesn't stop the game in co-op. Co-op runs pay credits and medals but don't count toward your solo best wave.
 
 How it works: `net.js` uses [PeerJS](https://peerjs.com) (loaded from cdnjs only when you open a room) and its free public broker to introduce the browsers, then the game talks peer to peer over WebRTC, falling back to PeerJS's relay when a firewall blocks a direct link. The host's game flies the enemies and runs the waves; each pilot's game flies their own jet and decides when enemy fire hits them, and the shooter's game decides friendly fire. If the host leaves, the run ends and everyone banks what they earned. Add `?peer=host:port` to the URL to use your own [peerjs-server](https://github.com/peers/peerjs-server) instead.
 
@@ -65,8 +65,9 @@ How it works: `net.js` uses [PeerJS](https://peerjs.com) (loaded from cdnjs only
 | Mouse | Aim. The jet flies toward the circle. In cockpit view it moves the stick |
 | W / S | Throttle. Keep holding W at 100% for afterburner |
 | A / D, Q / E | Roll, rudder |
-| Left mouse / Space | Guns |
-| Right mouse / R | Secondary weapon. Missiles need a lock first. Charges refill on a cooldown |
+| Left mouse / Space | Guns (selected group) |
+| Wheel / Tab / G / 1 / 2 | Swap primary and secondary guns |
+| Right mouse / R | Special. Missiles need a lock first. Charges refill on a cooldown |
 | F / middle mouse | Flares |
 | V (hold) | Free look |
 | C | Chase / cockpit view |
