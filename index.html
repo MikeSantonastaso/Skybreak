@@ -285,9 +285,9 @@ svg.webs { display: block; width: 100%; height: auto; }
 .tbtns button.fire { background: rgba(255,91,74,0.45); }
 @media (prefers-reduced-motion: reduce) { .msg, .bar .track i { transition: none; } }
 </style>
-
 </head>
 <body>
+
 <canvas id="gl"></canvas>
 <canvas id="hudc"></canvas>
 <div id="vignette"></div>
@@ -390,6 +390,7 @@ svg.webs { display: block; width: 100%; height: auto; }
           <label class="toggle"><input type="checkbox" id="optPull"> Pull back to climb in direct control (S or ↓ raises the nose)</label>
           <p class="note">A gamepad works too: left stick flies, right stick is rudder, RT fires, LT launches a missile, B drops flares, bumpers set throttle.</p>
           <button class="ghost" id="resetBtn">Reset all progress</button>
+          <p class="note" id="credits" hidden></p>
         </div>
       </aside>
     </div>
@@ -447,6 +448,8 @@ svg.webs { display: block; width: 100%; height: auto; }
 </section>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/RGBELoader.js"></script>
 <script src="assets.js"></script>
 <script>
 (() => {
@@ -753,9 +756,9 @@ const TEX_SOFT = blobTexture('rgba(255,255,255,1)', 'rgba(255,255,255,0.45)');
 // sky dome
 const skyMat = new THREE.ShaderMaterial({
   side: THREE.BackSide, depthWrite: false, fog: false,
-  uniforms: { top: { value: new THREE.Color() }, horizon: { value: new THREE.Color() }, sunDir: { value: sun.position.clone().normalize() }, sunCol: { value: new THREE.Color() } },
+  uniforms: { map: { value: null }, useMap: { value: 0 }, exposure: { value: 1 }, rot: { value: 0 }, top: { value: new THREE.Color() }, horizon: { value: new THREE.Color() }, sunDir: { value: sun.position.clone().normalize() }, sunCol: { value: new THREE.Color() } },
   vertexShader: 'varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
-  fragmentShader: 'uniform vec3 top; uniform vec3 horizon; uniform vec3 sunDir; uniform vec3 sunCol; varying vec3 vDir; void main(){ float h = clamp(vDir.y, -0.2, 1.0); vec3 c = mix(horizon, top, pow(max(h,0.0), 0.55)); float s = max(dot(normalize(vDir), sunDir), 0.0); c += sunCol * (pow(s, 600.0) * 1.6 + pow(s, 12.0) * 0.18); gl_FragColor = vec4(c, 1.0); }',
+  fragmentShader: 'uniform sampler2D map; uniform float useMap; uniform float exposure; uniform float rot; vec3 photo(vec3 d){ vec2 uv = vec2(atan(d.z, d.x) * 0.1591549 + 0.5 + rot, asin(clamp(d.y, -1.0, 1.0)) * 0.3183099 + 0.5); return texture2D(map, uv).rgb * exposure; } uniform vec3 top; uniform vec3 horizon; uniform vec3 sunDir; uniform vec3 sunCol; varying vec3 vDir; void main(){ vec3 d = normalize(vDir); if (useMap > 0.5) { vec3 p = photo(vec3(d.x, max(d.y, 0.02), d.z)); gl_FragColor = vec4(1.0 - exp(-p), 1.0); return; } float h = clamp(vDir.y, -0.2, 1.0); vec3 c = mix(horizon, top, pow(max(h,0.0), 0.55)); float s = max(dot(d, sunDir), 0.0); c += sunCol * (pow(s, 600.0) * 1.6 + pow(s, 12.0) * 0.18); gl_FragColor = vec4(c, 1.0); }',
 });
 const sky = new THREE.Mesh(new THREE.SphereGeometry(20000, 32, 16), skyMat);
 sky.renderOrder = -1;
@@ -764,9 +767,9 @@ scene.add(sky);
 // reflections: the sky (with the ground colour below the horizon) is prefiltered into an environment map for all paint and water
 const envMat = new THREE.ShaderMaterial({
   side: THREE.BackSide, depthWrite: false,
-  uniforms: { top: { value: new THREE.Color() }, horizon: { value: new THREE.Color() }, ground: { value: new THREE.Color() }, sunDir: { value: new V3(0, 1, 0) }, sunCol: { value: new THREE.Color() } },
+  uniforms: { map: { value: null }, useMap: { value: 0 }, exposure: { value: 1 }, rot: { value: 0 }, top: { value: new THREE.Color() }, horizon: { value: new THREE.Color() }, ground: { value: new THREE.Color() }, sunDir: { value: new V3(0, 1, 0) }, sunCol: { value: new THREE.Color() } },
   vertexShader: 'varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
-  fragmentShader: 'uniform vec3 top; uniform vec3 horizon; uniform vec3 ground; uniform vec3 sunDir; uniform vec3 sunCol; varying vec3 vDir; void main(){ vec3 d = normalize(vDir); vec3 c = d.y > 0.0 ? mix(horizon, top, pow(d.y, 0.55)) : mix(horizon, ground, smoothstep(0.0, 0.18, -d.y)); float s = max(dot(d, sunDir), 0.0); c += sunCol * (pow(s, 300.0) * 6.0 + pow(s, 10.0) * 0.25); gl_FragColor = linearToOutputTexel(vec4(c, 1.0)); }',
+  fragmentShader: 'uniform sampler2D map; uniform float useMap; uniform float exposure; uniform float rot; vec3 photo(vec3 d){ vec2 uv = vec2(atan(d.z, d.x) * 0.1591549 + 0.5 + rot, asin(clamp(d.y, -1.0, 1.0)) * 0.3183099 + 0.5); return texture2D(map, uv).rgb * exposure; } uniform vec3 top; uniform vec3 horizon; uniform vec3 ground; uniform vec3 sunDir; uniform vec3 sunCol; varying vec3 vDir; void main(){ vec3 d = normalize(vDir); if (useMap > 0.5) { vec3 p = d.y > 0.0 ? photo(d) : mix(photo(vec3(d.x, 0.02, d.z)), ground, smoothstep(0.0, 0.18, -d.y)); gl_FragColor = linearToOutputTexel(vec4(p, 1.0)); return; } vec3 c = d.y > 0.0 ? mix(horizon, top, pow(d.y, 0.55)) : mix(horizon, ground, smoothstep(0.0, 0.18, -d.y)); float s = max(dot(d, sunDir), 0.0); c += sunCol * (pow(s, 300.0) * 6.0 + pow(s, 10.0) * 0.25); gl_FragColor = linearToOutputTexel(vec4(c, 1.0)); }',
 });
 const envScene = new THREE.Scene();
 envScene.add(new THREE.Mesh(new THREE.SphereGeometry(50, 48, 24), envMat));
@@ -776,9 +779,81 @@ function updateEnv(w) {
   const u = envMat.uniforms;
   u.top.value.setHex(w.top); u.horizon.value.setHex(w.horizon); u.sunCol.value.setHex(w.sunCol); u.sunDir.value.copy(SUN_DIR);
   u.ground.value.setHex(w.ramp[Math.min(1, w.ramp.length - 1)][1]).multiplyScalar(0.55).lerp(new THREE.Color(w.hemiGround), 0.4);
+  rebuildEnv();
+}
+function rebuildEnv() {
   if (envRT) envRT.dispose();
   envRT = pmrem.fromScene(envScene, 0.02, 0.1, 200);
   A.setEnvMap(envRT.texture);
+  if (water) { water.material.envMap = envRT.texture; water.material.needsUpdate = true; }
+}
+
+// ---- imported assets: assets/manifest.json lists detailed jets (glTF) and sky photos (HDR); anything missing keeps the built-in look ----
+let manifest = null;
+const skyCache = {};
+function halfToFloat(h) {
+  const e = (h >> 10) & 31, f = h & 1023, sgn = h >> 15 ? -1 : 1;
+  return e === 0 ? sgn * f * 5.96e-8 : e === 31 ? (f ? NaN : sgn * Infinity) : sgn * Math.pow(2, e - 15) * (1 + f / 1024);
+}
+// read the photo once: the average colour near the horizon and overhead, and where the sun is
+function readSky(tex, o) {
+  const { data, width: w, height: h } = tex.image, half = data instanceof Uint16Array, ch = data.length / (w * h);
+  const px = (x, y) => { const i = (y * w + x) * ch; return half ? [halfToFloat(data[i]), halfToFloat(data[i + 1]), halfToFloat(data[i + 2])] : [data[i], data[i + 1], data[i + 2]]; };
+  const avg = (v0, v1) => { const c = [0, 0, 0]; let n = 0; for (let y = Math.floor(v0 * h); y < Math.floor(v1 * h); y += 2) for (let x = 0; x < w; x += 4) { const p = px(x, y); c[0] += p[0]; c[1] += p[1]; c[2] += p[2]; n++; } return new THREE.Color(c[0] / n, c[1] / n, c[2] / n).multiplyScalar(o.exposure || 1); };
+  let best = -1, bx = 0, by = 0;
+  for (let y = 0; y < Math.floor(h * 0.5); y += 2) for (let x = 0; x < w; x += 2) { const p = px(x, y), l = p[0] + p[1] + p[2]; if (l > best) { best = l; bx = x; by = y; } }
+  // the file stores the top row first, so row y sits at latitude (0.5 - y / h) * pi
+  const lat = (0.5 - (by + 0.5) / h) * Math.PI, phi = ((bx + 0.5) / w - 0.5 - (o.rot || 0)) * Math.PI * 2;
+  const tone = c => new THREE.Color(1 - Math.exp(-c.r), 1 - Math.exp(-c.g), 1 - Math.exp(-c.b));
+  return { horizon: tone(avg(0.44, 0.5)), top: tone(avg(0, 0.2)), sun: new V3(Math.cos(phi) * Math.cos(lat), Math.max(Math.sin(lat), 0.12), Math.sin(phi) * Math.cos(lat)).normalize() };
+}
+function setSkyPhoto(sk, o) {
+  for (const m of [skyMat, envMat]) { const u = m.uniforms; u.map.value = sk ? sk.tex : null; u.useMap.value = sk ? 1 : 0; u.exposure.value = (o && o.exposure) || 1; u.rot.value = (o && o.rot) || 0; }
+}
+function applySky(id) {
+  const o = manifest && manifest.skies && manifest.skies[id];
+  setSkyPhoto(null);
+  if (!o || !THREE.RGBELoader) return;
+  const use = sk => {
+    if (era.loc.id !== id) return;
+    setSkyPhoto(sk, o);
+    SUN_DIR.copy(sk.info.sun); skyMat.uniforms.sunDir.value.copy(SUN_DIR); envMat.uniforms.sunDir.value.copy(SUN_DIR);
+    // fog and fill light take the photo's colours so the ground sits in the same air
+    if (!o.keepFog) { scene.fog.color.copy(sk.info.horizon); hemi.color.copy(sk.info.top).lerp(new THREE.Color(1, 1, 1), 0.4); }
+    rebuildEnv();
+  };
+  if (skyCache[id]) { if (skyCache[id].tex) use(skyCache[id]); return; }
+  skyCache[id] = {};
+  new THREE.RGBELoader().setDataType(THREE.HalfFloatType).load(o.file, tex => {
+    tex.minFilter = tex.magFilter = THREE.LinearFilter; tex.generateMipmaps = false; tex.wrapS = THREE.RepeatWrapping;
+    skyCache[id] = { tex, info: readSky(tex, o) };
+    use(skyCache[id]);
+  }, undefined, () => console.warn('Sky photo failed to load: ' + o.file));
+}
+function loadManifest() {
+  fetch('assets/manifest.json').then(r => r.ok ? r.json() : null).then(m => {
+    if (!m) return;
+    manifest = m;
+    applySky(era.loc.id);
+    if (!THREE.GLTFLoader) return;
+    for (const id in m.jets || {}) {
+      const o = m.jets[id];
+      if (!A.JETS[id]) continue;
+      new THREE.GLTFLoader().load(o.file, gltf => { A.useModel(id, gltf.scene, o); assetsChanged(); }, undefined, () => console.warn('Model failed to load: ' + o.file));
+    }
+    renderCredits();
+  }).catch(() => {});
+}
+// new models: drop cached portraits and rebuild the jet on show
+function assetsChanged() {
+  for (const k in thumbCache) delete thumbCache[k];
+  if (state === 'hangar' || state === 'map' || state === 'debrief') { setupShowcase(); if (state === 'hangar') renderHangar(); }
+}
+function renderCredits() {
+  const el = $('credits'), list = [];
+  for (const g of ['jets', 'skies']) for (const id in (manifest && manifest[g]) || {}) if (manifest[g][id].credit) list.push(manifest[g][id].credit);
+  el.hidden = !list.length;
+  el.textContent = list.length ? 'Models and skies: ' + list.join(' · ') : '';
 }
 
 // ================= world =================
@@ -971,6 +1046,7 @@ function buildWorld() {
   sun.intensity = 1.0 * w.light;
   hemi.intensity = 0.62 * w.light;
   updateEnv(w);
+  applySky(era.loc.id);
 
   // terrain: smooth shaded, with a detail texture and bare rock wherever the ground is steep
   const SIZE = 17000, SEG = lowGfx ? 200 : 256;
@@ -3211,6 +3287,7 @@ function frame(now) {
 
 buildWorld();
 toHangar();
+loadManifest();
 requestAnimationFrame(frame);
 window.__skybreak = { get fps() { return fpsAvg; }, get state() { return state; }, get player() { return player; }, get enemies() { return enemies; }, get allies() { return allies; }, get run() { return run; }, startRun, endRun, showMap, addItem, enterNode,
   go(type, col) { const n = { c: col || 2, r: 0, rows: 1, type, next: [] }; startMission(type, n, {}); },
@@ -3219,7 +3296,7 @@ window.__skybreak = { get fps() { return fpsAvg; }, get state() { return state; 
   stick(x, y) { vStick.x = x; vStick.y = y; }, setCam(m) { setCamMode(m); }, head(y, p) { headYaw = y; headPitch = p; },
   get missiles() { return missiles; }, get locked() { return locked; }, flare() { flareRequest = true; }, get era() { return era; }, get save() { return save; },
   step(n, dt) { for (let i = 0; i < n && state === 'playing'; i++) updatePlaying(dt || 1 / 60); },
-  get web() { return webCache; }, WEB, train: trainNode, gfx: { renderer, scene, sun, camera }, tab: setTab, pick: pickNode, A, thumb: planeThumb,
+  get web() { return webCache; }, WEB, train: trainNode, get manifest() { return manifest; }, applySky, gfx: { renderer, scene, sun, camera }, tab: setTab, pick: pickNode, A, thumb: planeThumb,
   heat(h) { save.heatWon[save.loc] = Math.max(heatWon(save.loc), h - 1); save.selHeat[save.loc] = h; renderHangar(); }, renderHangar };
 })();
 </script>
