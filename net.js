@@ -30,6 +30,8 @@ window.SkyNet = (function () {
       o.host = host; o.port = +port || 443; o.path = '/';
       o.secure = !/^(localhost|127\.|192\.168\.|10\.)/.test(host);
       o.key = 'peerjs';
+      // a private broker is for testing on one machine or a LAN: skip the public STUN/TURN servers
+      if (!o.secure) o.config = { iceServers: [] };
     }
     return o;
   }
@@ -81,7 +83,8 @@ window.SkyNet = (function () {
           else if (err.type === 'network' || err.type === 'server-error' || err.type === 'socket-error') status('Lost the matchmaking server. Players already in the room stay connected.');
           else console.warn('[net]', err.type, err);
         });
-        p.on('disconnected', () => { if (!closed && p && !p.destroyed) { try { p.reconnect(); } catch (e) {} } });
+        // losing the broker doesn't drop players already connected; keep trying quietly so new pilots can still join
+        p.on('disconnected', () => setTimeout(() => { if (!closed && !p.destroyed && p.disconnected) { try { p.reconnect(); } catch (e) {} } }, 5000));
       }));
     }
 
