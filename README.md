@@ -31,7 +31,7 @@ Built with [three.js](https://threejs.org/) r128, loaded from cdnjs. `assets.js`
 
 ## Aircraft models
 
-The five player jets use detailed glTF models from Sketchfab, listed in `assets/manifest.json`. The game loads them after the hangar appears, and falls back to the built-in models if a file is missing. Each model was shrunk for the web: textures cut to 1024 px, meshes compressed, and landing gear and the F-5's open canopy removed. The manifest also sets each model's facing and where its afterburner flames sit. A sky photo (`.hdr`) can be listed the same way under `skies`, keyed by location.
+The five player jets use detailed glTF models from Sketchfab, listed in `assets/manifest.json`. The game loads them after the hangar appears, and falls back to the built-in models if a file is missing. Each model was shrunk for the web: textures cut to 1024 px, meshes compressed, and landing gear and the F-5's open canopy removed. The manifest also sets each model's facing and where its afterburner flames sit. Paint schemes are painted onto the models by a shader that projects the pattern onto the airframe and keeps the model's own panel lines, shading and colourful markings; `detail` (0 to 1) turns down how much of a grimy texture shows through. A sky photo (`.hdr`) can be listed the same way under `skies`, keyed by location.
 
 | Jet | Model | Author | License |
 | --- | --- | --- | --- |
