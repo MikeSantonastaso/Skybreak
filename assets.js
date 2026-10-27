@@ -128,7 +128,7 @@ window.SkyAssets = function (THREE) {
     { id: 'sunset', name: 'Canyon sunset', desc: 'Red rock splinter. Earned by downing the drone mothership.', pattern: 'splinter', c: [0xc8693a, 0x7e2f1a, 0xe2b07a], accent: 0x2b1810, unlock: { kind: 'boss', loc: 'canyon' } },
     { id: 'bare', name: 'Bare metal', desc: 'Polished aluminium. Earned with 250 kills.', pattern: 'metal', c: [0xc4c8cc, 0xa9adb1, 0xd7dadd], accent: 0x1f3a93, metal: 0.85, rough: 0.28, unlock: { kind: 'kills', n: 250 } },
     { id: 'ace', name: 'Red baron', desc: 'Crimson ace scheme. Earned with 750 kills.', pattern: 'twotone', c: [0xa3161f, 0x7d1018, 0x1a1a1a], accent: 0x111111, unlock: { kind: 'kills', n: 750 } },
-    { id: 'gold', name: 'Gold standard', desc: 'Mirror gold. Earned by downing any boss at heat 5.', pattern: 'metal', c: [0xd4a83a, 0xb88d2a, 0xe8c45a], accent: 0x1a1a1a, metal: 0.95, rough: 0.22, lines: 0.5, unlock: { kind: 'heat', lvl: 5 } },
+    { id: 'gold', name: 'Gold standard', desc: 'Mirror gold. Earned by surviving 30 waves at any location.', pattern: 'metal', c: [0xd4a83a, 0xb88d2a, 0xe8c45a], accent: 0x1a1a1a, metal: 0.95, rough: 0.22, lines: 0.5, unlock: { kind: 'wave', n: 30 } },
   ];
   const SKIN_BY_ID = Object.fromEntries(SKINS.map(s => [s.id, s]));
   // enemy factions get their own paint per airframe
