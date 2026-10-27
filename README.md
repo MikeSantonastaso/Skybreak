@@ -26,7 +26,9 @@ A browser prototype of a roguelike jet dogfighting game. Pick a location and a j
 
 - **Slots:** perks are equipped in the hangar's Perks tab and work on every jet. You start with 3 slots, get a 4th for downing your first boss and a 5th for downing the bosses of 3 locations.
 - **Tiers:** unlock perks with medals, then raise each from tier I to V (2, 3, 5 and 8 medals). You earn a medal for every wave you survive and three for every boss.
-- **Field upgrades:** after every wave you pick a field upgrade that lasts for the rest of the run (gun damage, rate of fire, heat, special cooldown and charges, hull, thrust), or a field repair. One reroll a run.
+- **Field upgrades:** after every wave you pick one that lasts for the rest of the run, or a field repair. Picks come in four rarities: **common** and **rare** stat boosts that stack, **epics** that change how you fight (ricochet rounds, both gun groups firing together, twin-shot specials, leech rounds, second wind, hot pursuit, squadron leader), and **cursed** trade-offs (overcharged barrels, stripped airframe, glass rails, blood money). Epics get likelier as the waves climb, and every card after a boss wave is an epic.
+- **Synergies:** every pick has a tag (Guns, Heat, Special, Airframe, Flight, Wingman). Three of one tag opens its bonus: Gunslinger, Thermal discipline, Quartermaster, Ironclad, Slipstream or Wingman ace.
+- **Reroll and skip:** one reroll a run plus one for every boss, or skip a pick for 30 credits plus 10 a wave, paid when the run ends.
 - **Wingman:** the Wingman perk brings one wingman per pilot (in co-op too). Tiers give them more hull and firepower; a downed wingman is back next wave. Wingman field upgrades (armor, guns, missiles, Cover me) only show up while you have one.
 
 ## Hangar and loadout

@@ -98,6 +98,9 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
 .perk.lv-new .k { color: var(--good); }
 .perk .f { margin-top: auto; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; color: var(--amber); }
 .perk:disabled { opacity: 0.45; cursor: default; }
+.perk.r-rare { border-color: rgba(127,233,242,0.5); } .perk.r-rare .k { color: var(--cyan); }
+.perk.r-epic { border-color: rgba(214,148,255,0.7); background: rgba(190,120,255,0.07); } .perk.r-epic .k { color: #d694ff; }
+.perk.r-cursed { border-color: rgba(255,91,74,0.6); background: rgba(255,91,74,0.06); } .perk.r-cursed .k { color: var(--danger); }
 .perk:disabled:hover { border-color: rgba(235,228,210,0.16); background: rgba(255,255,255,0.03); }
 .perkcards.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 @media (max-width: 760px) { .perkcards.four { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -691,7 +694,7 @@ const secondaryOf = pid => { const id = save.secondary[pid]; return SECONDARIES[
 function secondarySpec(pid, m) {
   const id = secondaryOf(pid), S = SECONDARIES[id];
   m = m || {};
-  return { secId: id, charges: (S.charges || Math.ceil(PLANES[pid].missiles / 2.5)) + (m.rack || 0) + (m.upRack || 0),
+  return { secId: id, charges: Math.max(1, (S.charges || Math.ceil(PLANES[pid].missiles / 2.5)) + (m.rack || 0) + (m.upRack || 0)),
     reload: Math.max(SEC_MIN_COOLDOWN, S.cd * (m.secCd || 1)), secDmg: S.dmg * (m.secDmg || 1) };
 }
 
@@ -1389,8 +1392,13 @@ class Plane {
     if (!this.alive || this.dying) return;
     this.lastHitT = 0;
     if (this.s.armor) amount *= 1 - this.s.armor;
+    if (this === player && run) amount *= 1 - run.mods.dr;
     if (this.shield > 0) { const a = Math.min(this.shield, amount); this.shield -= a; amount -= a; this.shieldDelay = 2.5; }
     this.hp -= amount;
+    // Second wind: once a wave, dropping under a quarter of your hull repairs 40% of it
+    if (this === player && run && run.mods.wind && !run.windUsed && this.hp > 0 && this.hp < this.maxHp * 0.25) {
+      run.windUsed = true; this.hp += this.maxHp * 0.4; popText('Second wind'); if (!run.coop) slowmoT = Math.max(slowmoT, 0.8);
+    }
     if (this.hp <= 0) {
       if (this === player && run && run.mods.phoenix && !run.phoenixUsed) { run.phoenixUsed++; this.hp = this.maxHp * run.mods.phoenix; phoenixBlast(); return; }
       this.hp = 0; this.kill(from);
@@ -1499,7 +1507,7 @@ function updateBullets(dt) {
         if (segSphere(b.prev, b.pos, e.pos, 9 * e.s.size)) {
           spawnFx(tv3, { add: true, color: b.crit ? 0xff8a3a : 0xfff1c0, size: b.crit ? 8 : 4, life: 0.14 });
           const at = tv3.clone();
-          e.damage(b.dmg, b.owner); hit = true;
+          e.damage(b.owner === player && (e.heavy || e.ace) ? b.dmg * run.mods.ap : b.dmg, b.owner); hit = true;
           if (b.owner === player) { hitMarkerT = 0.12; burst(0.04, 3200, 0.12, 'highpass'); onPlayerHit(e, b, at); }
           break;
         }
@@ -1527,6 +1535,12 @@ function updateBullets(dt) {
 // gear effects that hang off a player hit
 function onPlayerHit(e, b, at) {
   const m = run.mods;
+  if (m.leech && validTarget(player)) player.hp = Math.min(player.maxHp, player.hp + b.dmg * m.leech);
+  if (m.ricochet && Math.random() < 0.25) {
+    let best = null, bd = 300;
+    for (const o of enemies) { if (o === e || !validTarget(o)) continue; const d = o.pos.distanceTo(e.pos); if (d < bd) { bd = d; best = o; } }
+    if (best) { spawnArc(at, best.pos); best.damage(b.dmg * 0.6, player); }
+  }
   if (m.splash) {
     spawnFx(at, { add: true, color: 0xffa040, size: 14, grow: 1.4, life: 0.28 });
     for (const o of enemies) if (o !== e && o.alive && !o.dying && o.pos.distanceToSquared(at) < 900 * (o.s.size * o.s.size)) o.damage(b.dmg * m.splash, player);
@@ -1847,14 +1861,21 @@ function pv(id, i) {
 const up = id => (run.up && run.up[id]) || 0;
 // equipped perks and this run's field upgrades, folded into one set of multipliers
 function perkMods() {
+  const ace = syn('Wingman');
   return {
-    dmg: (1 + pv('hot')) * (1 + pv('glass')) * (1 + 0.1 * up('dmg')), rof: (1 + pv('belt')) * (1 + 0.08 * up('rof')), crit: pv('match'), spread: 1 - pv('sight'), range: 1 + pv('sight', 1),
-    heatGen: (1 - pv('cool')) * Math.pow(0.88, up('cool')), cool: 1 + pv('sinks'), splash: pv('boom'), chain: pv('chain'),
-    hp: pv('plate') + 15 * up('hull'), hpMul: 1 - pv('glass', 1), regen: pv('mech'), vamp: pv('trophy') + pv('time', 1), ghost: pv('charm'), phoenix: pv('phoenix'),
-    thrust: (1 + pv('wep')) * (1 + 0.06 * up('thr')), speed: 1 + pv('wep', 1), turn: 1 + pv('tabs'), slowmo: pv('time'),
-    secCd: (1 - pv('rearm')) * (1 - pv('rack', 1)) * Math.pow(0.9, up('sec')), rack: pv('rack'), upRack: up('rack'), secDmg: 1 + pv('warhead'), gunRearm: KILL_REFUND + pv('bounty'),
+    dmg: (1 + pv('hot')) * (1 + pv('glass')) * (1 + 0.1 * up('dmg')) * (up('over') ? 1.4 : 1) * (syn('Guns') ? 1.15 : 1),
+    rof: (1 + pv('belt')) * (1 + 0.08 * up('rof')), crit: pv('match'), spread: 1 - pv('sight'), range: 1 + pv('sight', 1),
+    heatGen: (1 - pv('cool')) * Math.pow(0.88, up('cool')) * (up('over') ? 1.3 : 1), cool: 1 + pv('sinks'), offCool: 1 + 0.4 * up('sink'), resume: syn('Heat') ? 0.6 : HEAT_RESUME,
+    splash: pv('boom'), chain: pv('chain'), ap: 1 + 0.25 * up('ap'), ricochet: up('ricochet') > 0, dual: up('dual') > 0, leech: up('leech') ? 0.03 : 0,
+    hp: pv('plate') + 15 * up('hull'), hpMul: (1 - pv('glass', 1)) * (up('strip') ? 0.8 : 1), regen: pv('mech'), vamp: pv('trophy') + pv('time', 1),
+    ghost: pv('charm') + 0.06 * up('evade'), dr: syn('Airframe') ? 0.12 : 0, wind: up('wind') > 0, phoenix: pv('phoenix'), flares: 8 * up('flare'),
+    thrust: (1 + pv('wep')) * (1 + 0.06 * up('thr')) * (up('strip') ? 1.15 : 1), speed: (1 + pv('wep', 1)) * (up('strip') ? 1.08 : 1) * (syn('Flight') ? 1.08 : 1),
+    turn: 1 + pv('tabs'), roll: syn('Flight') ? 1.1 : 1, ab: up('afterburn') ? 1.25 : 1, hunt: up('afterburn') > 0, slowmo: pv('time'),
+    secCd: (1 - pv('rearm')) * (1 - pv('rack', 1)) * Math.pow(0.9, up('sec')), rack: pv('rack'), upRack: up('rack') + (syn('Special') ? 1 : 0) - up('rails'),
+    secDmg: (1 + pv('warhead')) * (1 + 0.15 * up('lock')) * (up('rails') ? 1.6 : 1), lock: Math.pow(0.85, up('lock')), twin: up('twin') > 0, gunRearm: KILL_REFUND + pv('bounty'),
+    credMul: up('blood') ? 1.5 : 1, enemyHp: up('blood') ? 1.15 : 1,
     // one wingman at most, from the Wingman perk; field upgrades make them tougher and deadlier this run
-    wingman: run.perks.wing ? { hp: pv('wing') + 40 * up('wHull'), dmg: pv('wing', 1) * (1 + 0.25 * up('wGun')), missiles: 2 + up('wMsl'), cover: up('wCover') > 0 } : null,
+    wingman: run.perks.wing ? { hp: pv('wing') + 40 * up('wHull') + (ace ? 60 : 0), dmg: pv('wing', 1) * (1 + 0.25 * up('wGun')) * (ace ? 1.3 : 1), missiles: 2 + up('wMsl'), cover: up('wCover') > 0, back: up('squad') > 0 } : null,
   };
 }
 function refreshMods() { run.mods = perkMods(); }
@@ -1862,13 +1883,13 @@ function playerStats() {
   const m = run.mods, e = era, ld = e.load;
   const dmgMul = m.dmg, rofMul = m.rof, spreadMul = m.spread;
   return {
-    size: e.size, abMax: 1.2, abMul: 1, stallAoa: e.stallAoa, minSpeed: e.minSpeed, maxSpeed: e.maxSpeed * m.speed * ld.speed,
+    size: e.size, abMax: 1.2, abMul: m.ab, stallAoa: e.stallAoa, minSpeed: e.minSpeed, maxSpeed: e.maxSpeed * m.speed * ld.speed,
     corner: e.corner, gmax: e.gmax, thrust: e.thrust * m.thrust * ld.thrust, induced: 1,
-    pitch: e.pitch, roll: e.roll, yaw: e.yaw, turnMul: m.turn * ld.turn,
+    pitch: e.pitch, roll: e.roll * m.roll, yaw: e.yaw, turnMul: m.turn * ld.turn,
     hp: Math.max(30, Math.round((e.hp + m.hp) * m.hpMul)), shield: e.shield, armor: 0,
     dmgMul, rofMul, spreadMul, dmg: e.gun.dmg * dmgMul, rof: e.gun.rof * rofMul, spread: e.gun.spread * spreadMul, crit: m.crit, critMul: 2.5,
     heatGen: m.heatGen, cool: HEAT_COOL * m.cool,
-    ...secondarySpec(e.plane.id, m), lockTime: e.lockTime,
+    ...secondarySpec(e.plane.id, m), lockTime: e.lockTime * m.lock,
   };
 }
 const maxHull = () => playerStats().hp;
@@ -1897,7 +1918,7 @@ function startSurvival() {
   const perks = {};
   for (const id of equipped()) perks[id] = perkTier(PERK_BY_ID[id]);
   run = { survival: true, wave: 0, hull: 0, perks, up: {}, kills: 0, cleared: 0, bosses: 0, unlocked: [],
-    rerolls: 1, phoenixUsed: 0, hitCount: 0, over: false, seen: {}, deathT: 0, mission: null, coop: !!(net && net.active), downNote: '' };
+    rerolls: 1, bank: 0, synNote: '', windUsed: false, wingT: 0, huntT: 0, phoenixUsed: 0, hitCount: 0, over: false, seen: {}, deathT: 0, mission: null, coop: !!(net && net.active), downNote: '' };
   refreshMods();
   run.hull = maxHull();
   run.wave = 0;
@@ -1948,59 +1969,108 @@ function survivalWaveDone() {
 }
 
 // ---- field upgrades: after every wave you pick one, and it lasts for the rest of the run ----
-// max: how many times you can pick it. wing: only offered while you fly with a wingman
+// rarity: common and rare stack up to max; epics change how you fight and cursed picks trade a strength for a weakness (one of each at most).
+// tag: three picks of one tag open its synergy. wing: only offered while you fly with a wingman. solo: not offered in co-op
 const UPGRADES = [
-  { id: 'dmg', cat: 'Guns', name: 'Tune the guns', max: 5, d: '+10% gun damage.' },
-  { id: 'rof', cat: 'Guns', name: 'Faster cycling', max: 5, d: '+8% rate of fire.' },
-  { id: 'cool', cat: 'Guns', name: 'Barrel swap', max: 4, d: 'Both gun groups heat 12% slower.' },
-  { id: 'sec', cat: 'Special', name: 'Quick reload', max: 4, d: 'Special cooldown 10% shorter.' },
-  { id: 'rack', cat: 'Special', name: 'Extra rack', max: 2, d: '+1 special charge.' },
-  { id: 'hull', cat: 'Airframe', name: 'Reinforce', max: 5, d: '+15 max hull, and repair 15.' },
-  { id: 'thr', cat: 'Flight', name: 'Engine tune', max: 4, d: '+6% thrust.' },
-  { id: 'wHull', cat: 'Wingman', name: 'Wingman armor', max: 3, wing: true, d: 'Your wingman gets +40 hull.' },
-  { id: 'wGun', cat: 'Wingman', name: 'Wingman guns', max: 3, wing: true, d: 'Your wingman hits 25% harder.' },
-  { id: 'wMsl', cat: 'Wingman', name: 'Wingman missiles', max: 3, wing: true, d: 'Your wingman carries one more missile every wave.' },
-  { id: 'wCover', cat: 'Wingman', name: 'Cover me', max: 1, wing: true, d: 'Your wingman goes after the fighters on your tail first.' },
+  { id: 'dmg', tag: 'Guns', rar: 'common', name: 'Tune the guns', max: 5, d: '+10% gun damage.' },
+  { id: 'rof', tag: 'Guns', rar: 'common', name: 'Faster cycling', max: 5, d: '+8% rate of fire.' },
+  { id: 'cool', tag: 'Heat', rar: 'common', name: 'Barrel swap', max: 4, d: 'Both gun groups heat 12% slower.' },
+  { id: 'sec', tag: 'Special', rar: 'common', name: 'Quick reload', max: 4, d: 'Special cooldown 10% shorter.' },
+  { id: 'hull', tag: 'Airframe', rar: 'common', name: 'Reinforce', max: 5, d: '+15 max hull, and repair 15.' },
+  { id: 'flare', tag: 'Airframe', rar: 'common', name: 'Flare pack', max: 3, d: '+8 flares every wave.' },
+  { id: 'thr', tag: 'Flight', rar: 'common', name: 'Engine tune', max: 4, d: '+6% thrust.' },
+  { id: 'wHull', tag: 'Wingman', rar: 'common', name: 'Wingman armor', max: 3, wing: true, d: 'Your wingman gets +40 hull.' },
+  { id: 'wGun', tag: 'Wingman', rar: 'common', name: 'Wingman guns', max: 3, wing: true, d: 'Your wingman hits 25% harder.' },
+  { id: 'rack', tag: 'Special', rar: 'rare', name: 'Extra rack', max: 2, d: '+1 special charge.' },
+  { id: 'ap', tag: 'Guns', rar: 'rare', name: 'Armor-piercing rounds', max: 3, d: '+25% gun damage against heavies, aces and bosses.' },
+  { id: 'sink', tag: 'Heat', rar: 'rare', name: 'Heat exchanger', max: 3, d: 'The gun group you aren\'t firing cools 40% faster.' },
+  { id: 'lock', tag: 'Special', rar: 'rare', name: 'Seeker tuning', max: 2, d: 'Missile locks 15% faster and +15% special damage.' },
+  { id: 'evade', tag: 'Flight', rar: 'rare', name: 'Evasive training', max: 3, d: '6% of enemy hits miss you.' },
+  { id: 'wMsl', tag: 'Wingman', rar: 'rare', name: 'Wingman missiles', max: 3, wing: true, d: 'Your wingman carries one more missile every wave.' },
+  { id: 'wCover', tag: 'Wingman', rar: 'rare', name: 'Cover me', max: 1, wing: true, d: 'Your wingman goes after the fighters on your tail first.' },
+  { id: 'ricochet', tag: 'Guns', rar: 'epic', name: 'Ricochet rounds', max: 1, d: 'A quarter of your hits bounce to another enemy within 300 m for 60% damage.' },
+  { id: 'dual', tag: 'Heat', rar: 'epic', name: 'Linked triggers', max: 1, d: 'Both gun groups fire together. Each still heats on its own, and the cool one keeps firing.' },
+  { id: 'twin', tag: 'Special', rar: 'epic', name: 'Twin rails', max: 1, d: 'Every special shot fires twice for one charge.' },
+  { id: 'leech', tag: 'Airframe', rar: 'epic', name: 'Leech rounds', max: 1, d: 'Gun hits repair 3% of their damage as hull.' },
+  { id: 'wind', tag: 'Airframe', rar: 'epic', name: 'Second wind', max: 1, d: 'Once a wave, dropping under 25% hull repairs 40% of it on the spot.' },
+  { id: 'afterburn', tag: 'Flight', rar: 'epic', name: 'Hot pursuit', max: 1, d: 'Afterburner pushes 25% harder, and kills give a 3 s burst of +30% gun damage.' },
+  { id: 'squad', tag: 'Wingman', rar: 'epic', name: 'Squadron leader', max: 1, wing: true, d: 'A downed wingman is back 15 s later instead of next wave.' },
+  { id: 'over', tag: 'Guns', rar: 'cursed', name: 'Overcharged barrels', max: 1, d: '+40% gun damage, but your guns heat 30% faster.' },
+  { id: 'strip', tag: 'Flight', rar: 'cursed', name: 'Stripped airframe', max: 1, d: '+15% thrust and +8% top speed, but −20% max hull.' },
+  { id: 'rails', tag: 'Special', rar: 'cursed', name: 'Glass rails', max: 1, d: '+60% special damage, but one fewer special charge.' },
+  { id: 'blood', tag: 'Airframe', rar: 'cursed', name: 'Blood money', max: 1, solo: true, d: '+50% credits from this run, but enemies get 15% more hull.' },
 ];
 const UP_BY_ID = Object.fromEntries(UPGRADES.map(u => [u.id, u]));
-// three offers from what you can still take, with a wingman card in the mix when you have one
-function upgradeChoices() {
-  const open = UPGRADES.filter(u => up(u.id) < u.max && (!u.wing || run.perks.wing));
-  const wing = shuffle(open.filter(u => u.wing)), rest = shuffle(open.filter(u => !u.wing));
-  const out = wing.length ? [wing.shift()] : [];
-  const pool = shuffle(rest.concat(wing));
-  while (out.length < 3 && pool.length) out.push(pool.shift());
+const RARITY = { common: 'Common', rare: 'Rare', epic: 'Epic', cursed: 'Cursed' };
+// three picks of one tag open its synergy for the rest of the run
+const SYNERGY_AT = 3;
+const SYNERGIES = {
+  Guns: { name: 'Gunslinger', d: '+15% gun damage' },
+  Heat: { name: 'Thermal discipline', d: 'an overheated gun group comes back at 60% heat instead of 30%' },
+  Special: { name: 'Quartermaster', d: '+1 special charge' },
+  Airframe: { name: 'Ironclad', d: 'you take 12% less damage' },
+  Flight: { name: 'Slipstream', d: '+8% top speed and +10% roll' },
+  Wingman: { name: 'Wingman ace', d: 'your wingman gets +60 hull and hits 30% harder' },
+};
+const tagCount = tag => UPGRADES.reduce((a, u) => a + (u.tag === tag ? up(u.id) : 0), 0);
+const syn = tag => run.up && tagCount(tag) >= SYNERGY_AT;
+const canTake = u => up(u.id) < u.max && (!u.wing || run.perks.wing) && (!u.solo || !run.coop);
+// a weighted draw: epics get likelier as the waves climb, and now and then one card is a cursed pick
+function upgradeChoices(epicsOnly) {
+  const open = UPGRADES.filter(canTake), out = [];
+  const weight = u => u.rar === 'common' ? 60 : u.rar === 'rare' ? 30 : u.rar === 'epic' ? Math.min(4 + run.wave * 0.6, 16) : 0;
+  const draw = list => {
+    const tot = list.reduce((a, u) => a + weight(u), 0);
+    let r = Math.random() * tot;
+    for (const u of list) { r -= weight(u); if (r <= 0) return u; }
+    return list[list.length - 1];
+  };
+  if (epicsOnly) shuffle(open.filter(u => u.rar === 'epic')).slice(0, 3).forEach(u => out.push(u));
+  const cursed = open.filter(u => u.rar === 'cursed');
+  if (!epicsOnly && cursed.length && Math.random() < 0.3) out.push(cursed[Math.floor(Math.random() * cursed.length)]);
+  // a wingman pick in most offers while you have one
+  const wing = open.filter(u => u.wing && u.rar !== 'epic' && !out.includes(u));
+  if (!epicsOnly && wing.length && Math.random() < 0.6) out.push(wing[Math.floor(Math.random() * wing.length)]);
+  let pool = open.filter(u => u.rar !== 'cursed' && !out.includes(u) && weight(u) > 0);
+  while (out.length < 3 && pool.length) { const u = draw(pool); out.push(u); pool = pool.filter(x => x !== u); }
   return shuffle(out);
 }
 function upCard(u) {
-  const n = up(u.id);
-  return { k: u.cat + (u.max > 1 ? ' · ' + (n + 1) + ' of ' + u.max : ''), t: u.name, d: u.d, cls: n ? 'lv-up' : 'lv-new' };
+  const n = up(u.id), toward = tagCount(u.tag), S = SYNERGIES[u.tag];
+  const synNote = toward + 1 === SYNERGY_AT ? 'Opens ' + S.name + ': ' + S.d + '.' : toward < SYNERGY_AT ? u.tag + ' ' + (toward + 1) + ' of ' + SYNERGY_AT + ' toward ' + S.name + '.' : '';
+  return { k: RARITY[u.rar] + ' · ' + u.tag + (u.max > 1 ? ' · ' + (n + 1) + ' of ' + u.max : ''), t: u.name, d: u.d, foot: synNote, cls: 'r-' + u.rar };
 }
 function addUpgrade(id) {
-  const before = maxHull();
+  const before = maxHull(), opened = SYNERGIES[UP_BY_ID[id].tag], was = syn(UP_BY_ID[id].tag);
   run.up[id] = up(id) + 1;
   refreshMods();
+  if (!was && syn(UP_BY_ID[id].tag)) run.synNote = opened.name + ' is online: ' + opened.d + '. ';
   // extra max hull arrives filled
   run.hull = clamp(run.hull + Math.max(0, maxHull() - before), 1, maxHull());
 }
 const upsHeld = () => UPGRADES.filter(u => up(u.id)).map(u => u.name + (u.max > 1 ? ' ×' + up(u.id) : ''));
+const synsHeld = () => Object.keys(SYNERGIES).filter(syn).map(t => SYNERGIES[t].name);
 function offerPerks() {
-  let picks = upgradeChoices();
-  const next = run.wave + 1;
-  const go = f => () => { f(); run.hull = clamp(run.hull, 1, maxHull()); nextWave(); };
+  // after a boss wave every card is an epic
+  const bossWave = run.wave % BOSS_EVERY === 0;
+  let picks = upgradeChoices(bossWave);
+  const next = run.wave + 1, skipPay = 30 + 10 * run.wave;
+  const go = f => () => { run.synNote = ''; f(); run.hull = clamp(run.hull, 1, maxHull()); nextWave(); };
   const render = () => {
     const heal = Math.round(maxHull() * 0.4);
     const cards = picks.map(u => Object.assign(upCard(u), { onPick: go(() => addUpgrade(u.id)) }));
     if (cards.length < 3) cards.push({ k: 'Supply', t: 'Spare parts', d: 'Repair 25 hull.', onPick: go(() => { run.hull += 25; }) });
     cards.push({ k: 'Ground crew', t: 'Field repair', d: 'Repair ' + heal + ' hull.', disabled: run.hull >= maxHull(), onPick: go(() => { run.hull += heal; }) });
-    const held = upsHeld();
+    const held = upsHeld(), syns = synsHeld();
     showChoice({
-      title: 'Wave ' + run.wave + ' cleared',
-      sub: run.downNote + 'Hull ' + Math.round(run.hull) + ' / ' + maxHull() + '. Pick a field upgrade for the rest of the run' + (held.length ? ' (so far: ' + held.join(', ') + ')' : '') + '.' +
+      title: bossWave ? 'Boss down · pick an epic' : 'Wave ' + run.wave + ' cleared',
+      sub: run.downNote + (run.synNote || '') + 'Hull ' + Math.round(run.hull) + ' / ' + maxHull() + '. Pick a field upgrade for the rest of the run. Three of one tag open a synergy' +
+        (syns.length ? ' (online: ' + syns.join(', ') + ')' : '') + (held.length ? '. So far: ' + held.join(', ') : '') + '.' +
         ' Wave ' + next + ' brings ' + plural(next, 'fighter', 'fighters') + (next % BOSS_EVERY === 0 ? ' and the ' + era.boss.name.toLowerCase() : '') + '.',
       cards,
       buttons: [
-        run.rerolls > 0 && { label: 'Reroll (' + run.rerolls + ' left)', onClick: () => { run.rerolls--; picks = upgradeChoices(); render(); } },
+        run.rerolls > 0 && { label: 'Reroll (' + run.rerolls + ' left)', onClick: () => { run.rerolls--; picks = upgradeChoices(bossWave); render(); } },
+        { label: 'Skip · +' + skipPay + ' credits', onClick: go(() => { run.bank += skipPay; }) },
         { label: run.coop ? 'Leave the team and bank it' : 'End here and bank it', onClick: () => endRun('bail') },
       ].filter(Boolean),
     });
@@ -2015,7 +2085,7 @@ function endSurvival(reason) {
   // a co-op run pays out like a solo one but doesn't count toward your solo best
   const prev = save.survBest[loc] || 0, record = waves > prev && !run.coop;
   const medals = waves + 3 * run.bosses;
-  const credits = Math.round((run.kills * 12 + waves * 30 + run.bosses * 250) * (0.8 + 0.2 * era.loc.threat));
+  const credits = Math.round((run.kills * 12 + waves * 30 + run.bosses * 250) * (0.8 + 0.2 * era.loc.threat) * run.mods.credMul) + run.bank;
   save.points += medals; save.credits += credits; save.runs++; save.totalKills += run.kills;
   if (record) save.survBest[loc] = waves;
   const fresh = A.SKINS.filter(sk => skinOwned(sk) && !hadSkins.has(sk.id));
@@ -2056,7 +2126,7 @@ function startMission(type, node, opts) {
   // the first wave starts with full charges; later waves keep whatever was left and how far the cooldown had run
   if (run.wave > 1) run.charges = Math.min(run.charges, st.charges);
   else { run.charges = st.charges; run.reloadT = 0; }
-  run.flares = 24; run.flareCd = 0; run.warnT = 0; run.deathT = 0;
+  run.flares = 24 + run.mods.flares; run.flareCd = 0; run.warnT = 0; run.deathT = 0; run.windUsed = false; run.wingT = 0; run.huntT = 0;
   // a wingman who went down last wave is back for this one
   if (run.mods.wingman) spawnAlly(run.mods.wingman);
   const skill = Math.min(0.2 + era.loc.threat * 0.06 + depth * 0.08, 0.97);
@@ -2096,7 +2166,7 @@ function enemyStats(skill, ace, model, variant) {
   return {
     size: j.size, minSpeed: f.minSpeed, maxSpeed: f.maxSpeed * es.speedMul * (ace ? 1.05 : 1) * (v.speed || 1), corner: f.corner * (v.speed || 1),
     gmax: f.gmax * (ace ? 1 : 0.75 + 0.25 * skill), thrust: f.thrust * (v.thrust || 1), pitch: f.pitch * turn, roll: f.roll * turn, yaw: f.yaw * turn,
-    hp: j.hp * (ace ? 3 : 1) * (v.hp || 1) * (1 + depth * 0.06) * coopHpMul(), armor: v.armor || 0,
+    hp: j.hp * (ace ? 3 : 1) * (v.hp || 1) * (1 + depth * 0.06) * coopHpMul() * run.mods.enemyHp, armor: v.armor || 0,
   };
 }
 function initPilot(e, skill, kind) {
@@ -2139,7 +2209,7 @@ function spawnAlly(w) {
 // tier: 1 on wave 10, 2 on wave 20, and so on; each tier adds hull and gunners' damage
 function spawnBoss(depth, tier) {
   const b = era.boss;
-  const stats = { size: 2.6, minSpeed: era.minSpeed, maxSpeed: era.maxSpeed, corner: era.corner, gmax: 3, thrust: era.thrust, pitch: 0.3, roll: 0.5, yaw: 0.2, hp: Math.round(b.hp * (0.7 + 0.3 * tier) * coopHpMul()) };
+  const stats = { size: 2.6, minSpeed: era.minSpeed, maxSpeed: era.maxSpeed, corner: era.corner, gmax: 3, thrust: era.thrust, pitch: 0.3, roll: 0.5, yaw: 0.2, hp: Math.round(b.hp * (0.7 + 0.3 * tier) * coopHpMul() * run.mods.enemyHp) };
   const e = new Plane(stats, bossMesh(b.kind, b.color, b.accent), 1);
   e.boss = true; e.heavy = true; e.ace = true; e.name = b.name; e.skill = 1; e.throttle = 0.9;
   e.circR = 1700; e.alt = b.alt; e.circW = era.maxSpeed * b.speedFrac / e.circR;
@@ -2192,13 +2262,14 @@ function creditKill(p, msl) {
   popText(p.boss ? 'Boss down' : p.ace ? 'Ace down' : 'Splash one');
   if (run.mods.vamp && player.alive && !player.dying) player.hp = Math.min(player.maxHp, player.hp + run.mods.vamp);
   if (run.mods.slowmo && !run.coop) slowmoT = Math.max(slowmoT, run.mods.slowmo);
+  if (run.mods.hunt) run.huntT = 3;
   // gun kills (not secondary kills) knock time off the secondary cooldown
   if (!msl && run.charges < player.s.charges) run.reloadT += run.mods.gunRearm;
 }
 // a downed boss opens the next location straight away, even if the run ends this wave (in co-op, for every pilot)
 function bossDown() {
   coopBossDown();
-  run.bosses++; if (!run.coop) slowmoT = 1.6;
+  run.bosses++; run.rerolls++; if (!run.coop) slowmoT = 1.6;
   const loc = era.loc.id, next = LOC_ORDER[LOC_ORDER.indexOf(loc) + 1];
   save.bosses[loc] = true;
   if (next && !save.locs[next]) { save.locs[next] = true; run.unlocked.push(next); }
@@ -2334,26 +2405,32 @@ function updatePlaying(dt) {
     const cur = run.groups[run.grp];
     const firing = ctl.fire && !cur.over;
     run.firing = firing;
+    // Linked triggers: every group that isn't locked fires with the trigger
+    const linked = mods.dual && ctl.fire;
+    run.firing = run.firing || (linked && run.groups.some(G => !G.over));
+    run.huntT = Math.max(0, run.huntT - dt);
+    const hunt = run.huntT > 0 ? 1.3 : 1;
     for (const G of run.groups) {
-      const on = firing && G === cur;
+      const on = linked ? !G.over : firing && G === cur;
       if (on) {
         G.heat = Math.min(1, G.heat + G.g.heat * st.heatGen * dt); G.coolT = HEAT_DELAY;
         if (G.heat >= 1) {
           G.over = true; burst(0.35, 260, 0.2, 'lowpass');
           const other = run.groups[1 - run.grp];
-          if (other && !other.over) { run.grp = 1 - run.grp; popText((run.grp ? 'Secondary' : 'Primary') + ' guns · ' + other.g.name); beep(620, 0.06, 0.06); }
+          if (linked) popText('Guns overheated');
+          else if (other && !other.over) { run.grp = 1 - run.grp; popText((run.grp ? 'Secondary' : 'Primary') + ' guns · ' + other.g.name); beep(620, 0.06, 0.06); }
           else popText('Guns overheated');
         }
       } else {
         G.coolT -= dt;
-        if (G.coolT <= 0 || G.over) G.heat = Math.max(0, G.heat - st.cool * dt);
-        if (G.over && G.heat <= HEAT_RESUME) { G.over = false; if (G === cur) beep(760, 0.08, 0.07); }
+        if (G.coolT <= 0 || G.over) G.heat = Math.max(0, G.heat - st.cool * (G === cur ? 1 : mods.offCool) * dt);
+        if (G.over && G.heat <= mods.resume) { G.over = false; if (G === cur) beep(760, 0.08, 0.07); }
       }
       // every mounted gun keeps its own rate of fire
       for (const g of G.guns) {
         if (!on) { g.cd = Math.max(0, g.cd - dt); continue; }
         g.cd -= dt;
-        while (g.cd <= 0) { fireGun(player, g.gun, g.gun.dmg * st.dmgMul, g.gun.spread * st.spreadMul, g.gun.color, g.hp.at); g.cd += 1 / (g.gun.rof * st.rofMul); }
+        while (g.cd <= 0) { fireGun(player, g.gun, g.gun.dmg * st.dmgMul * hunt, g.gun.spread * st.spreadMul, g.gun.color, g.hp.at); g.cd += 1 / (g.gun.rof * st.rofMul); }
       }
     }
     if (st.shield) {
@@ -2374,9 +2451,14 @@ function updatePlaying(dt) {
         if (!locked && lockBeepT <= 0) { lockBeepT = 0.18; beep(880, 0.05, 0.06); }
       }
     } else { lockTarget = null; locked = false; }
-    if (missileRequest && run.charges > 0) { fireSecondary(st); run.charges--; }
+    if (missileRequest && run.charges > 0) { fireSecondary(st); if (mods.twin) setTimeout(() => { if (state === 'playing' && validTarget(player)) fireSecondary(player.s); }, 180); run.charges--; }
     else if (missileRequest) { popText(era.sec.short.toLowerCase().replace(/^./, c => c.toUpperCase()) + ' rearming · ' + Math.ceil(st.reload - run.reloadT) + ' s'); beep(330, 0.08, 0.06); }
     missileRequest = false;
+    // Squadron leader: a downed wingman is back 15 s later
+    if (mods.wingman && mods.wingman.back && !allies.some(validTarget)) {
+      run.wingT += dt;
+      if (run.wingT > 15) { run.wingT = 0; spawnAlly(mods.wingman); popText('Wingman back in the fight'); }
+    } else run.wingT = 0;
     // flares: each salvo has a good chance to pull every missile chasing you
     run.flareCd -= dt;
     if (flareRequest && run.flares > 0 && run.flareCd <= 0) {
@@ -3785,7 +3867,7 @@ function coopCheckReady() {
   net.send({ t: 'wave', n: run.wave, sub: run.mission.sub, pilots: coop.members.size });
 }
 function coopRespawnPenalty() {
-  const ids = Object.keys(run.up).filter(id => run.up[id] > 0);
+  const ids = Object.keys(run.up).filter(id => run.up[id] > 0 && UP_BY_ID[id].rar !== 'cursed');
   let lost = '';
   if (ids.length) {
     const id = ids[Math.floor(Math.random() * ids.length)];
