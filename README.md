@@ -7,6 +7,7 @@ A browser prototype of a roguelike jet dogfighting game. Pick a location, a heat
 - **Locations** open one at a time: down the boss at one to open the next.
 - **Heat 0 to 5** at each location. Downing the boss at a heat level opens the next one there. Each level adds enemy hull, damage, skill and numbers, and pays more credits and boss skill points.
 - **Skill web:** 61 permanent skills in five rings around a core, across six sectors (Airframe, Engine, Guns, Missiles, Pilot, Logistics). Train any skill connected to one you already have. Each sector ends in a keystone, and hybrid skills on the rim join neighbouring sectors.
+- **Survival:** a separate mode on its own tab. Wave 1 is one fighter, wave 2 is two, and so on. From wave 3 every third fighter is a newer jet type, and from wave 5 one in four is an ace. After each wave pick a piece of gear or a field repair. The best wave at each location is saved, and every wave pays credits, with a skill point for every two.
 - **Hangar:** five jets to buy with credits, and a paint shop with schemes bought with credits or earned by downing bosses, racking up kills or clearing heat 5.
 
 **Play:** open `index.html` in a browser, or use the GitHub Pages link for this repository.
