@@ -469,6 +469,53 @@ window.SkyAssets = function (THREE) {
     for (const o of full.children.slice()) if (o.name === 'flame' || (o.name === 'msl' && stores) || o.material === navR || o.material === navG || o.material === nozzleGlow) g.add(o);
     return g;
   }
+  // ---------- repainting imported models ----------
+  // A scheme is painted straight onto the model: the pattern is projected from three sides in the jet's own
+  // space, then the model's texture is laid back over it as fine detail (panel lines, rivets, stains, shading)
+  // with its broad colours taken out. Dark parts and strongly coloured markings keep their original colour.
+  const SKIP_PARTS = /glass|canopy|cockpit|pilot|seat|hud|screen|light|lamp|engine|nozzle|exhaust|tire|tyre|wheel|gold/i;
+  function isSkin(m) {
+    if (m.transparent || SKIP_PARTS.test(m.name)) return false;
+    if (m.map) return true;
+    const c = m.color; return c.r + c.g + c.b > 0.6;
+  }
+  // detail (0 to 1) sets how much of the model's own surface detail shows through the new paint
+  function repaintMaterial(m, p, toJet, detail) {
+    const u = {
+      paintMap: { value: paintTexture({ ...p, lines: 0 }) },
+      paintScale: { value: 1 / TILE },
+      paintMat: { value: toJet.clone() },
+      paintDetail: { value: detail == null ? 1 : detail },
+    };
+    m.color.set(0xffffff);
+    if (p.metal != null) { m.metalness = p.metal; m.metalnessMap = null; }
+    if (p.rough != null) { m.roughness = p.rough; m.roughnessMap = null; }
+    m.onBeforeCompile = sh => {
+      Object.assign(sh.uniforms, u);
+      sh.vertexShader = 'uniform mat4 paintMat; varying vec3 vPaintPos; varying vec3 vPaintN;\n' + sh.vertexShader.replace('#include <begin_vertex>',
+        '#include <begin_vertex>\n vPaintPos = (paintMat * vec4(transformed, 1.0)).xyz; vPaintN = mat3(paintMat) * objectNormal;');
+      sh.fragmentShader = 'uniform sampler2D paintMap; uniform float paintScale; uniform float paintDetail; varying vec3 vPaintPos; varying vec3 vPaintN;\n' + sh.fragmentShader.replace('#include <map_fragment>', `
+        #ifdef USE_MAP
+          vec4 orig = mapTexelToLinear(texture2D(map, vUv));
+          vec3 broad = mapTexelToLinear(texture2D(map, vUv, 3.5)).rgb;
+        #else
+          vec4 orig = vec4(1.0); vec3 broad = vec3(1.0);
+        #endif
+        const vec3 LUMA = vec3(0.299, 0.587, 0.114);
+        float lum = dot(orig.rgb, LUMA);
+        float detail = mix(1.0, clamp(lum / max(dot(broad, LUMA), 0.02), 0.55, 1.3), paintDetail);
+        vec3 nw = pow(abs(normalize(vPaintN)), vec3(4.0)); nw /= nw.x + nw.y + nw.z;
+        vec3 q = vPaintPos * paintScale;
+        vec3 paint = texture2D(paintMap, q.zy).rgb * nw.x + texture2D(paintMap, q.xz).rgb * nw.y + texture2D(paintMap, q.xy).rgb * nw.z;
+        paint *= 0.85;
+        float hi = max(max(orig.r, orig.g), orig.b), sat = (hi - min(min(orig.r, orig.g), orig.b)) / max(hi, 0.001);
+        float keep = max(smoothstep(0.45, 0.7, sat) * smoothstep(0.04, 0.12, hi), 1.0 - smoothstep(0.008, 0.025, lum));
+        diffuseColor *= vec4(mix(paint * detail, orig.rgb, keep), orig.a);
+      `);
+    };
+    m.customProgramCacheKey = () => 'repaint';
+    m.needsUpdate = true;
+  }
   // the vertex furthest out to the right, in the jet's own space
   function wingtip(holder) {
     holder.updateMatrixWorld(true);
@@ -482,7 +529,7 @@ window.SkyAssets = function (THREE) {
     });
     return [best.x - 0.12, best.y, best.z];
   }
-  function buildCustom(id, p, tinted) {
+  function buildCustom(id, p, repaint) {
     const { root, opt } = custom[id], spec = JETS[id];
     const holder = new THREE.Group(), body = root.clone(true);
     holder.add(body);
@@ -494,15 +541,14 @@ window.SkyAssets = function (THREE) {
     holder.updateMatrixWorld(true);
     box = new THREE.Box3().setFromObject(holder);
     holder.position.set(-(box.min.x + box.max.x) / 2, -(box.min.y + box.max.y) / 2 + (opt.y || 0), (z0 + z1) / 2 - (box.min.z + box.max.z) / 2);
-    // paint other than the model's own becomes a tint over its textures
-    const tint = tinted ? new THREE.Color(p.c[0]).multiplyScalar(1.3) : null;
+    holder.updateMatrixWorld(true);
     body.traverse(o => {
       if (!o.isMesh) return;
       o.castShadow = o.receiveShadow = true;
       const mats = [].concat(o.material).map(m => {
         const c = m.clone();
         if (c.isMeshStandardMaterial) { if (envMap) c.envMap = envMap; allStd.push(c); }
-        if (tint && c.color && !c.transparent) c.color.copy(tint);
+        if (repaint && c.isMeshStandardMaterial && isSkin(c)) repaintMaterial(c, p, o.matrixWorld, opt.detail);
         return c;
       });
       o.material = mats.length === 1 ? mats[0] : mats;
@@ -519,7 +565,7 @@ window.SkyAssets = function (THREE) {
     const p = typeof paint === 'string' && ENEMY_PAINT[paint] ? ENEMY_PAINT[paint] : resolvePaint(paint || 'factory', livery || [0x9aa3ad, 0x2c3e66]);
     const key = model + '|' + p.pattern + p.c.join(',') + p.accent;
     if (!templates[key]) {
-      // an imported model keeps its own paint for factory and enemy schemes; skins and the ace scheme tint it
+      // an imported model keeps its own paint for factory and enemy schemes; skins and the ace scheme repaint it
       const own = !paint || paint === 'factory' || (typeof paint === 'string' && ENEMY_PAINT[paint] && paint !== 'ace');
       templates[key] = custom[model] ? buildCustom(model, p, !own) : buildJet(JETS[model], materialsFor(p));
     }
