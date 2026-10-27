@@ -11,6 +11,15 @@ A browser prototype of a roguelike jet dogfighting game. Pick a location, a heat
 - **Enemy variants** mix in from survival wave 3, and from the middle of a sortie map. Interceptors (FAST) are quick and fragile, heavy fighters (HEAVY) are armored and hit hard, ghosts (GHOST) can't be locked and only show on the HUD and radar inside 1.5 km but carry no missiles, and hunters (HUNTER) carry four missiles and fire them from long range.
 - **Missiles are a special.** Each jet carries one to three on the rails, and each refills on a 24 s cooldown. Gun kills take 2 s off the cooldown. The Missiles sector of the skill web and the Ordnance crew, Ready rack and Gun-kill bounty gear cut the cooldown or add missiles.
 - **Hangar:** five jets to buy with credits, and a paint shop with schemes bought with credits or earned by downing bosses, racking up kills or clearing heat 5.
+- **Loadout:** each jet has its own gun hardpoints (bays inside the airframe for cannons, wing pylons for gun pods), a payload limit and a list of guns it can take. The Loadout tab shows the jet from above with a marker on every hardpoint: pick one and fit a gun. Seven guns, from the light M3 .50 cal to the ADEN 30 mm and the SUU-23 pod, are bought once with credits; a gun that comes fitted on a jet you own is free. Weight above the factory fit costs turn and thrust (lighter gives a little back), pods add drag, and pods on the F-35 halve its stealth. In combat every gun fires from its own hardpoint at its own rate.
+
+| Jet | Hardpoints | Payload | Factory guns |
+| --- | --- | --- | --- |
+| F-5E | 2 nose bays, 2 pylons | 3 | 2 × M39 |
+| F-16C | 2 root bays, 2 pylons | 4 | M61 |
+| F-14B | 2 nose bays, 4 pylons | 5.5 | M61 |
+| F/A-18E | 1 nose bay, 4 pylons | 5 | M61 |
+| F-35C | 1 internal bay, 3 pylons | 4.5 | GAU-22 |
 
 **Play:** open `index.html` in a browser, or use the GitHub Pages link for this repository.
 

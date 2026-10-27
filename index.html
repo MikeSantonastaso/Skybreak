@@ -205,6 +205,43 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
 .skinbar .need { color: var(--amber); font-size: 13px; }
 .skinbar .btn { padding: 10px 14px; }
 .btn:disabled { opacity: 0.45; cursor: default; }
+/* loadout */
+.lobox { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+@media (min-width: 900px) { .lobox { grid-template-columns: minmax(240px, 330px) minmax(0, 1fr); align-items: start; } }
+.lodiag { position: relative; width: 100%; max-width: 330px; margin: 0 auto; aspect-ratio: 360 / 400; background: radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.08), rgba(255,255,255,0) 70%), repeating-linear-gradient(0deg, rgba(235,228,210,0.04) 0 1px, transparent 1px 24px), repeating-linear-gradient(90deg, rgba(235,228,210,0.04) 0 1px, transparent 1px 24px); border: 1px solid rgba(235,228,210,0.12); }
+.lodiag img { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hpm { position: absolute; transform: translate(-50%, -50%); width: 26px; height: 26px; padding: 0; border-radius: 50%; border: 2px solid var(--paper); background: rgba(11,19,23,0.75); color: var(--paper); font-size: 10px; font-weight: 700; line-height: 1; display: grid; place-items: center; }
+.hpm.pylon { border-radius: 3px; }
+.hpm.full { background: var(--amber); border-color: var(--amber); color: #1a1206; }
+.hpm:hover { border-color: var(--amber); }
+.hpm[aria-pressed="true"] { box-shadow: 0 0 0 3px rgba(127,233,242,0.6); border-color: var(--cyan); }
+.hpm span { position: absolute; top: 100%; margin-top: 3px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 10px; letter-spacing: 0.06em; color: var(--paper); text-shadow: 0 1px 2px #000, 0 0 4px #000; pointer-events: none; }
+.hpm.up span { top: auto; bottom: 100%; margin: 0 0 3px; }
+.hpm.lt span, .hpm.rt span { top: 50%; margin: 0; transform: translateY(-50%); }
+.hpm.lt span { left: auto; right: 100%; margin-right: 5px; }
+.hpm.rt span { left: 100%; margin-left: 5px; }
+.guns { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+.gun { text-align: left; background: rgba(255,255,255,0.03); border: 1px solid rgba(235,228,210,0.14); color: var(--paper); padding: 10px; display: flex; flex-direction: column; gap: 5px; }
+.gun:not(:disabled):hover { border-color: var(--amber-dim); }
+.gun[aria-pressed="true"] { border-color: var(--good); background: rgba(143,214,154,0.07); }
+.gun:disabled { cursor: default; opacity: 0.5; }
+.gun.armed { border-color: var(--amber); box-shadow: 0 0 0 2px rgba(255,181,71,0.25); }
+.gun .gn { font-weight: 700; font-size: 14px; }
+.gun .gk { font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.gun .gd { font-size: 12px; color: var(--muted); line-height: 1.35; }
+.gun .stats { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 3px 8px; align-items: center; font-size: 11px; color: var(--muted); }
+.gun .stats i { display: block; height: 5px; background: rgba(235,228,210,0.12); position: relative; }
+.gun .stats i b { position: absolute; inset: 0 auto 0 0; background: var(--amber); }
+.gun .stats em { font-style: normal; color: var(--paper); font-variant-numeric: tabular-nums; text-align: right; }
+.gun .gs { margin-top: auto; font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.gun .gs.on { color: var(--good); }
+.gun .gs.cost { color: var(--amber); }
+.lospec { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px 16px; margin: 0; }
+.lospec div { border-top: 1px solid var(--line); padding-top: 6px; min-width: 0; }
+.lospec dt { font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.lospec dd { margin: 2px 0 0; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.lospec dd small { display: block; font-size: 11.5px; font-weight: 400; color: var(--muted); }
+.lospec .up { color: var(--good); } .lospec .dn { color: var(--danger); }
 /* skill web */
 .webbox { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 .webwrap { overflow-x: auto; }
@@ -337,6 +374,7 @@ svg.webs { display: block; width: 100%; height: auto; }
       <button class="tab" role="tab" id="tab-sortie" aria-controls="pane-sortie">Sortie</button>
       <button class="tab" role="tab" id="tab-survival" aria-controls="pane-survival">Survival</button>
       <button class="tab" role="tab" id="tab-hangar" aria-controls="pane-hangar">Hangar</button>
+      <button class="tab" role="tab" id="tab-loadout" aria-controls="pane-loadout">Loadout</button>
       <button class="tab" role="tab" id="tab-skills" aria-controls="pane-skills">Skills<b id="ptsBadge"></b></button>
     </div>
     <div class="cols">
@@ -371,6 +409,21 @@ svg.webs { display: block; width: 100%; height: auto; }
             <div class="skins" id="skinList"></div>
             <div class="skinbar" id="skinBar"></div>
           </div>
+        </div>
+        <div id="pane-loadout" class="col" role="tabpanel" aria-labelledby="tab-loadout" hidden>
+          <p class="note lede">Fit guns to the hardpoints on your jet. Bays inside the airframe take cannons, pylons under the wings take gun pods. Every gun has weight: go past the factory fit and the jet turns and climbs a little slower, go lighter and it gets nimbler. Pods also add drag, and on the F-35 they give away its stealth.</p>
+          <div class="lobox">
+            <div class="lodiag" id="loDiag"></div>
+            <div class="col" style="gap:10px">
+              <div class="label" style="margin:0"><span id="loHp">Hardpoint</span><span id="loWeight"></span></div>
+              <div class="guns" id="loGuns"></div>
+            </div>
+          </div>
+          <div>
+            <div class="label"><span>Spec sheet · <span id="loFor"></span></span></div>
+            <dl class="lospec" id="loSpec"></dl>
+          </div>
+          <button class="ghost" id="loStock">Back to the factory loadout</button>
         </div>
         <div id="pane-skills" class="col" role="tabpanel" aria-labelledby="tab-skills" hidden>
           <p class="note lede">Skills are permanent. Start at the core and train any skill that connects to one you already have. The inner rings are cheap. The outer rings cost more, each sector ends in a keystone, and hybrids on the rim join two sectors.</p>
@@ -477,13 +530,13 @@ const Y_AXIS = new V3(0, 1, 0);
 // ================= save data =================
 const SAVE_KEY = 'skybreak-save-v3';
 const defaultSave = () => ({ points: 0, credits: 0, best: 0, totalKills: 0, runs: 0, tree: {}, skills: {}, locs: { arctic: true }, bosses: {}, heatWon: {}, selHeat: {}, survBest: {},
-  planes: { f5: true }, skins: { factory: true }, skin: {}, loc: 'arctic', plane: 'f5', pullBack: true, ctl: 'mouse' });
+  planes: { f5: true }, skins: { factory: true }, skin: {}, guns: {}, loadout: {}, loc: 'arctic', plane: 'f5', pullBack: true, ctl: 'mouse' });
 let save = defaultSave();
 try {
   const s = JSON.parse(localStorage.getItem(SAVE_KEY));
   const obj = (k, base) => Object.assign({}, base || {}, s[k] || {});
   if (s) save = Object.assign(defaultSave(), s, { tree: obj('tree'), skills: obj('skills'), locs: obj('locs', { arctic: true }), bosses: obj('bosses'), heatWon: obj('heatWon'), selHeat: obj('selHeat'), survBest: obj('survBest'),
-    planes: obj('planes', { f5: true }), skins: obj('skins', { factory: true }), skin: obj('skin') });
+    planes: obj('planes', { f5: true }), skins: obj('skins', { factory: true }), skin: obj('skin'), guns: obj('guns'), loadout: obj('loadout') });
   else {
     // carry skill points and the record over from the era version; each boss it beat pays for some hangar credit
     const old = JSON.parse(localStorage.getItem('skybreak-save-v2'));
@@ -650,34 +703,91 @@ const PLANES = {
     blurb: 'Small, cheap and quick on the roll. Only one missile on the rails, so the gun does most of the work.',
     size: 1.05, cockpit: 'jet', eye: [0.85, -3.6], hp: 100, missiles: 2, lockTime: 1.0, lockRange: 2600,
     flight: { minSpeed: 62, maxSpeed: 320, corner: 145, gmax: 10, thrust: 28, pitch: 1.5, roll: 4.8, yaw: 0.45 },
-    gun: Object.assign({}, GUN20, { rof: 22, dmg: 4.4, offsets: [[-0.45, 0.25, -6], [0.45, 0.25, -6]] }),
+    // hardpoints: [x, y, z] on the airframe in metres, nose toward -z. A bay takes a cannon, a pylon takes a gun pod
+    payload: 3, guns: ['m3', 'm39', 'minigun'], stock: { noseL: 'm39', noseR: 'm39' },
+    hardpoints: [{ id: 'noseL', name: 'Nose gun, left', kind: 'bay', at: [-0.45, 0.25, -6] }, { id: 'noseR', name: 'Nose gun, right', kind: 'bay', at: [0.45, 0.25, -6] },
+      { id: 'pylL', name: 'Wing pylon, left', kind: 'pylon', at: [-2.4, -0.6, 0.9] }, { id: 'pylR', name: 'Wing pylon, right', kind: 'pylon', at: [2.4, -0.6, 0.9] }],
     livery: [0xa9b0b6, 0x2c3e66] },
   f16: { id: 'f16', name: 'F-16C Viper', short: 'F-16C', role: 'Dogfighter', price: 2500,
     blurb: 'Fly-by-wire and a bubble canopy. The best roll rate and G limit in the hangar.',
     size: 1.1, cockpit: 'jet', eye: [1.05, -4.3], hp: 115, missiles: 4, lockTime: 0.85, lockRange: 3000,
     flight: { minSpeed: 66, maxSpeed: 345, corner: 150, gmax: 11.5, thrust: 34, pitch: 1.6, roll: 5.6, yaw: 0.45 },
-    gun: Object.assign({}, GUN20, { rof: 32, dmg: 3.7, offsets: [[-1.0, 0.45, -3]] }),
+    payload: 4, guns: ['m3', 'm39', 'm61', 'minigun', 'suu23'], stock: { rootL: 'm61' },
+    hardpoints: [{ id: 'rootL', name: 'Gun bay, left root', kind: 'bay', at: [-1.0, 0.45, -3] }, { id: 'rootR', name: 'Gun bay, right root', kind: 'bay', at: [1.0, 0.45, -3] },
+      { id: 'pylL', name: 'Wing pylon, left', kind: 'pylon', at: [-2.9, -0.55, 1.2] }, { id: 'pylR', name: 'Wing pylon, right', kind: 'pylon', at: [2.9, -0.55, 1.2] }],
     livery: [0x8e979f, 0xc2272d] },
   f14: { id: 'f14', name: 'F-14B Tomcat', short: 'F-14B', role: 'Interceptor', price: 5000,
     blurb: 'Swing wings sweep back as you speed up. Fastest jet here, three missiles on the rails and the longest lock range.',
     size: 1.4, cockpit: 'jet', eye: [1.25, -6.2], hp: 150, missiles: 6, lockTime: 0.9, lockRange: 4500,
     flight: { minSpeed: 62, maxSpeed: 375, corner: 158, gmax: 9.5, thrust: 35, pitch: 1.4, roll: 4.0, yaw: 0.4 },
-    gun: Object.assign({}, GUN20, { rof: 28, dmg: 4.2, offsets: [[-0.9, -0.2, -6]] }),
+    payload: 5.5, guns: ['m3', 'm39', 'm61', 'aden', 'minigun', 'suu23'], stock: { noseL: 'm61' },
+    hardpoints: [{ id: 'noseL', name: 'Nose bay, left', kind: 'bay', at: [-0.9, -0.2, -6] }, { id: 'noseR', name: 'Nose bay, right', kind: 'bay', at: [0.9, -0.2, -6] },
+      { id: 'gloveL', name: 'Glove pylon, left', kind: 'pylon', at: [-2.1, -1.0, -1.4] }, { id: 'gloveR', name: 'Glove pylon, right', kind: 'pylon', at: [2.1, -1.0, -1.4] },
+      { id: 'bellyL', name: 'Belly pylon, left', kind: 'pylon', at: [-0.75, -1.15, 2.6] }, { id: 'bellyR', name: 'Belly pylon, right', kind: 'pylon', at: [0.75, -1.15, 2.6] }],
     livery: [0xb7bcc0, 0x111111] },
   f18: { id: 'f18', name: 'F/A-18E Super Hornet', short: 'F/A-18E', role: 'Strike fighter', price: 8000,
     blurb: 'Tough, and it keeps its nose authority at high angles of attack where other jets stall.',
     size: 1.3, cockpit: 'jet', eye: [1.15, -5.8], hp: 165, missiles: 6, lockTime: 0.85, lockRange: 3200, stallAoa: 0.37,
     flight: { minSpeed: 56, maxSpeed: 330, corner: 140, gmax: 10.5, thrust: 31, pitch: 1.85, roll: 4.6, yaw: 0.55 },
-    gun: Object.assign({}, GUN20, { rof: 30, dmg: 4, offsets: [[0, 0.55, -7.6]] }),
+    payload: 5, guns: ['m3', 'm61', 'gau22', 'aden', 'minigun', 'suu23'], stock: { nose: 'm61' },
+    hardpoints: [{ id: 'nose', name: 'Nose cannon', kind: 'bay', at: [0, 0.55, -7.6] },
+      { id: 'inL', name: 'Inner pylon, left', kind: 'pylon', at: [-3.0, -0.6, 1.0] }, { id: 'inR', name: 'Inner pylon, right', kind: 'pylon', at: [3.0, -0.6, 1.0] },
+      { id: 'outL', name: 'Outer pylon, left', kind: 'pylon', at: [-4.9, -0.45, 1.8], up: true }, { id: 'outR', name: 'Outer pylon, right', kind: 'pylon', at: [4.9, -0.45, 1.8], up: true }],
     livery: [0x7f8a94, 0xe2b13c] },
   f35: { id: 'f35', name: 'F-35C Lightning II', short: 'F-35C', role: 'Stealth fighter', price: 14000,
-    blurb: 'Stealth makes enemies slow to lock you and sloppy with their guns. Locks its own missiles fastest.',
+    blurb: 'Stealth makes enemies slow to lock you and sloppy with their guns, unless you hang pods outside. Locks its own missiles fastest.',
     size: 1.15, cockpit: 'future', eye: [1.15, -4.2], hp: 150, missiles: 4, lockTime: 0.5, lockRange: 3600, stealth: 0.4,
     flight: { minSpeed: 62, maxSpeed: 355, corner: 148, gmax: 11, thrust: 36, pitch: 1.65, roll: 5.0, yaw: 0.5 },
-    gun: Object.assign({}, GUN20, { rof: 28, dmg: 4.6, offsets: [[-1.1, 0.6, -2.5]] }),
+    payload: 4.5, guns: ['m61', 'gau22', 'aden', 'minigun', 'suu23'], stock: { rootL: 'gau22' },
+    hardpoints: [{ id: 'rootL', name: 'Internal gun, left root', kind: 'bay', at: [-1.1, 0.6, -2.5] }, { id: 'centre', name: 'Centreline pod', kind: 'pylon', at: [0, -1.05, 0.4] },
+      { id: 'pylL', name: 'Wing pylon, left', kind: 'pylon', at: [-3.2, -0.5, 1.6] }, { id: 'pylR', name: 'Wing pylon, right', kind: 'pylon', at: [3.2, -0.5, 1.6] }],
     livery: [0x59616a, 0x8b949c] },
 };
 const PLANE_ORDER = ['f5', 'f16', 'f14', 'f18', 'f35'];
+
+// ---- guns: bought once with credits, then fitted to the hardpoints of any jet that takes them ----
+// rof is rounds per second for one gun; weight counts against the jet's payload; drag cuts top speed
+const GUNS = {
+  m3: { name: 'M3 .50 cal', short: '.50 CAL', kind: 'Machine gun', mount: 'bay', weight: 0.4, price: 0, rof: 15, dmg: 1.9, speed: 900, spread: 0.006, range: 1100, color: 0xfff0b8, len: 11, sound: 1300,
+    d: 'Light and fast-firing. Weak alone, but it barely weighs anything.' },
+  m39: { name: 'M39 20 mm revolver', short: 'M39', kind: 'Revolver cannon', mount: 'bay', weight: 0.9, price: 0, rof: 11, dmg: 4.4, speed: 1030, spread: 0.004, range: 1250, color: 0xffe4a0, len: 16, sound: 950,
+    d: 'The F-5 workhorse. Accurate, steady and easy on the payload.' },
+  m61: { name: 'M61 Vulcan 20 mm', short: 'M61', kind: 'Rotary cannon', mount: 'bay', weight: 1.4, price: 0, rof: 30, dmg: 3.9, speed: 1050, spread: 0.0045, range: 1300, color: 0xffe4a0, len: 16, sound: 900,
+    d: 'Six barrels and a wall of lead. The all-rounder.' },
+  gau22: { name: 'GAU-22 25 mm', short: 'GAU-22', kind: 'Rotary cannon', mount: 'bay', weight: 1.6, price: 3200, rof: 22, dmg: 5.8, speed: 1100, spread: 0.0035, range: 1450, color: 0xffd28a, len: 18, sound: 800,
+    d: 'Harder hitting and flatter shooting than the Vulcan, at a little more weight.' },
+  aden: { name: 'ADEN 30 mm', short: 'ADEN 30', kind: 'Revolver cannon', mount: 'bay', weight: 1.5, price: 4200, rof: 10, dmg: 12, speed: 820, spread: 0.005, range: 1250, color: 0xffb36b, len: 20, sound: 600,
+    d: 'Each shell lands like a hammer, but they are slow, so lead your target.' },
+  minigun: { name: 'M134 minigun pod', short: 'MINIGUN', kind: 'Gun pod', mount: 'pylon', weight: 1.1, price: 900, rof: 40, dmg: 1.05, speed: 880, spread: 0.009, range: 1000, color: 0xfff0b8, len: 10, sound: 1500, drag: 0.02,
+    d: 'A buzzsaw of 7.62 mm. Short range and it hangs drag under the wing.' },
+  suu23: { name: 'SUU-23 20 mm pod', short: 'SUU-23', kind: 'Gun pod', mount: 'pylon', weight: 2, price: 2200, rof: 20, dmg: 3.4, speed: 1000, spread: 0.008, range: 1200, color: 0xffe4a0, len: 16, sound: 950, drag: 0.03,
+    d: 'A whole extra cannon on a pylon. Heavy and draggy, and it hits hard.' },
+};
+const GUN_ORDER = ['m3', 'm39', 'm61', 'gau22', 'aden', 'minigun', 'suu23'];
+// every point of payload above (or below) the factory loadout costs (or gives) this much turn and thrust
+const WEIGHT_TURN = 0.035, WEIGHT_THRUST = 0.025;
+const gunDps = id => GUNS[id].rof * GUNS[id].dmg;
+const gunOwned = id => !GUNS[id].price || !!save.guns[id] || PLANE_ORDER.some(pid => save.planes[pid] && Object.values(PLANES[pid].stock).includes(id));
+// the guns on each hardpoint of a jet: your saved choice, or the factory fit
+function loadoutOf(pid) {
+  const P = PLANES[pid], saved = save.loadout[pid], out = {};
+  for (const hp of P.hardpoints) {
+    const g = saved ? saved[hp.id] : P.stock[hp.id];
+    out[hp.id] = g && GUNS[g] && GUNS[g].mount === hp.kind && P.guns.includes(g) && gunOwned(g) ? g : null;
+  }
+  if (!Object.values(out).some(Boolean) || loadWeight(pid, out) > P.payload + 1e-6) return Object.assign({}, P.stock);
+  return out;
+}
+const loadWeight = (pid, lo) => Object.values(lo || loadoutOf(pid)).reduce((a, g) => a + (g ? GUNS[g].weight : 0), 0);
+// what a loadout does to the airframe, against the factory fit
+function loadoutSpec(pid, lo) {
+  lo = lo || loadoutOf(pid);
+  const P = PLANES[pid], w = loadWeight(pid, lo), dw = w - loadWeight(pid, P.stock);
+  const guns = Object.values(lo).filter(Boolean), pods = guns.filter(g => GUNS[g].mount === 'pylon').length;
+  return { weight: w, payload: P.payload, turn: clamp(1 - WEIGHT_TURN * dw, 0.7, 1.08), thrust: clamp(1 - WEIGHT_THRUST * dw, 0.75, 1.06),
+    speed: 1 - guns.reduce((a, g) => a + (GUNS[g].drag || 0), 0), dps: guns.reduce((a, g) => a + gunDps(g), 0), guns: guns.length, pods,
+    stealth: P.stealth ? P.stealth * (pods ? 0.5 : 1) : 0 };
+}
 
 const ENEMY_JETS = {
   mig21: { name: 'MiG-21', size: 1.05, hp: 32, flight: { minSpeed: 68, maxSpeed: 320, corner: 155, gmax: 8.5, thrust: 27, pitch: 1.35, roll: 4.4, yaw: 0.4 }, livery: [0x9aa39a, 0xb3261e] },
@@ -726,9 +836,16 @@ function composeEra() {
   if (!LOCS[save.loc] || !save.locs[save.loc]) save.loc = 'arctic';
   if (!PLANES[save.plane] || !save.planes[save.plane]) save.plane = 'f5';
   const L = LOCS[save.loc], P = PLANES[save.plane], E = ENEMY_JETS[L.enemy];
+  // the mounted guns, each firing from its own hardpoint. era.gun is the main one (most damage per second),
+  // used for the lead sight, gear that fires extra rounds, and your wingmen
+  const lo = loadoutOf(P.id), ls = loadoutSpec(P.id, lo);
+  const mounts = P.hardpoints.filter(hp => lo[hp.id]).map(hp => ({ hp, gun: GUNS[lo[hp.id]] }));
+  const main = mounts.reduce((a, m) => (!a || m.gun.rof * m.gun.dmg > a.gun.rof * a.gun.dmg ? m : a), null).gun;
+  const same = mounts.filter(m => m.gun === main);
   era = Object.assign({}, P.flight, {
     id: L.id + ':' + P.id, loc: L, plane: P, name: L.name, short: P.short, style: P.cockpit, size: P.size,
-    hp: P.hp, shield: 0, missiles: P.missiles, gun: P.gun, stallAoa: P.stallAoa, lockTime: P.lockTime, lockRange: P.lockRange, stealth: P.stealth || 0,
+    hp: P.hp, shield: 0, missiles: P.missiles, stallAoa: P.stallAoa, lockTime: P.lockTime, lockRange: P.lockRange, stealth: ls.stealth,
+    mounts, load: ls, gun: Object.assign({}, main, { rof: main.rof * same.length, offsets: same.map(m => m.hp.at) }),
     enemy: { model: L.enemy, name: E.name, size: E.size, flight: E.flight, hp: E.hp, dmg: 2.3 + 0.25 * L.threat, rof: 6, speedMul: 0.92 + 0.015 * L.threat, color: 0xff9a6b,
       gun: Object.assign({}, GUN20, { offsets: [[-0.8, 0.3, -5]] }) },
     boss: L.boss, world: L.world, player: P.livery[0], accent: P.livery[1], enemyCol: E.livery[0], enemyAccent: E.livery[1],
@@ -1154,6 +1271,21 @@ function buildWorld() {
 // ================= aircraft meshes =================
 // every model, paint scheme and texture lives in assets.js
 const { JETS, BOSS_TURRETS, cyl, planeMesh, bossMesh } = A;
+// gun pods hang under the pylons that carry one
+const podMat = new THREE.MeshStandardMaterial({ color: 0x737a74, metalness: 0.45, roughness: 0.5 }), podDark = new THREE.MeshStandardMaterial({ color: 0x2b2f2d, metalness: 0.6, roughness: 0.4 });
+const podParts = [[cyl(0.2, 0.2, 2.2, 12), podMat, 0, 0, 0], [cyl(0.03, 0.2, 0.5, 12), podMat, 0, 0, -1.35], [cyl(0.2, 0.12, 0.3, 12), podMat, 0, 0, 1.25],
+  [cyl(0.05, 0.05, 0.8, 6), podDark, 0, -0.06, -1.6], [new THREE.BoxGeometry(0.08, 0.32, 1.1), podMat, 0, 0.3, 0]];
+function fitPods(mesh, pid) {
+  const lo = loadoutOf(pid);
+  for (const hp of PLANES[pid].hardpoints) {
+    if (hp.kind !== 'pylon' || !lo[hp.id]) continue;
+    const g = new THREE.Group(); g.name = 'pod';
+    for (const [geo, mat, x, y, z] of podParts) { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; g.add(m); }
+    g.position.set(hp.at[0], hp.at[1] - 0.3, hp.at[2]);
+    mesh.add(g);
+  }
+  return mesh;
+}
 
 // ================= audio =================
 let actx = null, master = null, engine = null, noiseBuf = null, muted = false;
@@ -1415,9 +1547,9 @@ function spawnBullet(owner, start, dir, gun, dmg, color, crit) {
   scene.add(mesh);
   bullets.push({ mesh, pos: mesh.position, prev: start.clone(), vel: dir.clone().multiplyScalar(gun.speed).add(owner.vel), life: gun.range / gun.speed, dmg, team: owner.team, owner, crit });
 }
-function fireGun(p, gun, dmg, spread, color) {
-  const offs = gun.offsets;
-  const o = offs[p.gunIdx++ % offs.length];
+let gunSoundAt = 0;
+function fireGun(p, gun, dmg, spread, color, at) {
+  const o = at || gun.offsets[p.gunIdx++ % gun.offsets.length];
   const sz = p.s.size;
   const start = tv.set(o[0], o[1], o[2]).applyQuaternion(p.quat).add(p.pos);
   const conv = tv2.copy(p.fwd).multiplyScalar(380).add(p.pos);
@@ -1428,7 +1560,9 @@ function fireGun(p, gun, dmg, spread, color) {
   spawnBullet(p, start, dir, gun, crit ? dmg * (p.s.critMul || 2.5) : dmg, color, crit);
   if (p === player) {
     spawnFx(start, { add: true, color, size: 2.2 * sz, life: 0.05 });
-    burst(0.07, gun.sound, 0.18);
+    // a full loadout can fire hundreds of rounds a second; keep the sound to one shot per 30 ms
+    const now = performance.now();
+    if (now - gunSoundAt > 30) { gunSoundAt = now; burst(0.07, gun.sound, 0.18); }
   } else {
     const d = camera.position.distanceTo(p.pos);
     if (d < 900 && Math.random() < 0.5) burst(0.06, gun.sound * 0.8, 0.12 * (1 - d / 900));
@@ -1751,14 +1885,14 @@ function missileSpec(base, m) {
   };
 }
 function playerStats() {
-  const m = run.mods, b = run.bonus, e = era;
+  const m = run.mods, b = run.bonus, e = era, ld = e.load;
+  const dmgMul = (1 + ws('dmg')) * m.dmg * b.dmg, rofMul = (1 + ws('rof')) * m.rof, spreadMul = Math.max(0.35, 1 - ws('spread'));
   return {
-    size: e.size, abMax: 1.2, abMul: 1 + ws('ab'), stallAoa: e.stallAoa, minSpeed: e.minSpeed, maxSpeed: e.maxSpeed * (1 + ws('speed')) * m.speed,
-    corner: e.corner, gmax: e.gmax * (1 + ws('gmax')), thrust: e.thrust * (1 + ws('thrust')) * m.thrust * b.thrust, induced: Math.max(0.4, 1 - ws('drag')),
-    pitch: e.pitch, roll: e.roll, yaw: e.yaw, turnMul: m.turn * (1 + ws('control')),
+    size: e.size, abMax: 1.2, abMul: 1 + ws('ab'), stallAoa: e.stallAoa, minSpeed: e.minSpeed, maxSpeed: e.maxSpeed * (1 + ws('speed')) * m.speed * ld.speed,
+    corner: e.corner, gmax: e.gmax * (1 + ws('gmax')), thrust: e.thrust * (1 + ws('thrust')) * m.thrust * b.thrust * ld.thrust, induced: Math.max(0.4, 1 - ws('drag')),
+    pitch: e.pitch, roll: e.roll, yaw: e.yaw, turnMul: m.turn * (1 + ws('control')) * ld.turn,
     hp: Math.max(30, Math.round((e.hp + ws('hull') + m.hp + b.hp) * (1 + ws('hullPct')) * m.hpMul)), shield: e.shield, armor: Math.min(0.5, ws('armor')),
-    dmg: e.gun.dmg * (1 + ws('dmg')) * m.dmg * b.dmg, rof: e.gun.rof * (1 + ws('rof')) * m.rof,
-    spread: e.gun.spread * Math.max(0.35, 1 - ws('spread')), crit: ws('crit'), critMul: 2.5 + ws('critDmg'),
+    dmgMul, rofMul, spreadMul, dmg: e.gun.dmg * dmgMul, rof: e.gun.rof * rofMul, spread: e.gun.spread * spreadMul, crit: ws('crit'), critMul: 2.5 + ws('critDmg'),
     ...missileSpec(e.missiles, m), lockTime: e.lockTime * Math.max(0.35, 1 - ws('lock')),
     mslDmg: 1 + ws('mslDmg'), seeker: 1 + ws('seeker'),
   };
@@ -1930,7 +2064,7 @@ function startMission(type, node, opts) {
   if (showcase) { scene.remove(showcase); showcase = null; }
   clearCombat();
   const st = playerStats();
-  player = new Plane(st, planeMesh(era.plane.id, skinFor(era.plane.id), era.plane.livery), 0);
+  player = new Plane(st, fitPods(planeMesh(era.plane.id, skinFor(era.plane.id), era.plane.livery), era.plane.id), 0);
   player.hp = clamp(run.hull, 1, st.hp);
   player.pos.set(0, Math.max(1000, groundAt(0, 2600) + 550), 2600);
   player.quat.setFromRotationMatrix(mm.lookAt(player.pos, new V3(0, player.pos.y, 0), Y_AXIS));
@@ -1941,6 +2075,7 @@ function startMission(type, node, opts) {
   camQ.copy(player.quat);
   const depth = node.c;
   run.mission = { type, node, opts: opts || {}, depth, t: 0, done: false, doneT: 0, bombers: 0, bombersDown: 0, bombersEscaped: 0 };
+  run.guns = era.mounts.map(m => ({ hp: m.hp, gun: m.gun, cd: 0 }));
   // a sortie mission starts with full rails; survival keeps whatever was left and how far the cooldown had run
   if (run.survival && run.wave > 1) run.missiles = Math.min(run.missiles, st.missiles);
   else { run.missiles = st.missiles; run.reloadT = 0; }
@@ -2096,10 +2231,10 @@ function heavyUpdate(e, dt) {
     t.cd -= dt; if (t.cd > 0) continue;
     t.cd = rand(0.7, 1.4) / e.turretRof;
     const start = tv.copy(t.p).applyQuaternion(e.quat).add(e.pos);
-    const tt = start.distanceTo(tgt.pos) / era.gun.speed;
+    const tt = start.distanceTo(tgt.pos) / era.enemy.gun.speed;
     const aim = tv3.copy(tgt.pos).addScaledVector(tgt.vel, tt).addScaledVector(e.vel, -tt).sub(start).normalize();
     aim.x += rand(-0.014, 0.014); aim.y += rand(-0.014, 0.014); aim.z += rand(-0.014, 0.014); aim.normalize();
-    spawnBullet(e, start, aim, era.gun, e.turretDmg, era.enemy.color || 0xff9a6b, false);
+    spawnBullet(e, start, aim, era.enemy.gun, e.turretDmg, era.enemy.color || 0xff9a6b, false);
   }
 }
 
@@ -2154,7 +2289,7 @@ function aiControl(e, dt) {
 
   const desired = new V3();
   if (e.state === 'attack' && t) {
-    const tt = dist / era.gun.speed, k = tt * (0.4 + 0.6 * e.skill);
+    const tt = dist / (e.ally ? era.gun : era.enemy.gun).speed, k = tt * (0.4 + 0.6 * e.skill);
     desired.copy(t.pos).addScaledVector(t.vel, k).addScaledVector(e.vel, -k);
   } else if (e.state === 'evade') {
     e.jinkT -= dt;
@@ -2186,7 +2321,7 @@ function aiControl(e, dt) {
       if (t === player) popText('Missile launch!');
     }
   }
-  if (e.state === 'attack' && t && dist < Math.min(era.gun.range * 0.85, 750)) {
+  if (e.state === 'attack' && t && dist < Math.min((e.ally ? era.gun : era.enemy.gun).range * 0.85, 750)) {
     const ang = e.fwd.angleTo(tv2.subVectors(desired, e.pos).normalize());
     if (ang < 0.05 + (1 - e.skill) * 0.04 && e.burstT <= 0) e.burstT = rand(0.4, 0.9);
   }
@@ -2262,7 +2397,13 @@ function updatePlaying(dt) {
     player.trails(dt);
     const st = player.s;
     player.gunCd -= dt;
-    if (ctl.fire && player.gunCd <= 0) { fireGun(player, era.gun, st.dmg, st.spread, era.gun.color); firePods(st); player.gunCd = 1 / st.rof; }
+    // every mounted gun keeps its own rate of fire
+    for (const g of run.guns) {
+      if (!ctl.fire) { g.cd = Math.max(0, g.cd - dt); continue; }
+      g.cd -= dt;
+      while (g.cd <= 0) { fireGun(player, g.gun, g.gun.dmg * st.dmgMul, g.gun.spread * st.spreadMul, g.gun.color, g.hp.at); g.cd += 1 / (g.gun.rof * st.rofMul); }
+    }
+    if (ctl.fire && player.gunCd <= 0) { firePods(st); player.gunCd = 1 / st.rof; }
     if (st.shield) {
       player.shieldDelay -= dt;
       if (player.shieldDelay <= 0) player.shield = Math.min(st.shield, player.shield + 12 * dt);
@@ -2349,7 +2490,7 @@ function updatePlaying(dt) {
         const es = era.enemy;
         if (e.ally) { fireGun(e, era.gun, era.gun.dmg * 0.9, era.gun.spread * 2, era.gun.color); e.gunCd = 1 / (era.gun.rof * 0.6); }
         else {
-          fireGun(e, es.gun, es.dmg * (e.ace ? 1.4 : 1) * (e.vdef && e.vdef.gunDmg || 1) * depthMul, (era.gun.spread * (2.5 - 1.5 * e.skill) + 0.014 * (1.25 - e.skill)) * (e.target === player ? 1 + era.stealth : 1), es.color || 0xff9a6b);
+          fireGun(e, es.gun, es.dmg * (e.ace ? 1.4 : 1) * (e.vdef && e.vdef.gunDmg || 1) * depthMul, (es.gun.spread * (2.5 - 1.5 * e.skill) + 0.014 * (1.25 - e.skill)) * (e.target === player ? 1 + era.stealth : 1), es.color || 0xff9a6b);
           e.gunCd = 1 / (es.rof * (e.ace ? 1.3 : 1));
         }
       }
@@ -2917,7 +3058,7 @@ function toHangar() {
 }
 function setupShowcase() {
   if (showcase) scene.remove(showcase);
-  showcase = planeMesh(era.plane.id, previewSkin || skinFor(era.plane.id), era.plane.livery);
+  showcase = fitPods(planeMesh(era.plane.id, previewSkin || skinFor(era.plane.id), era.plane.livery), era.plane.id);
   showcase.position.set(0, Math.max(760, groundAt(0, 0) + 450), 0);
   for (const f of showcase.userData.flames) f.scale.set(0.85, 0.85, 0.06);
   scene.add(showcase);
@@ -2929,7 +3070,7 @@ function selectLoc(id) {
 }
 function selectPlane(id) {
   if (!save.planes[id]) return;
-  save.plane = id; previewSkin = null; persist();
+  save.plane = id; previewSkin = null; selHp = null; gunArm = null; persist();
   composeEra(); setupShowcase(); renderHangar();
 }
 
@@ -2964,37 +3105,56 @@ const swatchCache = {};
 const swatchFor = (sid, pid) => swatchCache[sid + pid] || (swatchCache[sid + pid] = A.swatch(sid, PLANES[pid].livery, 132));
 
 // ---- plane portraits, rendered once per paint job into a small offscreen target ----
-const thumbW = 400, thumbH = 225;
-const thumbRT = new THREE.WebGLRenderTarget(thumbW * 2, thumbH * 2);
-const thumbScene = new THREE.Scene(), thumbCam = new THREE.PerspectiveCamera(26, thumbW / thumbH, 1, 600);
+const thumbW = 400, thumbH = 225, planW = 360, planH = 400;
+const thumbScene = new THREE.Scene(), thumbCam = new THREE.PerspectiveCamera(26, thumbW / thumbH, 1, 600), planCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 200);
 thumbScene.add(new THREE.HemisphereLight(0xe6eef5, 0x4a4440, 0.75));
 const thumbSun = new THREE.DirectionalLight(0xffffff, 1.1); thumbSun.position.set(-0.6, 1, -0.4); thumbScene.add(thumbSun);
-const thumbCache = {}, thumbPx = new Uint8Array(thumbW * 2 * thumbH * 2 * 4);
+const thumbCache = {}, shotRT = {};
+// render one object at twice the size into an offscreen target and return it as an image
+function snapshot(m, cam, w, h) {
+  const rt = shotRT[w + 'x' + h] || (shotRT[w + 'x' + h] = { t: new THREE.WebGLRenderTarget(w * 2, h * 2), px: new Uint8Array(w * 2 * h * 2 * 4) });
+  thumbScene.add(m);
+  const prevClear = renderer.getClearColor(new THREE.Color()).getHex(), prevAlpha = renderer.getClearAlpha();
+  renderer.setRenderTarget(rt.t); renderer.setClearColor(0x000000, 0); renderer.clear();
+  renderer.render(thumbScene, cam);
+  renderer.readRenderTargetPixels(rt.t, 0, 0, w * 2, h * 2, rt.px);
+  renderer.setRenderTarget(null); renderer.setClearColor(prevClear, prevAlpha);
+  thumbScene.remove(m);
+  // the target reads bottom-up; flip it while copying, then halve it for smooth edges
+  const big = document.createElement('canvas'); big.width = w * 2; big.height = h * 2;
+  const bg = big.getContext('2d'), img = bg.createImageData(w * 2, h * 2), row = w * 2 * 4;
+  for (let y = 0; y < h * 2; y++) img.data.set(rt.px.subarray((h * 2 - 1 - y) * row, (h * 2 - y) * row), y * row);
+  bg.putImageData(img, 0, 0);
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(big, 0, 0, w, h);
+  return c.toDataURL();
+}
 function planeThumb(pid, sid) {
   const key = pid + '|' + sid;
   if (thumbCache[key]) return thumbCache[key];
   const m = planeMesh(pid, sid, PLANES[pid].livery);
   for (const f of m.userData.flames) f.visible = false;
   m.rotation.set(0.12, 0, -0.22);
-  thumbScene.add(m);
   const box = new THREE.Box3().setFromObject(m), ctr = box.getCenter(new V3()), r = box.getSize(new V3()).length() * 0.5;
   const d = r / Math.sin(thumbCam.fov * Math.PI / 360) * 0.36;
   thumbCam.position.copy(ctr).add(tv.set(-0.8, 0.55, -0.6).normalize().multiplyScalar(d));
   thumbCam.lookAt(ctr);
-  const prevClear = renderer.getClearColor(new THREE.Color()).getHex(), prevAlpha = renderer.getClearAlpha();
-  renderer.setRenderTarget(thumbRT); renderer.setClearColor(0x000000, 0); renderer.clear();
-  renderer.render(thumbScene, thumbCam);
-  renderer.readRenderTargetPixels(thumbRT, 0, 0, thumbW * 2, thumbH * 2, thumbPx);
-  renderer.setRenderTarget(null); renderer.setClearColor(prevClear, prevAlpha);
-  thumbScene.remove(m);
-  // the target reads bottom-up; flip it while copying, then halve it for smooth edges
-  const big = document.createElement('canvas'); big.width = thumbW * 2; big.height = thumbH * 2;
-  const bg = big.getContext('2d'), img = bg.createImageData(thumbW * 2, thumbH * 2), row = thumbW * 2 * 4;
-  for (let y = 0; y < thumbH * 2; y++) img.data.set(thumbPx.subarray((thumbH * 2 - 1 - y) * row, (thumbH * 2 - y) * row), y * row);
-  bg.putImageData(img, 0, 0);
-  const c = document.createElement('canvas'); c.width = thumbW; c.height = thumbH;
-  const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(big, 0, 0, thumbW, thumbH);
-  return (thumbCache[key] = c.toDataURL());
+  return (thumbCache[key] = snapshot(m, thumbCam, thumbW, thumbH));
+}
+// a plan view from straight above, nose up, for the loadout screen. Returns the image and a function
+// that turns a point on the airframe into a position on it (0..1 across and down)
+function planeTop(pid, sid) {
+  const key = 'top|' + pid + '|' + sid;
+  if (thumbCache[key]) return thumbCache[key];
+  const m = planeMesh(pid, sid, PLANES[pid].livery);
+  for (const f of m.userData.flames) f.visible = false;
+  m.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(m), ctr = box.getCenter(new V3()), size = box.getSize(new V3()), asp = planW / planH;
+  const hh = Math.max(size.z / 2, size.x / 2 / asp) * 1.08, hw = hh * asp;
+  Object.assign(planCam, { left: -hw, right: hw, top: hh, bottom: -hh });
+  planCam.updateProjectionMatrix();
+  planCam.position.set(ctr.x, box.max.y + 40, ctr.z); planCam.up.set(0, 0, -1); planCam.lookAt(ctr.x, ctr.y, ctr.z);
+  return (thumbCache[key] = { src: snapshot(m, planCam, planW, planH), at: p => [0.5 + (p[0] - ctr.x) / (2 * hw), 0.5 + (p[2] - ctr.z) / (2 * hh)] });
 }
 
 let hangarTab = 'sortie', previewSkin = null, selNode = 'core';
@@ -3004,7 +3164,7 @@ function setTab(t) {
   if (previewSkin) { previewSkin = null; setupShowcase(); }
   renderHangar();
 }
-['sortie', 'survival', 'hangar', 'skills'].forEach((t, i, all) => {
+['sortie', 'survival', 'hangar', 'loadout', 'skills'].forEach((t, i, all) => {
   const b = $('tab-' + t);
   b.addEventListener('click', () => setTab(t));
   b.addEventListener('keydown', e => {
@@ -3016,7 +3176,7 @@ function setTab(t) {
 const KEYS_MOUSE = [['Mouse', 'Aim. The jet flies toward the circle. In the cockpit it moves the stick'], ['V (hold)', 'Free look'], ['W / S', 'Throttle. Keep holding W at 100% for afterburner'], ['A / D', 'Roll (overrides the aim)'], ['Q / E', 'Rudder'], ['↑ / ↓', 'Pitch override'], ['LMB · Space', 'Guns'], ['RMB · R', 'Missile, after lock-on'], ['F · MMB', 'Flares'], ['C', 'Chase / cockpit view'], ['P · Esc', 'Pause'], ['M', 'Mute']];
 const KEYS_DIRECT = [['W / S', 'Pitch (or ↑ ↓)'], ['A / D', 'Roll (or ← →)'], ['Q / E', 'Rudder'], ['Shift / X', 'Throttle. Hold Shift at 100% for afterburner'], ['Space · LMB', 'Guns'], ['R · RMB', 'Missile, after lock-on'], ['F', 'Flares'], ['V (hold) + mouse', 'Free look'], ['C', 'Chase / cockpit view'], ['P · Esc', 'Pause'], ['M', 'Mute']];
 function renderHangar() {
-  ['sortie', 'survival', 'hangar', 'skills'].forEach(t => { $('tab-' + t).setAttribute('aria-selected', hangarTab === t ? 'true' : 'false'); $('tab-' + t).tabIndex = hangarTab === t ? 0 : -1; $('pane-' + t).hidden = hangarTab !== t; });
+  ['sortie', 'survival', 'hangar', 'loadout', 'skills'].forEach(t => { $('tab-' + t).setAttribute('aria-selected', hangarTab === t ? 'true' : 'false'); $('tab-' + t).tabIndex = hangarTab === t ? 0 : -1; $('pane-' + t).hidden = hangarTab !== t; });
   document.querySelector('#hangar .cols').classList.toggle('wide', hangarTab === 'skills');
   $('ptsBadge').textContent = save.points; $('ptsBadge').hidden = !save.points;
   const h = selHeat(), sk = A.SKIN_BY_ID[previewSkin || skinFor(era.plane.id)];
@@ -3031,6 +3191,7 @@ function renderHangar() {
   if (hangarTab === 'sortie') renderSortie();
   else if (hangarTab === 'survival') renderSurvival();
   else if (hangarTab === 'hangar') renderAircraft();
+  else if (hangarTab === 'loadout') renderLoadout();
   else renderWeb();
   $('keysList').innerHTML = (mouseMode() ? KEYS_MOUSE : KEYS_DIRECT).map(([k, d]) => '<dt>' + k + '</dt><dd>' + d + '</dd>').join('');
   $('optCtlMouse').checked = mouseMode();
@@ -3077,7 +3238,7 @@ function renderAircraft() {
   // the shop: stats are scaled against the best jet in the hangar
   const best = k => Math.max(...PLANE_ORDER.map(id => k(PLANES[id])));
   const turn = P => P.flight.gmax * 9.8 / P.flight.corner;
-  const bars = [['Speed', P => P.flight.maxSpeed], ['Turn', turn], ['Roll', P => P.flight.roll], ['Armor', P => P.hp], ['Missiles', P => P.missiles]];
+  const bars = [['Speed', P => P.flight.maxSpeed], ['Turn', turn], ['Roll', P => P.flight.roll], ['Armor', P => P.hp], ['Payload', P => P.payload], ['Missiles', P => P.missiles]];
   const pl = $('planeList'); pl.innerHTML = '';
   PLANE_ORDER.forEach(id => {
     const P = PLANES[id], owned = !!save.planes[id], afford = save.credits >= P.price;
@@ -3087,7 +3248,7 @@ function renderAircraft() {
     const stats = bars.map(([l, f]) => '<span>' + l + '</span><i><b style="width:' + Math.round(f(P) / best(f) * 100) + '%"></b></i>').join('');
     const foot = owned ? (era.plane.id === id ? '<span class="tag">Flying this one</span>' : '<span class="tag">Owned · click to fly</span>')
       : '<span class="cost">' + (afford ? 'Buy for ' : 'Costs ') + P.price.toLocaleString() + ' credits</span>';
-    b.innerHTML = '<img class="thumb" alt="" src="' + planeThumb(id, skinFor(id)) + '"><span class="pn">' + P.name + '</span><span class="pr">' + P.role + '</span><span class="bl">' + P.blurb + '</span><span class="stats">' + stats + '</span>' + foot;
+    b.innerHTML = '<img class="thumb" alt="" src="' + planeThumb(id, skinFor(id)) + '"><span class="pn">' + P.name + '</span><span class="pr">' + P.role + ' · ' + plural(P.hardpoints.length, 'hardpoint', 'hardpoints') + '</span><span class="bl">' + P.blurb + '</span><span class="stats">' + stats + '</span>' + foot;
     b.addEventListener('click', () => {
       if (!save.planes[id]) { if (save.credits < P.price) return; save.credits -= P.price; save.planes[id] = true; persist(); beep(990, 0.1, 0.08); }
       selectPlane(id);
@@ -3126,6 +3287,101 @@ function renderAircraft() {
     bar.innerHTML = '<div><b>' + s.name + '</b><span>' + s.desc + ' Paint you own works on every jet. Pick a locked scheme to preview it.</span></div>';
   }
 }
+
+// ---- loadout: pick a hardpoint on the plan view, then the gun that goes on it ----
+let selHp = null, gunArm = null;
+function fitGun(hpId, gid) {
+  const pid = era.plane.id, lo = loadoutOf(pid);
+  lo[hpId] = gid;
+  save.loadout[pid] = lo; gunArm = null; persist();
+  composeEra(); setupShowcase(); renderHangar();
+}
+function renderLoadout() {
+  const P = era.plane, pid = P.id, lo = loadoutOf(pid), ls = loadoutSpec(pid, lo);
+  if (!P.hardpoints.some(h => h.id === selHp)) selHp = (P.hardpoints.find(h => lo[h.id]) || P.hardpoints[0]).id;
+  const hp = P.hardpoints.find(h => h.id === selHp);
+  // plan view with a marker on each hardpoint; markers on the centreline pair are nudged apart so both stay clickable
+  const top = planeTop(pid, skinFor(pid)), dg = $('loDiag');
+  dg.innerHTML = '<img alt="' + P.name + ' seen from above">';
+  dg.firstChild.src = top.src;
+  for (const h of P.hardpoints) {
+    let [u, v] = top.at(h.at);
+    // a pair close to the centreline is nudged apart and labelled on its outer side
+    const pair = h.at[0] && Math.abs(u - 0.5) < 0.1;
+    if (pair && Math.abs(u - 0.5) < 0.045) u = 0.5 + Math.sign(h.at[0]) * 0.045;
+    const g = lo[h.id], b = document.createElement('button');
+    b.className = 'hpm ' + h.kind + (g ? ' full' : '') + (pair ? (h.at[0] < 0 ? ' lt' : ' rt') : h.up ? ' up' : ''); b.id = 'hp-' + h.id;
+    b.style.left = (u * 100) + '%'; b.style.top = (v * 100) + '%';
+    b.setAttribute('aria-pressed', h.id === selHp ? 'true' : 'false');
+    b.setAttribute('aria-label', h.name + ': ' + (g ? GUNS[g].name : 'empty'));
+    b.title = h.name;
+    b.innerHTML = (h.kind === 'pylon' ? 'P' : 'G') + (g ? '<span>' + GUNS[g].short + '</span>' : '');
+    b.addEventListener('click', () => { selHp = h.id; gunArm = null; renderHangar(); const f = $('hp-' + h.id); if (f) f.focus(); });
+    dg.appendChild(b);
+  }
+  $('loHp').textContent = hp.name + (hp.kind === 'pylon' ? ' · gun pods' : ' · cannons');
+  $('loWeight').textContent = 'Payload ' + r1(ls.weight) + ' / ' + P.payload;
+  // the gun list for this hardpoint; scales compare against the best gun of the same mount type
+  const list = GUN_ORDER.filter(id => GUNS[id].mount === hp.kind), best = f => Math.max(...list.map(id => f(GUNS[id])));
+  const bars = [['Damage/s', g => g.rof * g.dmg, v => Math.round(v)], ['Per hit', g => g.dmg, v => r1(v)], ['Velocity', g => g.speed, v => v + ' m/s'], ['Weight', g => g.weight, v => r1(v)]];
+  const gl = $('loGuns'); gl.innerHTML = '';
+  const others = Object.keys(lo).filter(k => k !== hp.id && lo[k]).length;
+  const cards = [null].concat(list);
+  cards.forEach(gid => {
+    const G = gid && GUNS[gid], b = document.createElement('button'), on = lo[hp.id] === gid;
+    b.className = 'gun' + (gunArm === gid && gid ? ' armed' : ''); b.id = 'gun-' + (gid || 'none');
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    if (!G) {
+      b.disabled = !on && !others;
+      b.innerHTML = '<span class="gn">Leave empty</span><span class="gd">' + (others ? 'Saves weight. ' + (hp.kind === 'pylon' ? 'No drag either.' : '') : 'Your jet needs at least one gun.') + '</span><span class="gs' + (on ? ' on' : '') + '">' + (on ? 'Empty' : 'Remove') + '</span>';
+      b.addEventListener('click', () => { if (!on && others) fitGun(hp.id, null); });
+      gl.appendChild(b);
+      return;
+    }
+    const allowed = P.guns.includes(gid), owned = gunOwned(gid);
+    const w = ls.weight - (lo[hp.id] ? GUNS[lo[hp.id]].weight : 0) + G.weight, heavy = w > P.payload + 1e-6;
+    let status, cls = '';
+    if (on) { status = 'Fitted'; cls = ' on'; }
+    else if (!allowed) status = 'Not on the ' + P.short;
+    else if (heavy) status = 'Over payload by ' + r1(w - P.payload);
+    else if (!owned) { status = gunArm === gid ? 'Click again to buy for ' + G.price.toLocaleString() : (save.credits >= G.price ? 'Buy and fit · ' : 'Costs ') + G.price.toLocaleString() + ' credits'; cls = ' cost'; }
+    else status = 'Fit';
+    b.disabled = !on && (!allowed || heavy || (!owned && save.credits < G.price));
+    const stats = bars.map(([l, f, fmt]) => '<span>' + l + '</span><i><b style="width:' + Math.round(f(G) / best(f) * 100) + '%"></b></i><em>' + fmt(f(G)) + '</em>').join('');
+    b.innerHTML = '<span class="gn">' + G.name + '</span><span class="gk">' + G.kind + (G.drag ? ' · −' + pc(G.drag) + ' top speed' : '') + '</span><span class="gd">' + G.d + '</span><span class="stats">' + stats + '</span><span class="gs' + cls + '">' + status + '</span>';
+    b.addEventListener('click', () => {
+      if (on || b.disabled) return;
+      if (!owned) {
+        if (gunArm !== gid) { gunArm = gid; renderHangar(); const f = $('gun-' + gid); if (f) f.focus(); return; }
+        if (save.credits < G.price) return;
+        save.credits -= G.price; save.guns[gid] = true; beep(990, 0.1, 0.08);
+      } else beep(880, 0.06, 0.06);
+      fitGun(hp.id, gid);
+      const f = $('gun-' + gid); if (f) f.focus();
+    });
+    gl.appendChild(b);
+  });
+  // spec sheet: the jet as you have fitted it
+  $('loFor').textContent = P.short;
+  const F = P.flight, sign = v => (v > 0.0005 ? '+' : v < -0.0005 ? '−' : '±') + pc(Math.abs(v));
+  const fx = v => '<span class="' + (v > 0.0005 ? 'up' : v < -0.0005 ? 'dn' : '') + '">' + sign(v) + '</span>';
+  const kinds = k => P.hardpoints.filter(h => h.kind === k).length;
+  const spec = [
+    ['Guns fitted', ls.guns + ' of ' + P.hardpoints.length, kinds('bay') + ' bays · ' + kinds('pylon') + ' pylons'],
+    ['Firepower', Math.round(ls.dps) + ' dmg/s', 'Before skills and gear'],
+    ['Payload', r1(ls.weight) + ' / ' + P.payload, 'Factory fit ' + r1(loadWeight(pid, P.stock))],
+    ['Handling', fx(ls.turn - 1) + ' turn', fx(ls.thrust - 1) + ' thrust · ' + fx(ls.speed - 1) + ' top speed'],
+    ['Top speed', Math.round(F.maxSpeed * ls.speed * 3.6) + ' km/h', 'Afterburner pushes past it'],
+    ['G limit', F.gmax + ' G', 'Corner speed ' + Math.round(F.corner * 3.6) + ' km/h'],
+    ['Roll rate', Math.round(F.roll * 57.3 / 10) * 10 + '°/s', F.yaw >= 0.5 ? 'Strong rudder' : 'Light rudder'],
+    ['Hull', P.hp, P.stallAoa ? 'Keeps nose authority at high AoA' : 'Standard airframe'],
+    ['Missiles', plural(missileSpec(P.missiles).missiles, 'charge', 'charges'), 'Each recharges in ' + Math.round(missileSpec(P.missiles).reload) + ' s · lock ' + P.lockTime + ' s'],
+  ];
+  if (P.stealth) spec.push(['Stealth', Math.round(ls.stealth * 100) + '%', ls.pods ? 'Pods on the pylons halve it' : 'Clean airframe']);
+  spec.push(['Takes', P.guns.map(g => GUNS[g].short).join(' · '), '']);
+  $('loSpec').innerHTML = spec.map(([k, v, sub]) => '<div><dt>' + k + '</dt><dd>' + v + (sub ? '<small>' + sub + '</small>' : '') + '</dd></div>').join('');
+}
+$('loStock').addEventListener('click', () => { delete save.loadout[era.plane.id]; gunArm = null; persist(); composeEra(); setupShowcase(); renderHangar(); });
 
 // ---- the skill web, drawn as SVG ----
 const WEB_R = [0, 80, 156, 234, 312, 392];
@@ -3481,7 +3737,8 @@ window.__skybreak = { get fps() { return fpsAvg; }, get state() { return state; 
   get missiles() { return missiles; }, get locked() { return locked; }, flare() { flareRequest = true; }, get era() { return era; }, get save() { return save; },
   step(n, dt) { for (let i = 0; i < n && state === 'playing'; i++) updatePlaying(dt || 1 / 60); },
   get web() { return webCache; }, WEB, train: trainNode, get manifest() { return manifest; }, applySky, gfx: { renderer, scene, sun, camera }, tab: setTab, pick: pickNode, A, thumb: planeThumb,
-  heat(h) { save.heatWon[save.loc] = Math.max(heatWon(save.loc), h - 1); save.selHeat[save.loc] = h; renderHangar(); }, renderHangar };
+  heat(h) { save.heatWon[save.loc] = Math.max(heatWon(save.loc), h - 1); save.selHeat[save.loc] = h; renderHangar(); }, renderHangar,
+  fitGun, selectPlane, GUNS, PLANES };
 })();
 </script>
 
