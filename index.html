@@ -579,6 +579,12 @@ try {
     for (const id in s.tree || {}) { const r = s.tree[id]; save.points += r * (r + 1) / 2; }
     for (const k of ['skills', 'tree', 'heatWon', 'selHeat', 'best', 'webNote']) delete save[k];
     if (s.heatWon && Object.values(s.heatWon).some(h => h >= 5)) save.skins.gold = true;
+    // the P-47 Thunderbolt left the hangar: its slot, owner and paint went to the Bf 109
+    if (save.planes.p47) { save.planes.bf109 = true; delete save.planes.p47; }
+    for (const k of ['skin', 'secondary']) if (save[k].p47) { save[k].bf109 = save[k].p47; delete save[k].p47; }
+    delete save.loadout.p47; delete save.groups.p47;
+    if (save.plane === 'p47') save.plane = 'bf109';
+    if (save.eraPlane && save.eraPlane.ww2 === 'p47') save.eraPlane.ww2 = 'bf109';
   } else {
     // carry skill points and the record over from the era version; each boss it beat pays for some hangar credit
     const old = JSON.parse(localStorage.getItem('skybreak-save-v2'));
@@ -697,7 +703,7 @@ const PLANES = {
     hardpoints: [{ id: 'wL1', name: 'Left wing, inner', kind: 'bay', at: [-1.9, -0.25, -0.6] }, { id: 'wL2', name: 'Left wing, middle', kind: 'bay', at: [-2.3, -0.25, -0.5] }, { id: 'wL3', name: 'Left wing, outer', kind: 'bay', at: [-2.7, -0.25, -0.4] },
       { id: 'wR1', name: 'Right wing, inner', kind: 'bay', at: [1.9, -0.25, -0.6] }, { id: 'wR2', name: 'Right wing, middle', kind: 'bay', at: [2.3, -0.25, -0.5] }, { id: 'wR3', name: 'Right wing, outer', kind: 'bay', at: [2.7, -0.25, -0.4] }],
     livery: [0xbfc4c7, 0x1a1a1a] },
-  spit: { id: 'spit', era: 'ww2', name: 'Spitfire Mk IX', short: 'Spitfire', role: 'Dogfighter', price: 1800,
+  spit: { id: 'spit', era: 'ww2', name: 'Spitfire Mk II', short: 'Spitfire', role: 'Dogfighter', price: 1800,
     blurb: 'The elliptical wing out-turns anything in the sky. Two Hispano cannons and two .303s.',
     size: 0.92, cockpit: 'prop', eye: [0.85, -0.2], hp: 85, missiles: 0, lockTime: 1, lockRange: 0,
     flight: { minSpeed: 40, maxSpeed: 185, corner: 100, gmax: 8.5, thrust: 16.5, pitch: 1.65, roll: 3.7, yaw: 0.6 },
@@ -713,13 +719,14 @@ const PLANES = {
     hardpoints: [{ id: 'wL1', name: 'Left wing, inner', kind: 'bay', at: [-2.2, -0.4, -0.7] }, { id: 'wL2', name: 'Left wing, middle', kind: 'bay', at: [-2.6, -0.4, -0.6] }, { id: 'wL3', name: 'Left wing, outer', kind: 'bay', at: [-3.0, -0.4, -0.5] },
       { id: 'wR1', name: 'Right wing, inner', kind: 'bay', at: [2.2, -0.4, -0.7] }, { id: 'wR2', name: 'Right wing, middle', kind: 'bay', at: [2.6, -0.4, -0.6] }, { id: 'wR3', name: 'Right wing, outer', kind: 'bay', at: [3.0, -0.4, -0.5] }],
     livery: [0x2c3e66, 0xe9e6dc] },
-  p47: { id: 'p47', era: 'ww2', name: 'P-47D Thunderbolt', short: 'P-47D', role: 'Heavy fighter', price: 7000,
-    blurb: 'The Jug: eight .50 cals, a huge engine and armor to match. Rolls well, turns like a truck.',
-    size: 1.1, cockpit: 'prop', eye: [1.1, -0.2], hp: 160, missiles: 0, lockTime: 1, lockRange: 0,
-    flight: { minSpeed: 48, maxSpeed: 208, corner: 125, gmax: 7, thrust: 18, pitch: 1.3, roll: 4.4, yaw: 0.5 },
-    payload: 5.2, maxGuns: 8, guns: ['mg303', 'm2', 'hispano', 'mk108'], stock: { wL1: 'm2', wL2: 'm2', wL3: 'm2', wL4: 'm2', wR1: 'm2', wR2: 'm2', wR3: 'm2', wR4: 'm2' },
-    hardpoints: [1, 2, 3, 4].flatMap(i => [{ id: 'wL' + i, name: 'Left wing, gun ' + i, kind: 'bay', at: [-1.9 - i * 0.4, -0.25, -0.7 + i * 0.08] }, { id: 'wR' + i, name: 'Right wing, gun ' + i, kind: 'bay', at: [1.9 + i * 0.4, -0.25, -0.7 + i * 0.08] }]),
-    livery: [0x6c6a4a, 0xf2c230] },
+  bf109: { id: 'bf109', era: 'ww2', name: 'Bf 109 F-2', short: 'Bf 109', role: 'Energy fighter', price: 7000,
+    blurb: 'Light, punchy and the best climber here. A cannon fires through the spinner, with two guns over the cowling.',
+    size: 0.92, cockpit: 'prop', eye: [0.85, -0.6], hp: 90, missiles: 0, lockTime: 1, lockRange: 0,
+    flight: { minSpeed: 44, maxSpeed: 205, corner: 106, gmax: 7.8, thrust: 19, pitch: 1.55, roll: 3.9, yaw: 0.6 },
+    payload: 3.4, maxGuns: 3, guns: ['mg303', 'm2', 'hispano', 'mk108'], stock: { hub: 'hispano', cL: 'mg303', cR: 'mg303' },
+    hardpoints: [{ id: 'hub', name: 'Engine cannon, through the spinner', kind: 'bay', at: [0, 0, -4.4] },
+      { id: 'cL', name: 'Cowling gun, left', kind: 'bay', at: [-0.22, 0.45, -3.0] }, { id: 'cR', name: 'Cowling gun, right', kind: 'bay', at: [0.22, 0.45, -3.0] }],
+    livery: [0x8c948a, 0xf2c230] },
   // ---- future: energy weapons, recharging shields and very high G ----
   x9: { id: 'x9', era: 'future', name: 'XF-9 Nightjar', short: 'XF-9', role: 'Space-age fighter', price: 0,
     blurb: 'Twin pulse lasers, a recharging shield and a 13 G airframe.',
@@ -744,7 +751,7 @@ const PLANES = {
       { id: 'pL', name: 'Wing pylon, left', kind: 'pylon', at: [-3.6, -0.5, 1.5] }, { id: 'pR', name: 'Wing pylon, right', kind: 'pylon', at: [3.6, -0.5, 1.5] }],
     livery: [0x1d2228, 0xd694ff] },
 };
-const PLANE_ORDER = ['f5', 'f16', 'f14', 'f18', 'f35', 'p51', 'spit', 'f4u', 'p47', 'x9', 'valk', 'nova'];
+const PLANE_ORDER = ['f5', 'f16', 'f14', 'f18', 'f35', 'p51', 'spit', 'f4u', 'bf109', 'x9', 'valk', 'nova'];
 
 // ---- guns: bought once with credits, then fitted to the hardpoints of any jet that takes them ----
 // rof is rounds per second for one gun; weight counts against the jet's payload; drag cuts top speed;
@@ -960,7 +967,7 @@ function boardSubmit(day, entry) {
 const ERAS = {
   ww2: { id: 'ww2', name: 'WW2', title: 'Piston fighters', mslWord: 'Rocket',
     blurb: 'Propellers, wing guns and no guided missiles. Win it with deflection shooting and by keeping your speed up.',
-    planes: ['p51', 'spit', 'f4u', 'p47'], tiers: ['bf109', 'zero', 'fw190', 'ki84', 'me262'], secs: ['rockets', 'flak'], spawnK: 0.65, noMissiles: true, gTol: 6, fbw: false,
+    planes: ['p51', 'spit', 'f4u', 'bf109'], tiers: ['bf109', 'zero', 'fw190', 'ki84', 'me262'], secs: ['rockets', 'flak'], spawnK: 0.65, noMissiles: true, gTol: 6, fbw: false,
     gun: { rof: 9, dmg: 4, speed: 800, spread: 0.006, range: 950, color: 0xffb36b, len: 11, sound: 1000 },
     msl: { turn: 0.9, max: 380, g: 16, lead: 0.3, life: 4, fuse: 18 },
     bosses: { arctic: { kind: 'bear', name: 'Fw 200 Condor', color: 0x6f7568, accent: 0xf2c230 }, desert: { kind: 'gunship', name: 'Ju 290 gunship', color: 0x8a7a58, accent: 0xc8102e },
