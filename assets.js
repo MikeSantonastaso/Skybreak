@@ -128,6 +128,11 @@ window.SkyAssets = function (THREE) {
     { id: 'sunset', name: 'Canyon sunset', desc: 'Red rock splinter. Earned by downing the drone mothership.', pattern: 'splinter', c: [0xc8693a, 0x7e2f1a, 0xe2b07a], accent: 0x2b1810, unlock: { kind: 'boss', loc: 'canyon' } },
     { id: 'bare', name: 'Bare metal', desc: 'Polished aluminium. Earned with 250 kills.', pattern: 'metal', c: [0xc4c8cc, 0xa9adb1, 0xd7dadd], accent: 0x1f3a93, metal: 0.85, rough: 0.28, unlock: { kind: 'kills', n: 250 } },
     { id: 'ace', name: 'Red baron', desc: 'Crimson ace scheme. Earned with 750 kills.', pattern: 'twotone', c: [0xa3161f, 0x7d1018, 0x1a1a1a], accent: 0x111111, unlock: { kind: 'kills', n: 750 } },
+    { id: 'acehunter', name: 'Ace hunter', desc: 'Bone white with red chevrons. Earned by downing 25 aces.', pattern: 'stripes', c: [0xe6e2d6, 0xa3161f, 0xa3161f], accent: 0xa3161f, unlock: { kind: 'ach', id: 'aces25' } },
+    { id: 'hazard', name: 'Hazard stripes', desc: 'Yellow and black. Earned by downing a boss at danger 5 or higher.', pattern: 'stripes', c: [0xf2c230, 0x1a1a1a, 0x1a1a1a], accent: 0x1a1a1a, unlock: { kind: 'ach', id: 'danger5' } },
+    { id: 'inferno', name: 'Inferno', desc: 'Molten red over black. Earned by clearing wave 10 at danger 10 or higher.', pattern: 'blotch', c: [0x2a1410, 0xb3261e, 0xff7a1a], accent: 0xffb547, unlock: { kind: 'ach', id: 'danger10' } },
+    { id: 'squadron', name: 'Squadron colours', desc: 'Navy and gold. Earned by clearing wave 10 in co-op.', pattern: 'twotone', c: [0x24345c, 0x1b2848, 0x24345c], accent: 0xe2b13c, unlock: { kind: 'ach', id: 'coop10' } },
+    { id: 'hex', name: 'Hexed', desc: 'Violet and black. Earned by flying with three cursed picks at once.', pattern: 'splinter', c: [0x3a1d4f, 0x1a1020, 0x7a3fa0], accent: 0xd694ff, unlock: { kind: 'ach', id: 'cursed3' } },
     { id: 'gold', name: 'Gold standard', desc: 'Mirror gold. Earned by surviving 30 waves at any location.', pattern: 'metal', c: [0xd4a83a, 0xb88d2a, 0xe8c45a], accent: 0x1a1a1a, metal: 0.95, rough: 0.22, lines: 0.5, unlock: { kind: 'wave', n: 30 } },
   ];
   const SKIN_BY_ID = Object.fromEntries(SKINS.map(s => [s.id, s]));

@@ -9,6 +9,27 @@ A browser prototype of a roguelike jet dogfighting game. Pick a location and a j
 - Hull and special charges carry over between waves. The best wave at each location is saved, and every wave pays credits.
 - **Enemy variants:** interceptors (FAST) are quick and fragile, heavy fighters (HEAVY) are armored and hit hard, ghosts (GHOST) can't be locked and only show on the HUD and radar inside 1.5 km but carry no missiles, and hunters (HUNTER) carry four missiles and fire them from long range.
 
+## Danger, achievements and the run summary
+
+- **Danger:** before a run, pick modifiers on the Survival tab to make it harder. Each point of danger pays 10% more credits and 5% more medals. In co-op the host's danger applies to everyone.
+
+| Modifier | Points | Effect |
+| --- | --- | --- |
+| Thin skin | 1 per rank (2 ranks) | You take 15% more damage per rank |
+| Swarm | 1 per rank (2 ranks) | 25% more fighters every wave per rank |
+| Hardened | 1 per rank (2 ranks) | Fighters and bosses get 20% more hull per rank |
+| Ace academy | 2 | Aces from wave 2, one fighter in three |
+| Hot rails | 1 | Every enemy fighter carries one more missile |
+| Mixed bag | 1 | Every kind of variant from wave 1 |
+| Short on flares | 1 | Half the flares |
+| No ground crew | 2 | No field repairs or spare parts between waves |
+| No second chances | 1 | No rerolls |
+| Boss rush | 3 | A boss every 5 waves instead of every 10 |
+
+- The highest danger at which you've downed each location's boss is saved and shown on the location card and the Records tab.
+- **Achievements** (Records tab): 19 feats, from First blood to Into the fire (wave 10 at danger 10). They pay credits or medals, or unlock paint schemes (Ace hunter, Hazard stripes, Inferno, Squadron colours, Hexed), perks (Gun-kill bounty, Big warheads) or a free F-16C. A toast pops up the moment you earn one.
+- **Run summary:** the debrief shows time flown, accuracy, damage dealt and taken, best kill streak, damage split by weapon (each gun, the special, wingman, ricochets, arc rounds and so on), your build with its synergies, the danger modifiers and any achievements, and **Copy summary** puts a text version on the clipboard to share.
+
 ## Weapons
 
 - **Gun groups:** every fitted gun is in the primary or the secondary fire group (set per hardpoint in Loadout; bays default to primary, pods to secondary). Only the selected group fires. Swap with the mouse wheel, Tab or G, 1 / 2, gamepad X, or the SWAP touch button.
