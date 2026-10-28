@@ -143,6 +143,16 @@ window.SkyAssets = function (THREE) {
     su27: { pattern: 'blotch', c: [0x9fb5c8, 0x6d8aa6, 0xc2d0db], accent: 0x3f5f80 },
     su35: { pattern: 'digital', c: [0x6f8292, 0x4c5d6b, 0x36434e], accent: 0x2b3a44 },
     su57: { pattern: 'digital', c: [0x7d8a93, 0x5c6870, 0xa3adb3], accent: 0x9fb6c4 },
+    bf109: { pattern: 'twotone', c: [0x8c948a, 0x5f6b55, 0x8c948a], accent: 0xf2c230 },
+    fw190: { pattern: 'blotch', c: [0x9aa3a6, 0x6f7a6e, 0x575f57], accent: 0xc8102e },
+    zero: { pattern: 'solid', c: [0xb9b8a0, 0xa9a890, 0xc6c4ad], accent: 0x1a1a1a },
+    ki84: { pattern: 'twotone', c: [0x56603e, 0x434b30, 0x56603e], accent: 0xd9a020 },
+    me262: { pattern: 'blotch', c: [0x9fa79f, 0x6c7a62, 0x4f5a48], accent: 0xb3261e },
+    drone: { pattern: 'solid', c: [0x1c1f24, 0x15171a, 0x24282d], accent: 0xff3b3b, rough: 0.7 },
+    wraith: { pattern: 'digital', c: [0x2c3138, 0x1b1f24, 0x3a4048], accent: 0xff5c3a },
+    lancer: { pattern: 'metal', c: [0x4a5058, 0x3a4048, 0x5a6068], accent: 0xff3b6b, metal: 0.8, rough: 0.3 },
+    mantis: { pattern: 'splinter', c: [0x3d4a3f, 0x252d27, 0x5b6b5d], accent: 0xb6ff3a },
+    reaper: { pattern: 'solid', c: [0x121417, 0x0d0f11, 0x1b1e22], accent: 0xff5ce1, rough: 0.6 },
     ace: { pattern: 'stripes', c: [0x2a2d31, 0xa3161f, 0xa3161f], accent: 0xc8102e, repaint: true },
     // enemy variants: each reads at a glance, whatever airframe it flies
     fast: { pattern: 'twotone', c: [0xd9dde0, 0xb9c1c8, 0xd9dde0], accent: 0xf2c230, repaint: true },
@@ -313,8 +323,72 @@ window.SkyAssets = function (THREE) {
   // the Su-35 is a Flanker with canards
   JETS.su35 = Object.assign({}, JETS.su27, { canard: { poly: [[1.0, -6.4], [3.2, -5.2], [3.2, -4.6], [1.0, -4.4]], y: 0.35, thick: 0.1 } });
 
+  // ---------- WW2 piston fighters, from a few numbers each ----------
+  // len and r: fuselage length and radius; span, chord and wingZ (leading edge at the root); ellip: an elliptical wing;
+  // cz: canopy position; scoop: a belly radiator; propR and blades: the propeller
+  function propSpec(o) {
+    const L = o.len, h = L / 2, r = o.r, s = o.span / 2, c = o.chord, wz = o.wingZ, wy = o.wingY == null ? -0.3 : o.wingY;
+    const fus = [[-h, r * 0.55], [-h + 0.4, r * 0.85], [-h + 1.6, r], [-h + L * 0.45, r * 0.98], [-h + L * 0.65, r * 0.72], [h - 0.6, r * 0.3], [h, r * 0.16]];
+    const wing = o.ellip
+      ? [[0.5, wz], [s * 0.55, wz + c * 0.06], [s * 0.88, wz + c * 0.22], [s, wz + c * 0.5], [s * 0.88, wz + c * 0.78], [s * 0.55, wz + c * 0.92], [0.5, wz + c]]
+      : [[0.5, wz], [s * 0.96, wz + c * 0.22], [s, wz + c * 0.38], [s, wz + c * 0.72], [0.5, wz + c]];
+    const ts = o.tail || s * 0.34, tz = h - 1.5, fin = o.fin || 1.5;
+    return { fus, fusS: [0.92, 1.12], seg: 14,
+      wing: { poly: wing, y: wy, thick: 0.2 },
+      stab: { poly: [[0.3, tz], [ts, tz + 0.45], [ts, tz + 0.95], [0.3, tz + 1.25]], y: 0.12, thick: 0.1, dihedral: 0 },
+      fins: [{ x: 0, y: r * 0.55, poly: [[h - 2.5, 0], [h - 0.95, fin], [h - 0.35, fin], [h, 0]], thick: 0.12 }],
+      canopy: { z: o.cz, y: r * 0.92, sx: 0.4, sy: 0.46, sz: 1.15 },
+      nozzles: o.nozzles || [], intakes: o.scoop != null ? [{ x: 0, y: -r * 1.02, z: o.scoop, w: 0.62, h: 0.42, d: 2.2 }] : [],
+      nacelles: o.nacelles, tip: [s, wy, wz + c * 0.5], missiles: [],
+      prop: o.noProp ? null : { z: -h - 0.05, r: o.propR || 1.6, blades: o.blades || 3 } };
+  }
+  Object.assign(JETS, {
+    p51: propSpec({ len: 9.8, r: 0.66, span: 11.3, chord: 2.6, wingZ: -1.4, ellip: false, cz: -0.4, scoop: 0.6, propR: 1.7, blades: 4 }),
+    spit: propSpec({ len: 9.5, r: 0.6, span: 11.2, chord: 2.5, wingZ: -1.6, ellip: true, cz: -0.2, propR: 1.6, blades: 4, fin: 1.7 }),
+    f4u: propSpec({ len: 10.2, r: 0.78, span: 12.5, chord: 2.7, wingZ: -1.5, cz: 0.4, propR: 2.0, blades: 3, wingY: -0.45 }),
+    p47: propSpec({ len: 11, r: 0.92, span: 12.4, chord: 2.9, wingZ: -1.2, ellip: true, cz: -0.2, propR: 2.0, blades: 4, fin: 1.9 }),
+    bf109: propSpec({ len: 9, r: 0.58, span: 9.9, chord: 2.2, wingZ: -1.3, cz: -0.9, propR: 1.5, blades: 3 }),
+    fw190: propSpec({ len: 9, r: 0.7, span: 10.5, chord: 2.3, wingZ: -1.5, cz: -0.1, propR: 1.65, blades: 3 }),
+    zero: propSpec({ len: 9.1, r: 0.62, span: 12, chord: 2.4, wingZ: -1.5, ellip: true, cz: -0.3, propR: 1.5, blades: 3, fin: 1.4 }),
+    ki84: propSpec({ len: 9.9, r: 0.64, span: 11.2, chord: 2.4, wingZ: -1.5, cz: -0.4, propR: 1.6, blades: 4 }),
+    // the Me 262: the first jet fighter, with an engine slung under each wing
+    me262: propSpec({ len: 10.6, r: 0.72, span: 12.6, chord: 2.6, wingZ: -0.9, cz: -0.6, noProp: true, fin: 1.6,
+      nacelles: [{ x: 2.3, y: -0.6, z0: -1.9, z1: 2.4, r: 0.48, sx: 1, sy: 1 }], nozzles: [{ x: 2.3, y: -0.6, z: 2.4, r: 0.32, len: 0.3 }] }),
+  });
+  JETS.me262.fusS = [1.1, 0.95];
+
+  // ---------- future fighters: faceted, flat and fast, with cyan exhaust ----------
+  // fsw: forward-swept wings; twin: two engines; canard: foreplanes
+  function futSpec(o) {
+    const L = o.len, h = L / 2, w = o.w, s = o.span / 2;
+    const fus = [[-h, 0], [-h + 0.8, w * 0.35], [-h + 2.4, w * 0.75], [-h + L * 0.4, w], [h - L * 0.25, w * 0.95], [h - 0.4, w * 0.7], [h, w * 0.62]];
+    const wing = o.fsw ? [[w * 0.8, -L * 0.02], [s, -L * 0.18], [s, -L * 0.1], [w * 0.8, L * 0.32]]
+      : [[w * 0.8, -L * 0.2], [s, L * 0.24], [s, L * 0.34], [w * 0.8, L * 0.38]];
+    const out = { fus, fusS: [1.6, 0.62], seg: 6, flame: 'cyan',
+      wing: { poly: wing, y: 0, thick: 0.2 },
+      fins: [{ x: w * 0.9, y: w * 0.4, poly: [[h - 3.4, 0], [h - 1.7, 2.1], [h - 0.9, 2.1], [h - 0.4, 0]], thick: 0.12, cant: 0.55 }],
+      canopy: { z: -h + L * 0.28, y: w * 0.6, sx: 0.5, sy: 0.36, sz: 1.8, tint: 0x0f6f7a },
+      nozzles: o.twin ? [{ x: w * 0.55, y: 0, z: h, r: w * 0.32, len: 0.5 }] : [{ x: 0, y: 0, z: h, r: w * 0.5, len: 0.6 }],
+      tip: [s, 0, o.fsw ? -L * 0.14 : L * 0.3], missiles: [] };
+    if (o.canard) out.canard = { poly: [[w * 0.8, -h + 2.2], [w * 0.8 + 1.8, -h + 3.4], [w * 0.8 + 1.8, -h + 3.8], [w * 0.8, -h + 3.9]], y: 0.1, thick: 0.08 };
+    if (o.stab) out.stab = { poly: [[w * 0.8, h - 2.2], [w * 0.8 + 2.2, h - 0.9], [w * 0.8 + 2.2, h - 0.4], [w * 0.8, h - 0.2]], y: 0, thick: 0.1, dihedral: 0 };
+    return out;
+  }
+  Object.assign(JETS, {
+    x9: futSpec({ len: 14, w: 1.15, span: 10, twin: true }),
+    valk: futSpec({ len: 15, w: 1.2, span: 11.5, fsw: true, canard: true, twin: true }),
+    nova: futSpec({ len: 17, w: 1.45, span: 13, twin: true, stab: true }),
+    drone: futSpec({ len: 9, w: 0.8, span: 8 }),
+    wraith: futSpec({ len: 13, w: 1.05, span: 10, canard: true }),
+    lancer: futSpec({ len: 15, w: 1.1, span: 9, stab: true, twin: true }),
+    mantis: futSpec({ len: 14, w: 1.2, span: 12, fsw: true, twin: true }),
+    reaper: futSpec({ len: 17, w: 1.4, span: 14, canard: true, twin: true, stab: true }),
+  });
+
   const flameIn = new THREE.MeshBasicMaterial({ color: 0xfff1c8, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false });
   const flameOut = new THREE.MeshBasicMaterial({ color: 0xff8a3a, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false });
+  const flameInC = new THREE.MeshBasicMaterial({ color: 0xe8ffff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false });
+  const flameOutC = new THREE.MeshBasicMaterial({ color: 0x3fd8ff, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false });
   const nozzleGlow = new THREE.MeshBasicMaterial({ color: 0xff9a4a });
   const navR = new THREE.MeshBasicMaterial({ color: 0xff3b3b }), navG = new THREE.MeshBasicMaterial({ color: 0x3cff6a });
 
@@ -365,11 +439,18 @@ window.SkyAssets = function (THREE) {
     for (const nz of spec.nozzles) both(nz.x, x => {
       add(cyl(nz.r * 1.02, nz.r * 0.9, nz.len, 16), M.metal, x, nz.y, nz.z + nz.len / 2 - 0.1);
       add(new THREE.CircleGeometry(nz.r * 0.8, 16), nozzleGlow, x, nz.y, nz.z + nz.len - 0.2).castShadow = false;
-      [[flameIn, 0.62, 3.2], [flameOut, 0.85, 5]].forEach(([m, rk, len]) => {
+      (spec.flame === 'cyan' ? [[flameInC, 0.62, 3.2], [flameOutC, 0.85, 5]] : [[flameIn, 0.62, 3.2], [flameOut, 0.85, 5]]).forEach(([m, rk, len]) => {
         const fl = add(new THREE.ConeGeometry(nz.r * rk, len, 12, 1, true).rotateX(Math.PI / 2).translate(0, 0, len / 2), m, x, nz.y, nz.z + nz.len - 0.15);
         fl.name = 'flame'; fl.castShadow = false; fl.receiveShadow = false;
       });
     });
+    if (spec.prop) {
+      // spinner and blades; the game spins every group called 'prop' about the nose
+      const pr = spec.prop, pg = new THREE.Group(); pg.name = 'prop'; pg.position.set(0, 0, pr.z);
+      add(new THREE.ConeGeometry(spec.fus[0][1] * 0.95, 0.9, 12).rotateX(-Math.PI / 2), M.trim, 0, 0, -0.3, pg);
+      for (let i = 0; i < pr.blades; i++) { const h = new THREE.Group(); h.rotation.z = i * Math.PI * 2 / pr.blades; add(new THREE.BoxGeometry(0.2, pr.r, 0.05), M.dark, 0, pr.r / 2, 0, h); pg.add(h); }
+      g.add(pg);
+    }
     if (spec.tip && !spec.swing) both(spec.tip[0], (x, side) => add(new THREE.SphereGeometry(0.11, 6, 4), side > 0 ? navG : navR, x, spec.tip[1], spec.tip[2]));
     (spec.missiles || []).forEach(m => both(m[0], x => {
       const ms = new THREE.Group(); ms.name = 'msl'; ms.position.set(x, m[1], m[2]);

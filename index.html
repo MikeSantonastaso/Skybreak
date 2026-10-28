@@ -68,6 +68,7 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
 .era .bl { font-size: 12.5px; color: var(--muted); line-height: 1.35; }
 .era.locked .yr { color: var(--muted); }
 .era .tag { margin-top: auto; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--good); }
+.eraPick { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
 .era .cost { margin-top: auto; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--amber); }
 
 .pips { display: flex; gap: 3px; }
@@ -383,6 +384,10 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
         <div id="pane-survival" class="col" role="tabpanel" aria-labelledby="tab-survival">
           <p class="note lede">How long can you last? Wave 1 is one fighter, wave 2 is two, and so on, with newer jets, aces and new kinds of fighter mixed in as the waves climb. Every tenth wave brings the location's boss: down it to open the next location. After every wave, pick a field upgrade for the rest of the run, or a field repair. Credits and medals pay out for every wave you survive.</p>
           <div>
+            <div class="label"><span>Era</span></div>
+            <div class="eras eraPick" id="eraList"></div>
+          </div>
+          <div>
             <div class="label"><span>Location</span></div>
             <div class="eras" id="survList"></div>
           </div>
@@ -664,8 +669,63 @@ const PLANES = {
     hardpoints: [{ id: 'rootL', name: 'Internal gun, left root', kind: 'bay', at: [-1.1, 0.6, -2.5] }, { id: 'centre', name: 'Centreline pod', kind: 'pylon', at: [0, -1.05, 0.4] },
       { id: 'pylL', name: 'Wing pylon, left', kind: 'pylon', at: [-3.2, -0.5, 1.6] }, { id: 'pylR', name: 'Wing pylon, right', kind: 'pylon', at: [3.2, -0.5, 1.6] }],
     livery: [0x59616a, 0x8b949c] },
+  // ---- WW2: piston fighters with wing guns and no missiles. Past 100% throttle is war emergency power ----
+  p51: { id: 'p51', era: 'ww2', name: 'P-51D Mustang', short: 'P-51D', role: 'Escort fighter', price: 0,
+    blurb: 'Fast, long-legged and easy to fly, with six .50 cals in the wings.',
+    size: 0.95, cockpit: 'prop', eye: [0.9, -0.4], hp: 95, missiles: 0, lockTime: 1, lockRange: 0,
+    flight: { minSpeed: 44, maxSpeed: 195, corner: 112, gmax: 7.5, thrust: 16, pitch: 1.45, roll: 4.0, yaw: 0.6 },
+    payload: 3.6, maxGuns: 6, guns: ['mg303', 'm2', 'hispano'], stock: { wL1: 'm2', wL2: 'm2', wL3: 'm2', wR1: 'm2', wR2: 'm2', wR3: 'm2' },
+    hardpoints: [{ id: 'wL1', name: 'Left wing, inner', kind: 'bay', at: [-1.9, -0.25, -0.6] }, { id: 'wL2', name: 'Left wing, middle', kind: 'bay', at: [-2.3, -0.25, -0.5] }, { id: 'wL3', name: 'Left wing, outer', kind: 'bay', at: [-2.7, -0.25, -0.4] },
+      { id: 'wR1', name: 'Right wing, inner', kind: 'bay', at: [1.9, -0.25, -0.6] }, { id: 'wR2', name: 'Right wing, middle', kind: 'bay', at: [2.3, -0.25, -0.5] }, { id: 'wR3', name: 'Right wing, outer', kind: 'bay', at: [2.7, -0.25, -0.4] }],
+    livery: [0xbfc4c7, 0x1a1a1a] },
+  spit: { id: 'spit', era: 'ww2', name: 'Spitfire Mk IX', short: 'Spitfire', role: 'Dogfighter', price: 1800,
+    blurb: 'The elliptical wing out-turns anything in the sky. Two Hispano cannons and two .303s.',
+    size: 0.92, cockpit: 'prop', eye: [0.85, -0.2], hp: 85, missiles: 0, lockTime: 1, lockRange: 0,
+    flight: { minSpeed: 40, maxSpeed: 185, corner: 100, gmax: 8.5, thrust: 16.5, pitch: 1.65, roll: 3.7, yaw: 0.6 },
+    payload: 3.2, maxGuns: 4, guns: ['mg303', 'm2', 'hispano'], stock: { wL1: 'hispano', wR1: 'hispano', wL2: 'mg303', wR2: 'mg303' },
+    hardpoints: [{ id: 'wL1', name: 'Left wing, cannon', kind: 'bay', at: [-1.8, -0.25, -0.9] }, { id: 'wL2', name: 'Left wing, outer', kind: 'bay', at: [-2.8, -0.25, -0.6] },
+      { id: 'wR1', name: 'Right wing, cannon', kind: 'bay', at: [1.8, -0.25, -0.9] }, { id: 'wR2', name: 'Right wing, outer', kind: 'bay', at: [2.8, -0.25, -0.6] }],
+    livery: [0x6b6f4e, 0x8a3a2a] },
+  f4u: { id: 'f4u', era: 'ww2', name: 'F4U Corsair', short: 'F4U', role: 'Carrier fighter', price: 4000,
+    blurb: 'Rugged and quick in a dive, with six .50 cals and a hull that shrugs off hits.',
+    size: 1.0, cockpit: 'prop', eye: [1.0, 0.4], hp: 125, missiles: 0, lockTime: 1, lockRange: 0,
+    flight: { minSpeed: 46, maxSpeed: 202, corner: 118, gmax: 7.2, thrust: 17, pitch: 1.4, roll: 4.2, yaw: 0.55 },
+    payload: 4.4, maxGuns: 6, guns: ['mg303', 'm2', 'hispano', 'mk108'], stock: { wL1: 'm2', wL2: 'm2', wL3: 'm2', wR1: 'm2', wR2: 'm2', wR3: 'm2' },
+    hardpoints: [{ id: 'wL1', name: 'Left wing, inner', kind: 'bay', at: [-2.2, -0.4, -0.7] }, { id: 'wL2', name: 'Left wing, middle', kind: 'bay', at: [-2.6, -0.4, -0.6] }, { id: 'wL3', name: 'Left wing, outer', kind: 'bay', at: [-3.0, -0.4, -0.5] },
+      { id: 'wR1', name: 'Right wing, inner', kind: 'bay', at: [2.2, -0.4, -0.7] }, { id: 'wR2', name: 'Right wing, middle', kind: 'bay', at: [2.6, -0.4, -0.6] }, { id: 'wR3', name: 'Right wing, outer', kind: 'bay', at: [3.0, -0.4, -0.5] }],
+    livery: [0x2c3e66, 0xe9e6dc] },
+  p47: { id: 'p47', era: 'ww2', name: 'P-47D Thunderbolt', short: 'P-47D', role: 'Heavy fighter', price: 7000,
+    blurb: 'The Jug: eight .50 cals, a huge engine and armor to match. Rolls well, turns like a truck.',
+    size: 1.1, cockpit: 'prop', eye: [1.1, -0.2], hp: 160, missiles: 0, lockTime: 1, lockRange: 0,
+    flight: { minSpeed: 48, maxSpeed: 208, corner: 125, gmax: 7, thrust: 18, pitch: 1.3, roll: 4.4, yaw: 0.5 },
+    payload: 5.2, maxGuns: 8, guns: ['mg303', 'm2', 'hispano', 'mk108'], stock: { wL1: 'm2', wL2: 'm2', wL3: 'm2', wL4: 'm2', wR1: 'm2', wR2: 'm2', wR3: 'm2', wR4: 'm2' },
+    hardpoints: [1, 2, 3, 4].flatMap(i => [{ id: 'wL' + i, name: 'Left wing, gun ' + i, kind: 'bay', at: [-1.9 - i * 0.4, -0.25, -0.7 + i * 0.08] }, { id: 'wR' + i, name: 'Right wing, gun ' + i, kind: 'bay', at: [1.9 + i * 0.4, -0.25, -0.7 + i * 0.08] }]),
+    livery: [0x6c6a4a, 0xf2c230] },
+  // ---- future: energy weapons, recharging shields and very high G ----
+  x9: { id: 'x9', era: 'future', name: 'XF-9 Nightjar', short: 'XF-9', role: 'Space-age fighter', price: 0,
+    blurb: 'Twin pulse lasers, a recharging shield and a 13 G airframe.',
+    size: 1.1, cockpit: 'future', eye: [0.75, -3.4], hp: 110, shield: 40, missiles: 4, lockTime: 0.5, lockRange: 4000,
+    flight: { minSpeed: 60, maxSpeed: 420, corner: 160, gmax: 13, thrust: 44, pitch: 1.9, roll: 6.0, yaw: 0.6 },
+    payload: 4, maxGuns: 3, guns: ['pulse', 'plasma', 'coil'], stock: { gL: 'pulse', gR: 'pulse' },
+    hardpoints: [{ id: 'gL', name: 'Gun bay, left', kind: 'bay', at: [-0.9, 0.1, -4] }, { id: 'gR', name: 'Gun bay, right', kind: 'bay', at: [0.9, 0.1, -4] }, { id: 'pod', name: 'Belly pylon', kind: 'pylon', at: [0, -0.8, 0.5] }],
+    livery: [0x2a2f36, 0x7fe9f2] },
+  valk: { id: 'valk', era: 'future', name: 'Valkyrie FSW', short: 'Valkyrie', role: 'Supermaneuver fighter', price: 9000,
+    blurb: 'Forward-swept wings and canards: the best nose authority there is, and it holds it at high angles.',
+    size: 1.15, cockpit: 'future', eye: [0.8, -3.8], hp: 120, shield: 50, missiles: 4, lockTime: 0.45, lockRange: 4200, stallAoa: 0.42,
+    flight: { minSpeed: 55, maxSpeed: 430, corner: 155, gmax: 14, thrust: 46, pitch: 2.1, roll: 6.4, yaw: 0.7 },
+    payload: 4.5, maxGuns: 3, guns: ['pulse', 'plasma', 'coil'], stock: { gL: 'pulse', gR: 'plasma' },
+    hardpoints: [{ id: 'gL', name: 'Gun bay, left', kind: 'bay', at: [-0.9, 0.1, -4.4] }, { id: 'gR', name: 'Gun bay, right', kind: 'bay', at: [0.9, 0.1, -4.4] }, { id: 'pod', name: 'Belly pylon', kind: 'pylon', at: [0, -0.8, 0.5] }],
+    livery: [0xd9dde0, 0xff5c3a] },
+  nova: { id: 'nova', era: 'future', name: 'Nova heavy fighter', short: 'Nova', role: 'Gunship', price: 16000,
+    blurb: 'Five guns, the thickest shield in the hangar and enough thrust to make it fly.',
+    size: 1.3, cockpit: 'future', eye: [0.95, -4.8], hp: 170, shield: 70, missiles: 6, lockTime: 0.55, lockRange: 4400,
+    flight: { minSpeed: 62, maxSpeed: 410, corner: 165, gmax: 12, thrust: 48, pitch: 1.7, roll: 5.2, yaw: 0.55 },
+    payload: 7, maxGuns: 5, guns: ['pulse', 'plasma', 'coil'], stock: { gL: 'plasma', gR: 'plasma', pL: 'coil' },
+    hardpoints: [{ id: 'gL', name: 'Gun bay, left', kind: 'bay', at: [-1.1, 0.1, -5] }, { id: 'gR', name: 'Gun bay, right', kind: 'bay', at: [1.1, 0.1, -5] }, { id: 'gC', name: 'Chin turret', kind: 'bay', at: [0, -0.6, -6.5] },
+      { id: 'pL', name: 'Wing pylon, left', kind: 'pylon', at: [-3.6, -0.5, 1.5] }, { id: 'pR', name: 'Wing pylon, right', kind: 'pylon', at: [3.6, -0.5, 1.5] }],
+    livery: [0x1d2228, 0xd694ff] },
 };
-const PLANE_ORDER = ['f5', 'f16', 'f14', 'f18', 'f35'];
+const PLANE_ORDER = ['f5', 'f16', 'f14', 'f18', 'f35', 'p51', 'spit', 'f4u', 'p47', 'x9', 'valk', 'nova'];
 
 // ---- guns: bought once with credits, then fitted to the hardpoints of any jet that takes them ----
 // rof is rounds per second for one gun; weight counts against the jet's payload; drag cuts top speed;
@@ -686,7 +746,23 @@ const GUNS = {
   suu23: { name: 'SUU-23 20 mm pod', short: 'SUU-23', kind: 'Gun pod', mount: 'pylon', weight: 2, price: 2200, rof: 20, dmg: 4.2, heat: 0.12, speed: 1000, spread: 0.008, range: 1200, color: 0xffe4a0, len: 16, sound: 950, drag: 0.03,
     d: 'A whole extra cannon on a pylon. Heavy and draggy, and it hits hard.' },
 };
-const GUN_ORDER = ['m3', 'm39', 'm61', 'gau22', 'aden', 'minigun', 'suu23'];
+Object.assign(GUNS, {
+  mg303: { era: 'ww2', name: '.303 Browning', short: '.303', kind: 'Machine gun', mount: 'bay', weight: 0.25, price: 0, rof: 18, dmg: 1.4, heat: 0.05, speed: 810, spread: 0.007, range: 850, color: 0xffd28a, len: 9, sound: 1400,
+    d: 'Rifle-calibre and very light. A buzz of hits, each one weak.' },
+  m2: { era: 'ww2', name: 'M2 Browning .50 cal', short: '.50 M2', kind: 'Heavy machine gun', mount: 'bay', weight: 0.5, price: 0, rof: 13, dmg: 2.7, heat: 0.06, speed: 870, spread: 0.006, range: 950, color: 0xffd28a, len: 11, sound: 1150,
+    d: 'The American standard. Six of them saw off most of the Luftwaffe.' },
+  hispano: { era: 'ww2', name: 'Hispano 20 mm', short: 'HISPANO', kind: 'Cannon', mount: 'bay', weight: 1.0, price: 1200, rof: 10, dmg: 6.5, heat: 0.1, speed: 850, spread: 0.005, range: 950, color: 0xffb36b, len: 14, sound: 820,
+    d: 'Explosive shells that tear off wings. Heavier than a machine gun.' },
+  mk108: { era: 'ww2', name: 'MK 108 30 mm', short: 'MK 108', kind: 'Heavy cannon', mount: 'bay', weight: 1.4, price: 2600, rof: 9, dmg: 17, heat: 0.13, speed: 540, spread: 0.006, range: 700, color: 0xff9a5a, len: 16, sound: 560,
+    d: 'Three hits bring down a bomber. The shells are slow, so get close.' },
+  pulse: { era: 'future', name: 'Pulse laser', short: 'PULSE', kind: 'Laser', mount: 'bay', weight: 0.8, price: 0, rof: 20, dmg: 5, heat: 0.14, speed: 2400, spread: 0.002, range: 1700, color: 0x7fe9f2, len: 26, sound: 2100,
+    d: 'Light-speed bolts that go where you point. Runs hot.' },
+  plasma: { era: 'future', name: 'Plasma cannon', short: 'PLASMA', kind: 'Plasma', mount: 'bay', weight: 1.5, price: 5000, rof: 6, dmg: 24, heat: 0.16, speed: 950, spread: 0.003, range: 1300, color: 0xff5ce1, len: 12, sound: 480,
+    d: 'Slow, glowing bolts that hit like a truck.' },
+  coil: { era: 'future', name: 'Coil gatling pod', short: 'COIL', kind: 'Gun pod', mount: 'pylon', weight: 1.4, price: 3000, rof: 36, dmg: 3, heat: 0.12, speed: 1600, spread: 0.006, range: 1300, color: 0xbfe8ff, len: 14, sound: 1600, drag: 0.01,
+    d: 'A magnetic gatling under the wing. Fast and flat.' },
+});
+const GUN_ORDER = ['m3', 'm39', 'm61', 'gau22', 'aden', 'minigun', 'suu23', 'mg303', 'm2', 'hispano', 'mk108', 'pulse', 'plasma', 'coil'];
 // every point of payload above (or below) the factory loadout costs (or gives) this much turn and thrust
 const WEIGHT_TURN = 0.035, WEIGHT_THRUST = 0.025;
 const gunDps = id => GUNS[id].rof * GUNS[id].dmg;
@@ -694,7 +770,7 @@ const gunDps = id => GUNS[id].rof * GUNS[id].dmg;
 // Each group has its own heat gauge: firing fills it, and at the top that group locks until it cools to HEAT_RESUME.
 // A gauge cools at HEAT_COOL a second once its group has been quiet for HEAT_DELAY.
 const HEAT_COOL = 0.3, HEAT_DELAY = 0.3, HEAT_RESUME = 0.3;
-const gunOwned = id => !GUNS[id].price || !!save.guns[id] || PLANE_ORDER.some(pid => save.planes[pid] && Object.values(PLANES[pid].stock).includes(id));
+const gunOwned = id => !GUNS[id].price || !!save.guns[id] || PLANE_ORDER.some(pid => planeOwned(pid) && Object.values(PLANES[pid].stock).includes(id));
 // the guns on each hardpoint of a jet: your saved choice, or the factory fit
 function loadoutOf(pid) {
   const P = PLANES[pid], saved = save.loadout[pid], out = {};
@@ -741,11 +817,13 @@ const SECONDARIES = {
   emp: { name: 'EMP pulse', short: 'EMP', tag: 'EMP', kind: 'Pulse', price: 3500, charges: 1, cd: 26, dmg: 20, radius: 1100, stun: 3.5,
     d: 'Knocks out every enemy within 1.1 km for 3.5 s, and fries the seekers of missiles chasing you.' },
 };
-const SEC_ORDER = ['missile', 'rockets', 'flak', 'emp'];
+SECONDARIES.rail = { name: 'Railgun', short: 'RAILGUN', tag: 'RG', kind: 'Hitscan', price: 4000, charges: 2, cd: 11, dmg: 95, range: 2600,
+  d: 'A slug at a hundred times the speed of sound. Hits everything along a 2.6 km line straight down the nose, instantly.' };
+const SEC_ORDER = ['missile', 'rockets', 'flak', 'emp', 'rail'];
 // (in the game these are called specials: the secondary fire group is the second set of guns)
 const KILL_REFUND = 2, SEC_MIN_COOLDOWN = 4;
 const secOwned = id => !SECONDARIES[id].price || !!save.secs[id];
-const secondaryOf = pid => { const id = save.secondary[pid]; return SECONDARIES[id] && secOwned(id) ? id : 'missile'; };
+const secondaryOf = pid => { const id = save.secondary[pid], E = ERAS[PLANES[pid].era || 'modern']; return SECONDARIES[id] && secOwned(id) && E.secs.includes(id) ? id : E.secs[0]; };
 // charges and cooldown for a jet's secondary, before (pid) or with (m) perks
 function secondarySpec(pid, m) {
   const id = secondaryOf(pid), S = SECONDARIES[id];
@@ -759,6 +837,16 @@ const ENEMY_JETS = {
   mig29: { name: 'MiG-29', size: 1.25, hp: 44, flight: { minSpeed: 64, maxSpeed: 335, corner: 145, gmax: 9.5, thrust: 31, pitch: 1.55, roll: 4.6, yaw: 0.5 }, livery: [0xb9a98a, 0x6b4a2a] },
   su27: { name: 'Su-27', size: 1.5, hp: 55, flight: { minSpeed: 64, maxSpeed: 345, corner: 150, gmax: 9.5, thrust: 32, pitch: 1.5, roll: 4.4, yaw: 0.5 }, livery: [0x8fa7bd, 0x3f5f80] },
   su35: { name: 'Su-35', size: 1.5, hp: 64, flight: { minSpeed: 60, maxSpeed: 350, corner: 145, gmax: 10, thrust: 34, pitch: 1.7, roll: 4.8, yaw: 0.6 }, livery: [0x5d6f7c, 0x2b3a44] },
+  bf109: { name: 'Bf 109', size: 0.92, hp: 24, flight: { minSpeed: 46, maxSpeed: 186, corner: 112, gmax: 7, thrust: 16, pitch: 1.35, roll: 3.6, yaw: 0.5 }, livery: [0x8c948a, 0xf2c230] },
+  fw190: { name: 'Fw 190', size: 0.95, hp: 32, flight: { minSpeed: 48, maxSpeed: 192, corner: 118, gmax: 7, thrust: 16.5, pitch: 1.3, roll: 4.4, yaw: 0.5 }, livery: [0x9aa3a6, 0xc8102e] },
+  zero: { name: 'A6M Zero', size: 0.95, hp: 22, flight: { minSpeed: 38, maxSpeed: 172, corner: 95, gmax: 7.5, thrust: 15, pitch: 1.6, roll: 3.4, yaw: 0.6 }, livery: [0xb9b8a0, 0x1a1a1a] },
+  ki84: { name: 'Ki-84 Hayate', size: 0.98, hp: 34, flight: { minSpeed: 44, maxSpeed: 196, corner: 108, gmax: 7.5, thrust: 17, pitch: 1.5, roll: 3.9, yaw: 0.55 }, livery: [0x56603e, 0xd9a020] },
+  me262: { name: 'Me 262', size: 1.05, hp: 44, flight: { minSpeed: 60, maxSpeed: 235, corner: 140, gmax: 6.5, thrust: 18, pitch: 1.1, roll: 3.0, yaw: 0.4 }, livery: [0x9fa79f, 0xb3261e] },
+  drone: { name: 'Hornet drone', size: 0.8, hp: 26, flight: { minSpeed: 60, maxSpeed: 400, corner: 150, gmax: 14, thrust: 42, pitch: 2.0, roll: 6.2, yaw: 0.6 }, livery: [0x1c1f24, 0xff3b3b] },
+  wraith: { name: 'Wraith', size: 1.05, hp: 40, flight: { minSpeed: 60, maxSpeed: 410, corner: 155, gmax: 12, thrust: 42, pitch: 1.8, roll: 5.6, yaw: 0.6 }, livery: [0x2c3138, 0xff5c3a] },
+  lancer: { name: 'Lancer', size: 1.15, hp: 52, flight: { minSpeed: 62, maxSpeed: 430, corner: 160, gmax: 12, thrust: 45, pitch: 1.7, roll: 5.4, yaw: 0.55 }, livery: [0x4a5058, 0xff3b6b] },
+  mantis: { name: 'Mantis', size: 1.15, hp: 62, flight: { minSpeed: 56, maxSpeed: 420, corner: 150, gmax: 13.5, thrust: 45, pitch: 2.0, roll: 6.0, yaw: 0.7 }, livery: [0x3d4a3f, 0xb6ff3a] },
+  reaper: { name: 'Reaper', size: 1.3, hp: 76, flight: { minSpeed: 62, maxSpeed: 440, corner: 160, gmax: 13, thrust: 48, pitch: 1.9, roll: 5.8, yaw: 0.65 }, livery: [0x121417, 0xff5ce1] },
   su57: { name: 'Su-57', size: 1.45, hp: 74, flight: { minSpeed: 62, maxSpeed: 360, corner: 145, gmax: 10.5, thrust: 36, pitch: 1.75, roll: 5.0, yaw: 0.6 }, livery: [0x6f7c86, 0x9fb6c4] },
 };
 
@@ -795,12 +883,51 @@ const LOCS = {
 };
 const LOC_ORDER = ['arctic', 'desert', 'ocean', 'city', 'canyon'];
 
-// The game reads one combined profile: the plane you fly in the place you picked.
-let era = null, coopLoc = null; // coopLoc: the host's location while flying co-op
+// ---- eras: every run is flown in one. An era brings its own jets, guns, specials, enemy fighters, bosses and a few
+// field upgrades of its own; locations, perks, paint and progress are shared. tiers: the enemy fighters from oldest to newest
+// (a location flies the one that matches its threat). msl: how the enemies' missiles fly, when they carry any ----
+const ERAS = {
+  ww2: { id: 'ww2', name: 'WW2', title: 'Piston fighters', mslWord: 'Rocket',
+    blurb: 'Propellers, wing guns and no guided missiles. Win it with deflection shooting and by keeping your speed up.',
+    planes: ['p51', 'spit', 'f4u', 'p47'], tiers: ['bf109', 'zero', 'fw190', 'ki84', 'me262'], secs: ['rockets', 'flak'], spawnK: 0.65, noMissiles: true,
+    gun: { rof: 9, dmg: 4, speed: 800, spread: 0.006, range: 950, color: 0xffb36b, len: 11, sound: 1000 },
+    msl: { turn: 0.9, max: 380, g: 16, lead: 0.3, life: 4, fuse: 18 },
+    bosses: { arctic: { kind: 'bear', name: 'Fw 200 Condor', color: 0x6f7568, accent: 0xf2c230 }, desert: { kind: 'gunship', name: 'Ju 290 gunship', color: 0x8a7a58, accent: 0xc8102e },
+      ocean: { kind: 'gunship', name: 'H8K flying boat', color: 0x56603e, accent: 0xd9a020 }, city: { kind: 'bear', name: 'He 177 Greif', color: 0x4f5a48, accent: 0xb3261e },
+      canyon: { kind: 'bear', name: 'Me 264 Amerika bomber', color: 0x5a6068, accent: 0xf2c230 } } },
+  modern: { id: 'modern', name: 'Modern', title: 'Jet age', mslWord: 'Missile',
+    blurb: 'Supersonic jets, rotary cannons, heat-seekers and flares. The original Skybreak.',
+    planes: ['f5', 'f16', 'f14', 'f18', 'f35'], tiers: ['mig21', 'mig29', 'su27', 'su35', 'su57'], secs: ['missile', 'rockets', 'flak', 'emp'], spawnK: 1 },
+  future: { id: 'future', name: 'Future', title: 'Energy weapons', mslWord: 'Missile',
+    blurb: 'Lasers, plasma, railguns and recharging shields at 14 G, against drone swarms and their motherships.',
+    planes: ['x9', 'valk', 'nova'], tiers: ['drone', 'wraith', 'lancer', 'mantis', 'reaper'], secs: ['missile', 'emp', 'rail'], spawnK: 1.1,
+    gun: { rof: 7, dmg: 4.2, speed: 1800, spread: 0.004, range: 1500, color: 0xff3b6b, len: 22, sound: 1900 },
+    msl: { turn: 2.4, max: 780, g: 80, lead: 1, life: 7, fuse: 20 },
+    bosses: { arctic: { kind: 'wing', name: 'Glacier carrier', color: 0x1c2228, accent: 0x7fe9f2 }, desert: { kind: 'blackjack', name: 'Sandstorm lancer', color: 0x2a2620, accent: 0xff7a1a },
+      ocean: { kind: 'awacs', name: 'Leviathan command ship', color: 0x1d2430, accent: 0x7fe9f2 }, city: { kind: 'blackjack', name: 'Spire interceptor', color: 0x16181b, accent: 0xff5ce1 },
+      canyon: { kind: 'wing', name: 'Hive mothership', color: 0x121417, accent: 0xb6ff3a } } },
+};
+const ERA_ORDER = ['ww2', 'modern', 'future'];
+const planeOwned = id => !!save.planes[id] || PLANES[id].price === 0;
+// the enemy fighter a location flies in an era
+const locEnemy = (L, E) => (E.id === 'modern' ? L.enemy : E.tiers[L.threat - 1]);
+// best waves are kept per era; the modern era keeps the old keys so earlier records carry over
+const bestKey = (loc, eid) => ((eid || era.eraId) === 'modern' ? loc : (eid || era.eraId) + ':' + loc);
+
+// The game reads one combined profile: the plane you fly in the place and era you picked.
+let era = null, coopLoc = null, coopEra = null; // coopLoc, coopEra: the host's location and era while flying co-op
 function composeEra() {
   if (!LOCS[save.loc] || !save.locs[save.loc]) save.loc = 'arctic';
-  if (!PLANES[save.plane] || !save.planes[save.plane]) save.plane = 'f5';
-  const L = LOCS[coopLoc || save.loc], P = PLANES[save.plane], E = ENEMY_JETS[L.enemy];
+  if (!ERAS[save.era]) save.era = 'modern';
+  const X = ERAS[coopEra || save.era];
+  // your jet for this era: the one you last flew in it, or its free starter
+  save.eraPlane = save.eraPlane || {};
+  if (!PLANES[save.plane] || !planeOwned(save.plane) || !X.planes.includes(save.plane)) {
+    const last = save.eraPlane[X.id];
+    save.plane = last && PLANES[last] && planeOwned(last) && X.planes.includes(last) ? last : X.planes[0];
+  }
+  save.eraPlane[X.id] = save.plane;
+  const L = LOCS[coopLoc || save.loc], P = PLANES[save.plane], enemyId = locEnemy(L, X), E = ENEMY_JETS[enemyId];
   // the mounted guns, each firing from its own hardpoint in its fire group. era.gun is the main one (most damage per second),
   // used for your wingman and your teammates' tracers; each group's main gun sets the lead sight while it's selected
   const lo = loadoutOf(P.id), ls = loadoutSpec(P.id, lo), gr = groupsOf(P.id, lo);
@@ -811,12 +938,12 @@ function composeEra() {
   const fireGroups = [1, 2].map(k => mounts.filter(m => m.group === k)).filter(l => l.length)
     .map(l => ({ mounts: l, heat: l.reduce((a, m) => a + m.gun.heat, 0), gun: mainOf(l).gun, name: [...new Set(l.map(m => m.gun.short))].join(' + ') }));
   era = Object.assign({}, P.flight, {
-    id: L.id + ':' + P.id, loc: L, plane: P, name: L.name, short: P.short, style: P.cockpit, size: P.size,
-    hp: P.hp, shield: 0, missiles: P.missiles, stallAoa: P.stallAoa, lockTime: P.lockTime, lockRange: P.lockRange, stealth: ls.stealth,
+    id: L.id + ':' + P.id, eraId: X.id, X, loc: L, plane: P, name: L.name, short: P.short, style: P.cockpit, size: P.size,
+    hp: P.hp, shield: P.shield || 0, missiles: P.missiles, stallAoa: P.stallAoa, lockTime: P.lockTime, lockRange: P.lockRange, stealth: ls.stealth,
     secId: secondaryOf(P.id), sec: SECONDARIES[secondaryOf(P.id)], fireGroups, mounts, load: ls, gun: Object.assign({}, main, { rof: main.rof * same.length, offsets: same.map(m => m.hp.at) }),
-    enemy: { model: L.enemy, name: E.name, size: E.size, flight: E.flight, hp: E.hp, dmg: 2.3 + 0.25 * L.threat, rof: 6, speedMul: 0.92 + 0.015 * L.threat, color: 0xff9a6b,
-      gun: Object.assign({}, GUN20, { offsets: [[-0.8, 0.3, -5]] }) },
-    boss: L.boss, world: L.world, player: P.livery[0], accent: P.livery[1], enemyCol: E.livery[0], enemyAccent: E.livery[1],
+    enemy: { model: enemyId, name: E.name, size: E.size, flight: E.flight, hp: E.hp, dmg: 2.3 + 0.25 * L.threat, rof: 6, speedMul: 0.92 + 0.015 * L.threat, color: X.gun ? X.gun.color : 0xff9a6b,
+      gun: Object.assign({}, X.gun || GUN20, { offsets: [[-0.8, 0.3, -5]] }) },
+    boss: Object.assign({}, L.boss, X.bosses ? X.bosses[L.id] : null), world: L.world, player: P.livery[0], accent: P.livery[1], enemyCol: E.livery[0], enemyAccent: E.livery[1],
   });
 }
 composeEra();
@@ -1719,6 +1846,7 @@ function onPlayerHit(e, b, at) {
     for (const o of enemies) { if (o === e || !validTarget(o)) continue; const d = o.pos.distanceTo(e.pos); if (d < bd) { bd = d; best = o; } }
     if (best) { spawnArc(at, best.pos); withSrc('Ricochet', () => best.damage(b.dmg * 0.6, player)); }
   }
+  if (m.burn) { e.burnT = 3; e.burnDps = m.burn; }
   if (m.splash) {
     spawnFx(at, { add: true, color: 0xffa040, size: 14, grow: 1.4, life: 0.28 });
     for (const o of enemies) if (o !== e && o.alive && !o.dying && o.pos.distanceToSquared(at) < 900 * (o.s.size * o.s.size)) withSrc('Explosive rounds', () => o.damage(b.dmg * m.splash, player));
@@ -1740,6 +1868,12 @@ function spawnArc(a, b) {
   line.userData.life = 0.18; scene.add(line); arcs.push(line);
   spawnFx(b, { add: true, color: 0x9ff6ff, size: 10, life: 0.2 });
   burst(0.12, 4200, 0.12, 'highpass');
+}
+const railEnd = new V3(), railMat = new THREE.LineBasicMaterial({ color: 0xbff6ff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false });
+function railBeam(a, b) {
+  const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([a.clone(), b.clone()]), railMat);
+  line.userData.life = 0.3; scene.add(line); arcs.push(line);
+  for (let i = 1; i <= 14; i++) spawnFx(tv2.lerpVectors(a, b, i / 14), { add: true, color: 0x7fe9f2, size: 6 + i * 0.6, grow: 1.5, life: 0.35 + i * 0.02 });
 }
 function updateArcs(dt) {
   for (let i = arcs.length - 1; i >= 0; i--) { const l = arcs[i]; l.userData.life -= dt; if (l.userData.life <= 0) { scene.remove(l); l.geometry.dispose(); arcs.splice(i, 1); } }
@@ -1806,6 +1940,17 @@ function fireSecondary(st) {
   } else if (st.secId === 'flak') {
     fireMissile(player, null, dmg, { boost: 450, max: 950, life: 1.5, fuse: 45, burst: S.radius });
     popText('Flak out');
+  } else if (st.secId === 'rail') {
+    // hitscan: everything within a few metres of the line down the nose takes the full hit
+    railEnd.copy(player.pos).addScaledVector(player.fwd, S.range);
+    const hits = enemies.filter(e => validTarget(e) && segSphere(player.pos, railEnd, e.pos, (e.boss ? 24 : 11) * e.s.size));
+    missileHit = true; dmgSrc = S.name;
+    for (const e of hits) e.damage(dmg, player);
+    missileHit = false; dmgSrc = '';
+    railBeam(tv.copy(player.pos).addScaledVector(player.fwd, 6), railEnd);
+    addShake(0.35); thump(150, 40, 0.4, 0.4); burst(0.35, 5200, 0.25, 'highpass');
+    popText(hits.length ? 'Railgun · ' + plural(hits.length, 'hit', 'hits') : 'Railgun · miss');
+    if (hits.length > 1) achEvent({ kind: 'multi', n: hits.length });
   } else if (st.secId === 'emp') {
     spawnFx(player.pos, { add: true, color: 0x9ff6ff, size: 60, grow: 14, life: 0.6 });
     burst(0.5, 3600, 0.3, 'highpass');
@@ -2059,10 +2204,10 @@ function perkMods() {
     rof: (1 + pv('belt')) * (1 + 0.08 * up('rof')), crit: pv('match'), spread: 1 - pv('sight'), range: 1 + pv('sight', 1),
     heatGen: (1 - pv('cool')) * Math.pow(0.88, up('cool')) * (up('over') ? 1.3 : 1), cool: 1 + pv('sinks'), offCool: 1 + 0.4 * up('sink'), resume: syn('Heat') ? 0.6 : HEAT_RESUME,
     splash: pv('boom'), chain: pv('chain'), ap: 1 + 0.25 * up('ap'), ricochet: up('ricochet') > 0, dual: up('dual') > 0, leech: up('leech') ? 0.03 : 0,
-    hp: pv('plate') + 15 * up('hull'), hpMul: (1 - pv('glass', 1)) * (up('strip') ? 0.8 : 1), regen: pv('mech'), vamp: pv('trophy') + pv('time', 1),
-    ghost: pv('charm') + 0.06 * up('evade'), dr: syn('Airframe') ? 0.12 : 0, wind: up('wind') > 0, phoenix: pv('phoenix'), flares: 8 * up('flare'),
+    hp: pv('plate') + 15 * up('hull'), hpMul: (1 - pv('glass', 1)) * (up('strip') ? 0.8 : 1), regen: pv('mech') + 1.2 * up('nanite'), vamp: pv('trophy') + pv('time', 1),
+    ghost: pv('charm') + 0.06 * up('evade') + (up('phase') ? 0.15 : 0), dr: (syn('Airframe') ? 0.12 : 0) + 0.08 * up('armglass'), shield: 15 * up('shieldcap'), shieldRate: up('phase') ? 2 : 1, burn: up('incend') ? 4 : 0, wind: up('wind') > 0, phoenix: pv('phoenix'), flares: 8 * up('flare'),
     thrust: (1 + pv('wep')) * (1 + 0.06 * up('thr')) * (up('strip') ? 1.15 : 1), speed: (1 + pv('wep', 1)) * (up('strip') ? 1.08 : 1) * (syn('Flight') ? 1.08 : 1),
-    turn: 1 + pv('tabs'), roll: syn('Flight') ? 1.1 : 1, ab: up('afterburn') ? 1.25 : 1, hunt: up('afterburn') > 0, slowmo: pv('time'),
+    turn: 1 + pv('tabs'), roll: syn('Flight') ? 1.1 : 1, ab: (up('afterburn') ? 1.25 : 1) * Math.pow(1.2, up('wep')), hunt: up('afterburn') > 0, slowmo: pv('time'),
     secCd: (1 - pv('rearm')) * (1 - pv('rack', 1)) * Math.pow(0.9, up('sec')), rack: pv('rack'), upRack: up('rack') + (syn('Special') ? 1 : 0) - up('rails'),
     secDmg: (1 + pv('warhead')) * (1 + 0.15 * up('lock')) * (up('rails') ? 1.6 : 1), lock: Math.pow(0.85, up('lock')), twin: up('twin') > 0, gunRearm: KILL_REFUND + pv('bounty'),
     credMul: up('blood') ? 1.5 : 1, enemyHp: up('blood') ? 1.15 : 1,
@@ -2078,7 +2223,7 @@ function playerStats() {
     size: e.size, abMax: 1.2, abMul: m.ab, stallAoa: e.stallAoa, minSpeed: e.minSpeed, maxSpeed: e.maxSpeed * m.speed * ld.speed,
     corner: e.corner, gmax: e.gmax, thrust: e.thrust * m.thrust * ld.thrust, induced: 1,
     pitch: e.pitch, roll: e.roll * m.roll, yaw: e.yaw, turnMul: m.turn * ld.turn,
-    hp: Math.max(30, Math.round((e.hp + m.hp) * m.hpMul)), shield: e.shield, armor: 0,
+    hp: Math.max(30, Math.round((e.hp + m.hp) * m.hpMul)), shield: e.shield + (e.shield ? m.shield : 0), armor: 0,
     dmgMul, rofMul, spreadMul, dmg: e.gun.dmg * dmgMul, rof: e.gun.rof * rofMul, spread: e.gun.spread * spreadMul, crit: m.crit, critMul: 2.5,
     heatGen: m.heatGen, cool: HEAT_COOL * m.cool,
     ...secondarySpec(e.plane.id, m), lockTime: e.lockTime * m.lock,
@@ -2104,7 +2249,6 @@ function clearCombat() {
 // ---------------- survival: wave N is N fighters, a field upgrade between waves, and the location's boss every tenth wave ----------------
 const SURV_LIVE = 8; // fighters in the air at once; the rest of the wave joins as they fall
 const SURV_LIVE_MAX = 16; // a hard ceiling, however many pilots are flying
-const SURV_TIERS = ['mig21', 'mig29', 'su27', 'su35', 'su57'];
 const BOSS_EVERY = 10;
 function startSurvival(danger) {
   initAudio();
@@ -2132,13 +2276,13 @@ function nextWave() {
 // Wave w: w fighters. Every third is a newer jet (two steps newer from wave 8), and from wave 5 one in four is an ace.
 // From wave 3 about half of the rest are variants, from whichever kinds have turned up by then; a new kind always shows on its first wave.
 function survivalWave(w, skill) {
-  const base = SURV_TIERS.indexOf(era.enemy.model), out = [];
+  const tiers = era.X.tiers, base = tiers.indexOf(era.enemy.model), out = [];
   const aces = dz('aces') ? (w >= 2 ? Math.ceil(w / 3) : 0) : Math.floor((w - 1) / 4), ups = Math.floor(w / 3);
   for (let i = 0; i < w; i++) {
     if (i < aces) out.push({ model: era.enemy.model, ace: true, skill: Math.min(skill + 0.25, 1) });
     else if (i < aces + ups) {
       const step = w >= 8 && i % 2 ? 2 : 1, t = base + step;
-      out.push({ model: SURV_TIERS[Math.min(t, SURV_TIERS.length - 1)], up: true, skill: Math.min(skill + 0.08 * step + (t >= SURV_TIERS.length ? 0.1 : 0), 1) });
+      out.push({ model: tiers[Math.min(t, tiers.length - 1)], up: true, skill: Math.min(skill + 0.08 * step + (t >= tiers.length ? 0.1 : 0), 1) });
     } else out.push({ model: era.enemy.model, skill: skill * rand(0.85, 1.1) });
   }
   const early = dz('early'), pool = VARIANT_ORDER.filter(v => early || VARIANTS[v].from <= w), plain = out.filter(s => !s.ace);
@@ -2193,6 +2337,13 @@ const UPGRADES = [
   { id: 'wind', tag: 'Airframe', rar: 'epic', name: 'Second wind', max: 1, d: 'Once a wave, dropping under 25% hull repairs 40% of it on the spot.' },
   { id: 'afterburn', tag: 'Flight', rar: 'epic', name: 'Hot pursuit', max: 1, d: 'Afterburner pushes 25% harder, and kills give a 3 s burst of +30% gun damage.' },
   { id: 'squad', tag: 'Wingman', rar: 'epic', name: 'Squadron leader', max: 1, wing: true, d: 'A downed wingman is back 15 s later instead of next wave.' },
+  // era picks: only offered in their own era
+  { id: 'wep', era: 'ww2', tag: 'Flight', rar: 'rare', name: 'Water injection', max: 2, d: 'War emergency power pushes 20% harder.' },
+  { id: 'armglass', era: 'ww2', tag: 'Airframe', rar: 'rare', name: 'Armored windscreen', max: 2, d: 'You take 8% less damage.' },
+  { id: 'incend', era: 'ww2', tag: 'Guns', rar: 'epic', name: 'Incendiary rounds', max: 1, d: 'Gun hits set the target alight: it burns for 4 damage a second for 3 s.' },
+  { id: 'shieldcap', era: 'future', tag: 'Airframe', rar: 'common', name: 'Shield capacitor', max: 4, d: '+15 shield.' },
+  { id: 'nanite', era: 'future', tag: 'Airframe', rar: 'rare', name: 'Nanite hull', max: 2, d: 'Repair 1.2 hull a second.' },
+  { id: 'phase', era: 'future', tag: 'Flight', rar: 'epic', name: 'Phase shift', max: 1, d: '15% of enemy hits pass straight through you, and your shield recharges twice as fast.' },
   { id: 'over', tag: 'Guns', rar: 'cursed', name: 'Overcharged barrels', max: 1, d: '+40% gun damage, but your guns heat 30% faster.' },
   { id: 'strip', tag: 'Flight', rar: 'cursed', name: 'Stripped airframe', max: 1, d: '+15% thrust and +8% top speed, but −20% max hull.' },
   { id: 'rails', tag: 'Special', rar: 'cursed', name: 'Glass rails', max: 1, d: '+60% special damage, but one fewer special charge.' },
@@ -2212,7 +2363,7 @@ const SYNERGIES = {
 };
 const tagCount = tag => UPGRADES.reduce((a, u) => a + (u.tag === tag ? up(u.id) : 0), 0);
 const syn = tag => run.up && tagCount(tag) >= SYNERGY_AT;
-const canTake = u => up(u.id) < u.max && (!u.wing || run.perks.wing) && (!u.solo || !run.coop);
+const canTake = u => up(u.id) < u.max && (!u.wing || run.perks.wing) && (!u.solo || !run.coop) && (!u.era || u.era === era.eraId);
 // a weighted draw: epics get likelier as the waves climb, and now and then one card is a cursed pick
 function upgradeChoices(epicsOnly) {
   const open = UPGRADES.filter(canTake), out = [];
@@ -2327,6 +2478,9 @@ const ACH = [
   { id: 'danger5', name: 'Danger close', d: 'Down a boss at danger 5 or higher.', r: { skin: 'hazard' }, test: ev => ev.kind === 'boss' && dangerOf(run.danger) >= 5 },
   { id: 'danger10', name: 'Into the fire', d: 'Clear wave 10 at danger 10 or higher.', r: { skin: 'inferno', md: 5 }, test: ev => ev.kind === 'wave' && run.wave >= 10 && dangerOf(run.danger) >= 10 },
   { id: 'coop10', name: 'Squadron', d: 'Clear wave 10 in co-op.', r: { skin: 'squadron' }, test: ev => ev.kind === 'wave' && run.coop && run.wave >= 10 },
+  { id: 'ww2_10', name: 'The few', d: 'Clear wave 10 in the WW2 era.', r: { cr: 1200 }, test: ev => ev.kind === 'wave' && era.eraId === 'ww2' && run.wave >= 10 },
+  { id: 'fut_10', name: 'Future shock', d: 'Clear wave 10 in the Future era.', r: { cr: 1200 }, test: ev => ev.kind === 'wave' && era.eraId === 'future' && run.wave >= 10 },
+  { id: 'eras', name: 'Through the ages', d: 'Clear wave 5 in all three eras.', r: { md: 5 }, test: ev => ev.kind === 'wave' && ERA_ORDER.every(id => (save.life['era_' + id] || 0) >= 5) },
   { id: 'kills1000', name: 'Thousand', d: 'Down 1,000 fighters, over any number of runs.', r: { cr: 2000 }, test: ev => ev.kind === 'kill' && save.totalKills + run.kills >= 1000 },
   { id: 'explorer', name: 'World tour', d: 'Open every location.', r: { cr: 1000 }, test: ev => ev.kind === 'boss' && LOC_ORDER.every(id => save.locs[id]) },
 ];
@@ -2376,12 +2530,12 @@ function endSurvival(reason) {
   const loc = era.loc.id, waves = run.cleared;
   const hadSkins = new Set(A.SKINS.filter(skinOwned).map(sk => sk.id));
   // a co-op run pays out like a solo one but doesn't count toward your solo best
-  const prev = save.survBest[loc] || 0, record = waves > prev && !run.coop;
+  const bk = bestKey(loc), prev = save.survBest[bk] || 0, record = waves > prev && !run.coop;
   const heat = dangerOf(run.danger), pay = dangerPay(heat);
   const medals = Math.ceil((waves + 3 * run.bosses) * pay.md);
   const credits = Math.round((run.kills * 12 + waves * 30 + run.bosses * 250) * (0.8 + 0.2 * era.loc.threat) * run.mods.credMul * pay.cr) + run.bank;
   save.points += medals; save.credits += credits; save.runs++; save.totalKills += run.kills;
-  if (record) save.survBest[loc] = waves;
+  if (record) save.survBest[bk] = waves;
   const fresh = A.SKINS.filter(sk => skinOwned(sk) && !hadSkins.has(sk.id));
   persist();
   $('dbTitle').textContent = reason === 'bail' ? 'Run banked' : run.coop ? 'Team shot down' : 'Shot down';
@@ -2495,7 +2649,9 @@ function initPilot(e, skill, kind) {
   e.skill = skill; e.kind = kind; e.state = kind === 'boomer' ? 'climb' : 'attack'; e.stateT = 0; e.burstT = 0;
   e.jink = new V3(); e.jinkT = 0; e.throttle = 0.85; e.target = null; e.targetT = 0;
   e.mslCd = rand(6, 12); e.missiles = e.ally ? 2 : (e.ace ? 3 : (era.loc.threat >= 2 || Math.random() < 0.5 ? 1 : 0));
-  if (e.vdef && e.vdef.missiles != null) { e.missiles = e.vdef.missiles; if (e.missiles) e.mslCd = rand(3, 6); }
+  // WW2 fighters carry no missiles: only hunters, with a pair of barely guided rockets
+  if (era.X.noMissiles) e.missiles = e.vdef && e.vdef.missiles ? 2 : 0;
+  else if (e.vdef && e.vdef.missiles != null) { e.missiles = e.vdef.missiles; if (e.missiles) e.mslCd = rand(3, 6); }
   if (!e.ally && dz('rails')) e.missiles++;
 }
 function spawnEnemy(skill, ace, kind, model, variant) {
@@ -2504,7 +2660,7 @@ function spawnEnemy(skill, ace, kind, model, variant) {
   kind = kind || (run.mission.depth >= 1 && Math.random() < 0.3 ? 'boomer' : 'fighter');
   // spawn ahead of a pilot so fights open with a merge
   const pl = coopAnchor();
-  const a = Math.atan2(pl.fwd.z, pl.fwd.x) + rand(-0.9, 0.9), d = rand(1700, 2500);
+  const a = Math.atan2(pl.fwd.z, pl.fwd.x) + rand(-0.9, 0.9), d = rand(1700, 2500) * era.X.spawnK;
   const x = clamp(pl.pos.x + Math.cos(a) * d, -ARENA, ARENA), z = clamp(pl.pos.z + Math.sin(a) * d, -ARENA, ARENA);
   const y = Math.max(groundAt(x, z) + 400, pl.pos.y + (kind === 'boomer' ? rand(300, 600) : rand(-150, 250)));
   const mesh = lodPlane(model, ace ? 'ace' : variant || model);
@@ -2683,8 +2839,8 @@ function aiControl(e, dt) {
     e.mslCd = hunter ? rand(6, 9) : rand(9, 16);
     if (!(t === player && Math.random() < era.stealth)) {
       e.missiles--;
-      fireMissile(e, t, e.ally ? 60 * e.gunMul : 26 + 4 * era.loc.threat, e.ally ? null : { turn: 2.0, max: 640, g: 62, lead: 1, life: 7, fuse: 20 });
-      if (t === player) popText('Missile launch!');
+      fireMissile(e, t, e.ally ? 60 * e.gunMul : 26 + 4 * era.loc.threat, e.ally ? null : Object.assign({}, era.X.msl || { turn: 2.0, max: 640, g: 62, lead: 1, life: 7, fuse: 20 }));
+      if (t === player) popText(era.X.mslWord + ' launch!');
     }
   }
   if (e.state === 'attack' && t && dist < Math.min((e.ally ? era.gun : era.enemy.gun).range * 0.85, 750)) {
@@ -2771,7 +2927,7 @@ function updatePlaying(dt) {
     }
     if (st.shield) {
       player.shieldDelay -= dt;
-      if (player.shieldDelay <= 0) player.shield = Math.min(st.shield, player.shield + 12 * dt);
+      if (player.shieldDelay <= 0) player.shield = Math.min(st.shield, player.shield + 12 * mods.shieldRate * dt);
     }
     player.lastHitT += dt;
     if (mods.regen) player.hp = Math.min(player.maxHp, player.hp + mods.regen * dt);
@@ -2842,6 +2998,13 @@ function updatePlaying(dt) {
   } else if (player.dying && player.alive) {
     player.dyingUpdate(dt);
   }
+  // incendiary fires tick twice a second
+  for (const e of enemies) {
+    if (!(e.burnT > 0) || !validTarget(e)) continue;
+    e.burnT -= dt; e.burnTick = (e.burnTick || 0) - dt;
+    if (Math.random() < dt * 12) spawnFx(e.pos, { add: true, color: 0xff8a33, size: 4 * e.s.size, grow: 0.6, life: 0.3, rise: 6 });
+    if (e.burnTick <= 0) { e.burnTick = 0.5; withSrc('Incendiary', () => e.damage(e.burnDps * 0.5, player)); }
+  }
   const depthMul = 0.7 + m.depth * 0.06;
   for (const list of [allies, enemies]) {
     for (const e of list) {
@@ -2895,6 +3058,7 @@ const activeGun = () => (run && run.groups && run.groups[run.grp] ? run.groups[r
 function waveCleared() {
   const m = run.mission, next = run.wave + 1;
   if (coopGuest()) run.st.waveSize = 99; // a guest can't count the host's wave, so any clear without a hit counts
+  save.life['era_' + era.eraId] = Math.max(save.life['era_' + era.eraId] || 0, run.wave);
   achEvent({ kind: 'wave' });
   m.done = true; m.doneT = 2.4; slowmoT = 1.2;
   flashMsg('WAVE ' + run.wave + ' CLEARED', plural(next, 'fighter', 'fighters') + (isBossWave(next) ? ' and a boss' : '') + ' next', 2.2);
@@ -3018,7 +3182,7 @@ function drawHud(dt) {
   const alive = enemies.filter(e => e.alive && !e.dying).length;
   hEls.wave.textContent = 'WAVE ' + run.wave;
   hEls.en.textContent = objectiveText(alive);
-  hEls.kills.textContent = run.kills + ' kills' + (run.coop ? '' : ' · best wave ' + (save.survBest[era.loc.id] || 0));
+  hEls.kills.textContent = run.kills + ' kills' + (run.coop ? '' : ' · best wave ' + (save.survBest[bestKey(era.loc.id)] || 0));
   coopHudTeam();
   const hf = player.hp / player.maxHp;
   hEls.hull.style.width = (hf * 100) + '%'; hEls.hull.style.background = hf < 0.3 ? red : '';
@@ -3026,7 +3190,7 @@ function drawHud(dt) {
   if (era.shield) { hEls.sh.style.width = (player.shield / player.s.shield * 100) + '%'; hEls.shN.textContent = Math.ceil(player.shield); }
   hEls.spd.textContent = Math.round(player.speed * 3.6);
   hEls.alt.textContent = Math.max(0, Math.round(player.pos.y));
-  hEls.thr.textContent = player.throttle > 1.001 ? 'AB' : Math.round(player.throttle * 100);
+  hEls.thr.textContent = player.throttle > 1.001 ? (era.style === 'prop' ? 'WEP' : 'AB') : Math.round(player.throttle * 100);
   hEls.g.textContent = Math.max(0, player.g).toFixed(1);
   const st = player.s;
   // both gun groups, the selected one marked, each with its own heat
@@ -3306,8 +3470,14 @@ function selectLoc(id) {
   save.loc = id; persist();
   composeEra(); buildWorld(); setupShowcase(); renderHangar();
 }
+function selectEra(id) {
+  if (!ERAS[id] || save.era === id) return;
+  save.era = id; previewSkin = null; selHp = null; gunArm = null; persist();
+  composeEra(); setupShowcase(); renderHangar();
+  const f = $('era-' + id); if (f) f.focus();
+}
 function selectPlane(id) {
-  if (!save.planes[id]) return;
+  if (!planeOwned(id)) return;
   save.plane = id; previewSkin = null; selHp = null; gunArm = null; persist();
   composeEra(); setupShowcase(); renderHangar();
 }
@@ -3320,7 +3490,7 @@ const skinEarned = s => {
   if (u.kind === 'ach') return !!save.ach[u.id];
   return bestWave() >= u.n;
 };
-const bestWave = () => Math.max(0, ...LOC_ORDER.map(id => save.survBest[id] || 0));
+const bestWave = () => Math.max(0, ...Object.values(save.survBest).map(v => v || 0));
 const skinOwned = s => s.id === 'factory' || !!save.skins[s.id] || skinEarned(s);
 const skinFor = pid => { const s = A.SKIN_BY_ID[save.skin[pid]]; return s && skinOwned(s) ? s.id : 'factory'; };
 function skinNeed(s) {
@@ -3414,7 +3584,7 @@ function renderHangar() {
   $('heroName').textContent = era.plane.name;
   $('heroSub').textContent = sk.name + (previewSkin ? ' · preview' : '') + ' · ' + era.loc.name;
   $('wallet').innerHTML = [[save.credits.toLocaleString(), 'Credits'], [save.points, 'Medals']].map(([v, l]) => '<div><b>' + v + '</b><span>' + l + '</span></div>').join('');
-  $('launchEra').textContent = era.short + ' · ' + era.name.toUpperCase() + ' · BEST WAVE ' + (save.survBest[save.loc] || 0);
+  $('launchEra').textContent = era.short + ' · ' + era.name.toUpperCase() + ' · BEST WAVE ' + (save.survBest[bestKey(save.loc)] || 0);
   $('record').innerHTML = [['Best wave', bestWave()], ['Kills', save.totalKills], ['Bosses', LOC_ORDER.filter(id => save.bosses[id]).length + '/' + LOC_ORDER.length]].map(([l, v]) => '<div><b>' + v + '</b><span>' + l + '</span></div>').join('');
   if (hangarTab === 'survival') renderSurvival();
   else if (hangarTab === 'hangar') renderAircraft();
@@ -3429,15 +3599,28 @@ function renderHangar() {
   coopRender();
 }
 function renderSurvival() {
+  const ep = $('eraList'); ep.innerHTML = '';
+  const guest = coopRoom() && !net.isHost;
+  ERA_ORDER.forEach(id => {
+    const X = ERAS[id], b = document.createElement('button'), best = Math.max(0, ...LOC_ORDER.map(l => save.survBest[bestKey(l, id)] || 0));
+    b.className = 'era eraopt'; b.id = 'era-' + id; b.disabled = guest;
+    b.setAttribute('aria-pressed', era.eraId === id ? 'true' : 'false');
+    b.innerHTML = '<span class="yr">' + X.name + '</span><span class="nm">' + X.title + '</span><span class="bl">' + X.blurb + '</span><span class="tag">' + (best ? 'Best: wave ' + best : 'Not flown yet') + ' · ' + X.planes.filter(planeOwned).length + ' of ' + X.planes.length + ' jets</span>';
+    b.addEventListener('click', () => selectEra(id));
+    ep.appendChild(b);
+  });
   const el = $('survList'); el.innerHTML = '';
   LOC_ORDER.forEach((id, i) => {
-    const L = LOCS[id], open = !!save.locs[id], prev = LOCS[LOC_ORDER[i - 1]], best = save.survBest[id] || 0;
+    const L = LOCS[id], open = !!save.locs[id], prev = LOCS[LOC_ORDER[i - 1]], best = save.survBest[bestKey(id)] || 0;
     const b = document.createElement('button'); b.className = 'era' + (open ? '' : ' locked'); b.id = 'sloc-' + id;
     b.setAttribute('aria-pressed', era.loc.id === id ? 'true' : 'false');
     b.disabled = !open;
-    const foot = !open ? '<span class="cost">Down the ' + prev.boss.name.toLowerCase() + ' on wave ' + BOSS_EVERY + ' at ' + prev.name + ' to open</span>'
+    const bossOf = l => Object.assign({}, l.boss, era.X.bosses ? era.X.bosses[l.id] : null).name;
+    const foot = !open ? '<span class="cost">Down the ' + bossOf(prev).toLowerCase() + ' at ' + prev.name + ' (in any era) to open</span>'
       : '<span class="tag">' + (best ? 'Best: wave ' + best : 'Not flown yet') + (save.bosses[id] ? ' · boss down' + (save.dangerBest[id] ? ' at danger ' + save.dangerBest[id] : '') : '') + '</span>';
-    b.innerHTML = '<span class="yr">' + L.name + '</span><span class="nm">Threat ' + L.threat + ' · ' + ENEMY_JETS[L.enemy].name + 's</span><span class="bl">' + L.blurb + '</span>' + foot;
+    // the scenery line of the blurb, then this era's enemies and boss
+    const blurb = era.eraId === 'modern' ? L.blurb : L.blurb.split('. ')[0] + '. ' + ENEMY_JETS[locEnemy(L, era.X)].name + 's and the ' + bossOf(L) + '.';
+    b.innerHTML = '<span class="yr">' + L.name + '</span><span class="nm">Threat ' + L.threat + ' · ' + ENEMY_JETS[locEnemy(L, era.X)].name + 's</span><span class="bl">' + blurb + '</span>' + foot;
     b.addEventListener('click', () => selectLoc(id));
     el.appendChild(b);
   });
@@ -3474,12 +3657,12 @@ function renderRecords() {
 }
 function renderAircraft() {
   // the shop: stats are scaled against the best jet in the hangar
-  const best = k => Math.max(...PLANE_ORDER.map(id => k(PLANES[id])));
+  const list = era.X.planes, best = k => Math.max(...list.map(id => k(PLANES[id])));
   const turn = P => P.flight.gmax * 9.8 / P.flight.corner;
   const bars = [['Speed', P => P.flight.maxSpeed], ['Turn', turn], ['Roll', P => P.flight.roll], ['Armor', P => P.hp], ['Payload', P => P.payload], ['Guns', P => P.maxGuns]];
   const pl = $('planeList'); pl.innerHTML = '';
-  PLANE_ORDER.forEach(id => {
-    const P = PLANES[id], owned = !!save.planes[id], afford = save.credits >= P.price;
+  list.forEach(id => {
+    const P = PLANES[id], owned = planeOwned(id), afford = save.credits >= P.price;
     const b = document.createElement('button'); b.className = 'plane' + (owned ? '' : ' locked'); b.id = 'plane-' + id;
     b.setAttribute('aria-pressed', era.plane.id === id ? 'true' : 'false');
     b.disabled = !owned && !afford;
@@ -3488,7 +3671,7 @@ function renderAircraft() {
       : '<span class="cost">' + (afford ? 'Buy for ' : 'Costs ') + P.price.toLocaleString() + ' credits</span>';
     b.innerHTML = '<img class="thumb" alt="" src="' + planeThumb(id, skinFor(id)) + '"><span class="pn">' + P.name + '</span><span class="pr">' + P.role + ' · ' + plural(P.maxGuns, 'gun', 'guns') + '</span><span class="bl">' + P.blurb + '</span><span class="stats">' + stats + '</span>' + foot;
     b.addEventListener('click', () => {
-      if (!save.planes[id]) { if (save.credits < P.price) return; save.credits -= P.price; save.planes[id] = true; persist(); beep(990, 0.1, 0.08); }
+      if (!planeOwned(id)) { if (save.credits < P.price) return; save.credits -= P.price; save.planes[id] = true; persist(); beep(990, 0.1, 0.08); }
       selectPlane(id);
     });
     pl.appendChild(b);
@@ -3578,7 +3761,7 @@ function renderLoadout() {
     });
   }
   // the gun list for this hardpoint; scales compare against the best gun of the same mount type
-  const list = GUN_ORDER.filter(id => GUNS[id].mount === hp.kind), best = f => Math.max(...list.map(id => f(GUNS[id])));
+  const list = GUN_ORDER.filter(id => GUNS[id].mount === hp.kind && (GUNS[id].era || 'modern') === era.eraId), best = f => Math.max(...list.map(id => f(GUNS[id])));
   const bars = [['Damage/s', g => g.rof * g.dmg, v => Math.round(v)], ['Per hit', g => g.dmg, v => r1(v)], ['Velocity', g => g.speed, v => v + ' m/s'], ['Fire time', g => 1 / g.heat, v => Math.round(v) + ' s'], ['Weight', g => g.weight, v => r1(v)]];
   const gl = $('loGuns'); gl.innerHTML = '';
   const others = Object.keys(lo).filter(k => k !== hp.id && lo[k]).length;
@@ -3620,7 +3803,7 @@ function renderLoadout() {
   });
   // the special: one per jet
   const sl = $('loSec'); sl.innerHTML = '';
-  SEC_ORDER.forEach(id => {
+  SEC_ORDER.filter(id => era.X.secs.includes(id)).forEach(id => {
     const S = SECONDARIES[id], on = era.secId === id, owned = secOwned(id), b = document.createElement('button');
     const ch = S.charges || Math.ceil(P.missiles / 2.5);
     b.className = 'gun' + (gunArm === 'sec:' + id ? ' armed' : ''); b.id = 'sec-' + id;
@@ -4331,7 +4514,7 @@ function coopMessage(f, msg) {
       const tgt = missileTarget(msg.tg);
       if (tgt === player) {
         if (Math.random() < era.stealth) break;
-        popText('Missile launch!');
+        popText(era.X.mslWord + ' launch!');
       }
       coopMissileIn(coop.pup.get(msg.id), msg, tgt === player);
       break;
@@ -4374,7 +4557,7 @@ function coopClosed(reason) {
 const callsign = () => (($('coopName').value || '').trim() || save.callsign || 'Pilot').slice(0, 16);
 function coopSyncInfo() {
   if (!coopRoom()) return;
-  const info = { plane: era.plane.short, loc: save.loc, busy: !!(run && run.coop && !run.over) };
+  const info = { plane: era.plane.short, loc: save.loc, era: era.eraId, busy: !!(run && run.coop && !run.over) };
   const k = JSON.stringify(info);
   if (k !== coop.info) { coop.info = k; net.setInfo(info); }
 }
@@ -4382,7 +4565,7 @@ function coopLaunch() {
   if (!coopRoom() || !net.isHost) return;
   coop.members = new Set(net.roster.map(r => r.slot));
   coop.ready.clear(); coop.mates.clear(); coop.ending = false; coop.downBy = -1;
-  net.send({ t: 'start', loc: save.loc, members: [...coop.members], danger: save.danger });
+  net.send({ t: 'start', loc: save.loc, members: [...coop.members], danger: save.danger, era: era.eraId });
   startSurvival();
   coopSyncInfo();
 }
@@ -4391,6 +4574,9 @@ function coopStart(msg) {
   if (run && !run.over) return; // already flying
   coop.members = new Set(msg.members);
   coop.ready.clear(); coop.mates.clear(); coop.ending = false; coop.downBy = -1;
+  // a guest flies the host's era, in their own jet for it (or its starter)
+  const eid = ERAS[msg.era] ? msg.era : 'modern';
+  if (coopEra !== eid || era.eraId !== eid) { coopEra = eid; composeEra(); }
   if (coopLoc !== msg.loc || era.loc.id !== msg.loc) { coopLoc = msg.loc; composeEra(); buildWorld(); }
   startSurvival(msg.danger || {});
   coopSyncInfo();
@@ -4398,7 +4584,7 @@ function coopStart(msg) {
 function coopRender() {
   if (!$('coopBox')) return;
   // back in the hangar a guest returns to their own location
-  if (state === 'hangar' && coopLoc && !(run && run.coop && !run.over)) { coopLoc = null; composeEra(); buildWorld(); setupShowcase(); }
+  if (state === 'hangar' && (coopLoc || coopEra) && !(run && run.coop && !run.over)) { coopLoc = null; coopEra = null; composeEra(); buildWorld(); setupShowcase(); }
   const live = coopRoom(), busy = !!(net && net.connecting);
   $('coopIdle').hidden = live; $('coopRoom').hidden = !live;
   $('coopHost').disabled = $('coopJoin').disabled = busy;
@@ -4419,7 +4605,8 @@ function coopRender() {
       ls.textContent = 'Waiting for the host'; launch.disabled = true;
       const L = LOCS[hostInfo.loc];
       $('launchEra').textContent = era.short + (L ? ' · ' + L.name.toUpperCase() : '');
-      $('coopNote').textContent = coop.status || (hostInfo.busy ? 'The host is mid-run. You\'ll fly from their next launch.' : 'The host picks the location' + (L ? ' (' + L.name + ' for now)' : '') + ' and launches. You fly your own ' + era.plane.short + '.');
+      const HX = ERAS[hostInfo.era];
+      $('coopNote').textContent = coop.status || (hostInfo.busy ? 'The host is mid-run. You\'ll fly from their next launch.' : 'The host picks the era and location' + (L ? ' (' + (HX ? HX.name + ', ' : '') + L.name + ' for now)' : '') + ' and launches. You fly your own jet for that era and the host\'s danger.');
     }
   } else {
     ls.textContent = 'Launch survival'; launch.disabled = false;
@@ -4542,7 +4729,7 @@ requestAnimationFrame(frame);
 window.__skybreak = { get fps() { return fpsAvg; }, get state() { return state; }, get player() { return player; }, get enemies() { return enemies; }, get allies() { return allies; }, get run() { return run; }, startSurvival, nextWave, survivalWave, endRun, addUpgrade, offerPerks, selectGroup,
   wave(w) { run.wave = w - 1; nextWave(); },
   nudge(dx, dy) { nudgeAim(dx, dy); }, setAim(y, p) { aimYaw = y; aimPitch = p; updateAimDir(); }, cam(m) { camMode = m; },
-  setup(loc, plane) { save.locs[loc] = true; save.planes[plane] = true; save.loc = loc; save.plane = plane; composeEra(); buildWorld(); setupShowcase(); renderHangar(); },
+  setup(loc, plane) { save.locs[loc] = true; save.planes[plane] = true; save.loc = loc; save.plane = plane; save.era = PLANES[plane].era || 'modern'; composeEra(); buildWorld(); setupShowcase(); renderHangar(); },
   stick(x, y) { vStick.x = x; vStick.y = y; }, setCam(m) { setCamMode(m); }, head(y, p) { headYaw = y; headPitch = p; },
   get missiles() { return missiles; }, get locked() { return locked; }, flare() { flareRequest = true; }, get era() { return era; }, get save() { return save; },
   step(n, dt) { for (let i = 0; i < n && state === 'playing'; i++) updatePlaying(dt || 1 / 60); },

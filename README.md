@@ -27,8 +27,17 @@ A browser prototype of a roguelike jet dogfighting game. Pick a location and a j
 | Boss rush | 3 | A boss every 5 waves instead of every 10 |
 
 - The highest danger at which you've downed each location's boss is saved and shown on the location card and the Records tab.
-- **Achievements** (Records tab): 19 feats, from First blood to Into the fire (wave 10 at danger 10). They pay credits or medals, or unlock paint schemes (Ace hunter, Hazard stripes, Inferno, Squadron colours, Hexed), perks (Gun-kill bounty, Big warheads) or a free F-16C. A toast pops up the moment you earn one.
+- **Achievements** (Records tab): 22 feats, from First blood to Into the fire (wave 10 at danger 10). They pay credits or medals, or unlock paint schemes (Ace hunter, Hazard stripes, Inferno, Squadron colours, Hexed), perks (Gun-kill bounty, Big warheads) or a free F-16C. A toast pops up the moment you earn one.
 - **Run summary:** the debrief shows time flown, accuracy, damage dealt and taken, best kill streak, damage split by weapon (each gun, the special, wingman, ricochets, arc rounds and so on), your build with its synergies, the danger modifiers and any achievements, and **Copy summary** puts a text version on the clipboard to share.
+
+## Eras
+
+Pick an era on the Survival tab. Each era has its own jets, guns, enemies, bosses and field upgrades, and keeps its own best wave per location (Modern keeps the records you already had). In co-op everyone flies the host's era.
+
+- **WW2 (piston fighters):** P-51D Mustang (free), Spitfire Mk IX, F4U Corsair and P-47 Thunderbolt, against Bf 109s, Zeros, Fw 190s, Ki-84s and the Me 262. Wing guns (.303, .50 cal M2, Hispano 20 mm, MK 108 30 mm), rockets and flak, and no guided missiles: fighters carry none, and hunters carry two slow, weakly guided rockets. Throttle past military power shows WEP. Bosses are bombers and gunships such as the Fw 200 Condor and the Me 264 Amerika bomber. Era upgrades: Water injection, Armored windscreen and Incendiary rounds (set targets burning).
+- **Modern (jet age):** the original game, unchanged.
+- **Future (energy weapons):** XF-9 Nightjar (free), Valkyrie and Nova, all with recharging shields, against drones, Wraiths, Lancers, Mantises and Reapers. Pulse lasers, plasma and coilguns, faster and harder-turning missiles, EMP and the **Railgun** special (two charges, a long-range beam that hits everything along its line). Bosses are motherships and command ships. Era upgrades: Shield capacitor, Nanite hull (hull regenerates) and Phase shift (harder to hit, faster shield recharge).
+- Three achievements cover the eras: wave 10 in WW2, wave 10 in the Future, and wave 5 in all three.
 
 ## Weapons
 
