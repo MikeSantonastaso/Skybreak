@@ -576,6 +576,45 @@ window.SkyAssets = function (THREE) {
     }
     return collectParts(templates[key].clone(true));
   }
+  // ---------- far models ----------
+  // Planes far from the camera swap to a low-poly copy of the built-in model with every part baked into one mesh
+  // per material, so a distant fighter costs a handful of draw calls instead of dozens
+  function mergeByMaterial(root) {
+    root.updateMatrixWorld(true);
+    const groups = new Map();
+    root.traverse(o => {
+      if (!o.isMesh || o.name === 'flame' || Array.isArray(o.material)) return;
+      const g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone();
+      g.applyMatrix4(o.matrixWorld);
+      if (!groups.has(o.material)) groups.set(o.material, []);
+      groups.get(o.material).push(g);
+    });
+    const out = new THREE.Group();
+    for (const [mat, list] of groups) {
+      const n = list.reduce((a, g) => a + g.attributes.position.count, 0);
+      const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3), uv = new Float32Array(n * 2);
+      let o = 0;
+      for (const g of list) {
+        const a = g.attributes;
+        pos.set(a.position.array, o * 3);
+        if (a.normal) nor.set(a.normal.array, o * 3);
+        if (a.uv) uv.set(a.uv.array, o * 2);
+        o += a.position.count;
+        g.dispose();
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+      geo.computeBoundingSphere();
+      out.add(new THREE.Mesh(geo, mat));
+    }
+    return out;
+  }
+  function planeFar(model, paint, livery) {
+    const p = typeof paint === 'string' && ENEMY_PAINT[paint] ? ENEMY_PAINT[paint] : resolvePaint(paint || 'factory', livery || [0x9aa3ad, 0x2c3e66]);
+    const key = 'far|' + model + '|' + p.pattern + p.c.join(',') + p.accent;
+    if (!templates[key]) templates[key] = mergeByMaterial(buildJet(Object.assign({}, JETS[model], { seg: 6, missiles: [] }), materialsFor(p)));
+    return templates[key].clone();
+  }
   function bossMesh(kind, color, accent) {
     const key = 'boss' + kind + color;
     if (!templates[key]) templates[key] = buildBoss(kind, color, accent);
@@ -628,5 +667,5 @@ window.SkyAssets = function (THREE) {
   const cloud = new THREE.CanvasTexture(puffCanvas(128, 3, false));
   const smoke = new THREE.CanvasTexture(puffCanvas(64, 5, true));
 
-  return { TILE, SKINS, SKIN_BY_ID, ENEMY_PAINT, JETS, BOSS_TURRETS, planeMesh, bossMesh, useModel, hasModel: id => !!custom[id], swatch, setEnvMap, cyl, glassMat, textures: { detail, waterNormal, cloud, smoke } };
+  return { TILE, SKINS, SKIN_BY_ID, ENEMY_PAINT, JETS, BOSS_TURRETS, planeMesh, planeFar, bossMesh, useModel, hasModel: id => !!custom[id], swatch, setEnvMap, cyl, glassMat, textures: { detail, waterNormal, cloud, smoke } };
 };

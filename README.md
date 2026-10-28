@@ -77,6 +77,11 @@ How it works: `net.js` uses [PeerJS](https://peerjs.com) (loaded from cdnjs only
 
 A gamepad and touch controls also work. Progress is saved in your browser.
 
+## Game feel and performance
+
+- **Juice:** kills freeze the game for a few frames (hit-stop, longer for aces and bosses), throw burning debris and a shockwave, and flash a kill marker on the HUD. The camera shakes with a little roll on hits, blasts and while the guns fire, and jets that tear past close by whoosh. The engine has a turbine whine, an afterburner roar and wind noise that builds with speed. **Calm mode** in Settings turns the shake, flashes and hit-stop well down, and starts on if your system asks for reduced motion. Hit-stop is off in co-op.
+- **Performance:** bullets, missiles, smoke, sparks and debris come from pools and never leave the scene, so a big fight builds nothing new. Other planes swap to a merged low-poly model past 900 m, damaged jets far beyond the fog stop trailing smoke, and no more than 16 fighters fly at once however many pilots there are. In a fight the game watches its frame rate and lowers the resolution and the particle budget if it drops under about 38 fps, then raises them again once there's headroom.
+
 Built with [three.js](https://threejs.org/) r128, loaded from cdnjs. `assets.js` is the asset library: procedural paint textures, the paint schemes, and every aircraft and boss model.
 
 ## Aircraft models
