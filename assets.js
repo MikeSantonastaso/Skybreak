@@ -346,7 +346,6 @@ window.SkyAssets = function (THREE) {
     p51: propSpec({ len: 9.8, r: 0.66, span: 11.3, chord: 2.6, wingZ: -1.4, ellip: false, cz: -0.4, scoop: 0.6, propR: 1.7, blades: 4 }),
     spit: propSpec({ len: 9.5, r: 0.6, span: 11.2, chord: 2.5, wingZ: -1.6, ellip: true, cz: -0.2, propR: 1.6, blades: 4, fin: 1.7 }),
     f4u: propSpec({ len: 10.2, r: 0.78, span: 12.5, chord: 2.7, wingZ: -1.5, cz: 0.4, propR: 2.0, blades: 3, wingY: -0.45 }),
-    p47: propSpec({ len: 11, r: 0.92, span: 12.4, chord: 2.9, wingZ: -1.2, ellip: true, cz: -0.2, propR: 2.0, blades: 4, fin: 1.9 }),
     bf109: propSpec({ len: 9, r: 0.58, span: 9.9, chord: 2.2, wingZ: -1.3, cz: -0.9, propR: 1.5, blades: 3 }),
     fw190: propSpec({ len: 9, r: 0.7, span: 10.5, chord: 2.3, wingZ: -1.5, cz: -0.1, propR: 1.65, blades: 3 }),
     zero: propSpec({ len: 9.1, r: 0.62, span: 12, chord: 2.4, wingZ: -1.5, ellip: true, cz: -0.3, propR: 1.5, blades: 3, fin: 1.4 }),
