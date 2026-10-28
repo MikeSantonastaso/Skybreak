@@ -41,32 +41,18 @@ window.SkyNet = (function () {
     return loading;
   }
 
-  // Metered TURN/STUN servers.
-  // Replace the placeholders with your Metered credentials.
+  // How browsers find a route to each other. STUN finds a direct path; when a
+  // router or firewall blocks that, TURN relays the traffic. Skybreak's own relay
+  // (coturn on the matchmaking droplet, see server/setup-turn.sh) comes first,
+  // then Metered's and PeerJS's free relays as backups.
+  const OWN_TURN = { username: 'skybreak', credential: '22ae7468ac6f5f4841e50bb8' };
+  const METERED = { username: 'c6ce3f47153847e4d67403d5', credential: 'XjxE+HzAWijpfmpH' };
+
   const ICE_SERVERS = [
-    {
-      urls: 'stun:stun.relay.metered.ca:80'
-    },
-    {
-      urls: 'turn:standard.relay.metered.ca:80',
-      username: 'c6ce3f47153847e4d67403d5',
-      credential: 'XjxE+HzAWijpfmpH'
-    },
-    {
-      urls: 'turn:standard.relay.metered.ca:80?transport=tcp',
-      username: 'c6ce3f47153847e4d67403d5',
-      credential: 'XjxE+HzAWijpfmpH'
-    },
-    {
-      urls: 'turn:standard.relay.metered.ca:443',
-      username: 'c6ce3f47153847e4d67403d5',
-      credential: 'XjxE+HzAWijpfmpH'
-    },
-    {
-      urls: 'turns:standard.relay.metered.ca:443?transport=tcp',
-      username: 'c6ce3f47153847e4d67403d5',
-      credential: 'XjxE+HzAWijpfmpH'
-    }
+    { urls: ['stun:stun.l.google.com:19302', 'stun:165.245.229.241:3478'] },
+    Object.assign({ urls: ['turn:165.245.229.241:3478?transport=udp', 'turn:165.245.229.241:3478?transport=tcp'] }, OWN_TURN),
+    Object.assign({ urls: ['turn:standard.relay.metered.ca:80', 'turns:standard.relay.metered.ca:443?transport=tcp'] }, METERED),
+    { urls: 'turn:eu-0.turn.peerjs.com:3478', username: 'peerjs', credential: 'peerjsp' }
   ];
 
   // Matchmaking brokers, tried in order. The first is Skybreak's own
@@ -100,14 +86,34 @@ window.SkyNet = (function () {
     return [OWN_BROKER, {}];
   }
 
+  // ?relay=1 in the URL sends everything through a TURN relay, to test the
+  // relay from two tabs on one machine.
+  const RELAY_ONLY = new URLSearchParams(location.search).get('relay') === '1';
+
   function peerOptions(b) {
     return Object.assign({
       debug: 2,
       config: {
         iceServers: ICE_SERVERS,
-        iceTransportPolicy: 'all'
+        iceTransportPolicy: RELAY_ONLY ? 'relay' : 'all'
       }
     }, brokers()[b]);
+  }
+
+  // Logs which route a connection ended up on: host (same network), srflx
+  // (direct through the routers) or relay (through TURN).
+  function logRoute(c) {
+    const pc = c && c.peerConnection;
+    if (!pc || !pc.getStats) return;
+
+    pc.getStats().then(stats => {
+      stats.forEach(r => {
+        if (r.type !== 'candidate-pair' || !(r.selected || r.nominated) || r.state !== 'succeeded') return;
+        const local = stats.get(r.localCandidateId), remote = stats.get(r.remoteCandidateId);
+        console.info('[net] Linked via', local && local.candidateType, '->', remote && remote.candidateType,
+          local && local.url ? '(' + local.url + ')' : '');
+      });
+    }).catch(() => {});
   }
 
   const newCode = () =>
@@ -293,7 +299,11 @@ window.SkyNet = (function () {
           let slot = null;
           let accepted = false;
 
+          c.on('iceStateChanged', st => console.info('[net] Guest link:', st));
+
           c.on('open', () => {
+            logRoute(c);
+
             if (closed || conns.size >= MAX - 1) {
               try { c.send({ t: 'full' }); } catch (e) {}
               setTimeout(() => c.close(), 300);
@@ -451,6 +461,14 @@ window.SkyNet = (function () {
 
         let welcomed = false;
         let dropped = false;
+        // The host's browser answers through the broker, then the two browsers try
+        // routes to each other (ice is how that is going).
+        let ice = '';
+        const answered = () => !!(conn.peerConnection && conn.peerConnection.remoteDescription);
+
+        const stuck = () => !answered()
+          ? 'The room did not answer. Check the code, and that the host still has the room open.'
+          : "Found the room, but couldn't link up with the host. A firewall on one side blocked both the direct route and the relay. Try another network (a phone hotspot often works).";
 
         // No room with this code on this broker: release it so join() can try the next.
         onMissing = err => {
@@ -466,15 +484,21 @@ window.SkyNet = (function () {
 
         const timeout = setTimeout(() => {
           if (!welcomed) {
-            reject(new Error(
-              'The room did not answer. Check the room code, host connection, and TURN configuration.'
-            ));
+            console.warn('[net] No welcome from the host.', answered() ? 'Link state: ' + (ice || 'no routes found') : 'The host never answered.');
+            reject(new Error(stuck()));
             shut();
           }
-        }, 25000);
+        }, 30000);
+
+        conn.on('iceStateChanged', st => {
+          console.info('[net] Host link:', st);
+          ice = st;
+          if (st === 'checking') status('Found room ' + c1 + '. Linking up with the host…');
+        });
 
         conn.on('open', () => {
-          status('Connected to matchmaking. Waiting for host…');
+          logRoute(conn);
+          status('Linked. Waiting for the host to seat you…');
         });
 
         conn.on('data', m => {
@@ -526,7 +550,7 @@ window.SkyNet = (function () {
           clearTimeout(timeout);
 
           if (!welcomed) {
-            reject(new Error('Could not reach that room.'));
+            reject(new Error(ice === 'failed' || ice === 'disconnected' ? stuck() : 'Could not reach that room.'));
           }
 
           shut(welcomed ? 'The host closed the room.' : '');
