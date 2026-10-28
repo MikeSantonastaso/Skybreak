@@ -377,6 +377,7 @@ window.SkyAssets = function (THREE) {
     x9: futSpec({ len: 14, w: 1.15, span: 10, twin: true }),
     valk: futSpec({ len: 15, w: 1.2, span: 11.5, fsw: true, canard: true, twin: true }),
     nova: futSpec({ len: 17, w: 1.45, span: 13, twin: true, stab: true }),
+    volition: futSpec({ len: 16, w: 1.3, span: 15.5, twin: true, stab: true }),
     drone: futSpec({ len: 9, w: 0.8, span: 8 }),
     wraith: futSpec({ len: 13, w: 1.05, span: 10, canard: true }),
     lancer: futSpec({ len: 15, w: 1.1, span: 9, stab: true, twin: true }),
