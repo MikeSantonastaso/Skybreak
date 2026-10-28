@@ -464,6 +464,12 @@ window.SkyAssets = function (THREE) {
 
   // ---------- bosses: full size, about 40 m long ----------
   const BOSS_TURRETS = [[0, 2.6, -4], [0, -2.5, 2], [0, 0.8, 15.5], [0, -0.9, -14]];
+  // the airship and the carrier are far bigger and carry more guns
+  const BOSS_TURRET_SETS = {
+    airship: [[0, -12.6, -9], [0, -12.6, 7], [0, 11.4, -16], [0, 11.4, 12], [8.6, -5.4, -26], [-8.6, -5.4, -26], [8.6, -5.4, 24], [-8.6, -5.4, 24]],
+    ship: [[15.5, 13.2, -62], [-15.5, 13.2, -62], [15.5, 13.2, 58], [-15.5, 13.2, 58], [12, 34, 8], [-15.5, 13.2, -4]],
+  };
+  const turretsOf = kind => BOSS_TURRET_SETS[kind] || BOSS_TURRETS;
   function buildBoss(kind, color, accent) {
     const g = new THREE.Group();
     const M = materialsFor({ pattern: kind === 'wing' ? 'solid' : 'twotone', c: [color, new THREE.Color(color).multiplyScalar(0.88).getHex(), color], accent });
@@ -478,7 +484,25 @@ window.SkyAssets = function (THREE) {
       for (let i = 0; i < 4; i++) { const b = new THREE.Mesh(new THREE.BoxGeometry(0.35, 2.8, 0.08), dark); b.position.y = 1.3; const h = new THREE.Group(); h.rotation.z = i * Math.PI / 2; h.add(b); pr.add(h); }
       g.add(pr);
     };
-    if (kind === 'wing') {
+    if (kind === 'airship') {
+      // a rigid airship about 95 m long: envelope, cruciform tail, a gondola and four engine pods
+      add(latheGeo([[-47, 0], [-44, 4.5], [-36, 8.6], [-22, 10.8], [0, 11.2], [20, 10.6], [34, 8], [44, 3.6], [48, 0.6]], 24, 1, 1), body);
+      [0, 1, 2, 3].forEach(i => { const f = add(finGeo([[30, 0], [41, 13], [47, 13], [47, 0]], 0.7), i % 2 ? trim : wingM, 0, 0, 0); f.rotation.z = i * Math.PI / 2; });
+      [-30, -10, 10, 30].forEach(z => add(new THREE.TorusGeometry(10.9 - Math.abs(z) * 0.06, 0.18, 4, 28), trim, 0, 0, z));
+      add(new THREE.BoxGeometry(4.2, 3, 26), body, 0, -12, -1);
+      add(new THREE.BoxGeometry(4.4, 1, 6), glassMat(), 0, -11.4, -13.6);
+      [[9.4, -4.6, -22], [-9.4, -4.6, -22], [9.4, -4.6, 20], [-9.4, -4.6, 20]].forEach(([x, y, z]) => { add(cyl(1.2, 0.9, 6, 10), dark, x, y, z); add(new THREE.BoxGeometry(Math.abs(x) - 6, 0.5, 1.6), dark, x / 2 + Math.sign(x) * 3, y + 1.6, z); prop(x, y, z - 3.4); });
+    } else if (kind === 'ship') {
+      // an enemy carrier at sea, about 150 m long, bow toward -Z
+      add(new THREE.BoxGeometry(30, 14, 140), body, 0, 4, 4);
+      add(new THREE.ConeGeometry(15, 22, 4, 1).rotateX(-Math.PI / 2).rotateZ(Math.PI / 4).scale(1, 0.45, 1), body, 0, 6.5, -77);
+      add(new THREE.BoxGeometry(34, 1.4, 156), dark, 0, 11.8, -2);
+      add(new THREE.BoxGeometry(0.8, 0.2, 120), trim, -4, 12.6, -2);
+      add(new THREE.BoxGeometry(9, 20, 28), body, 12, 22, 8);
+      add(new THREE.BoxGeometry(2, 14, 2), dark, 12, 38, 8);
+      add(new THREE.CylinderGeometry(2.8, 2.8, 0.6, 16), trim, 12, 45, 8);
+      for (let i = 0; i < 5; i++) add(new THREE.BoxGeometry(7, 2.6, 11), wingM, -8 + (i % 2) * 6, 13.8, 30 + i * 9);
+    } else if (kind === 'wing') {
       pair([[0, -16], [26, 5], [24, 7.5], [15, 3.5], [10, 7.5], [0, 4]], 1.8, 0, body);
       add(latheGeo([[-16, 0], [-12, 1.6], [-6, 2.8], [2, 3], [8, 2], [11, 1]], 10, 1.6, 0.8), body, 0, 0.6, 0);
       add(new THREE.BoxGeometry(46, 0.5, 0.8), trim, 0, 0.2, 7.2);
@@ -528,9 +552,49 @@ window.SkyAssets = function (THREE) {
         add(new THREE.BoxGeometry(0.4, 0.3, 30), trim, 0, 2.5, -2);
       }
     }
-    BOSS_TURRETS.forEach(t => { add(new THREE.SphereGeometry(0.9, 10, 8), dark, t[0], t[1], t[2]); add(cyl(0.12, 0.12, 2.2, 6), dark, t[0], t[1], t[2] - 1.2); });
+    const big = kind === 'airship' || kind === 'ship' ? 1.6 : 1;
+    turretsOf(kind).forEach(t => { add(new THREE.SphereGeometry(0.9 * big, 10, 8), dark, t[0], t[1], t[2]); add(cyl(0.12 * big, 0.12 * big, 2.2 * big, 6), dark, t[0], t[1], t[2] - 1.2 * big); });
     g.add(glow);
     return g;
+  }
+
+  // ---------- ground and naval targets: flak batteries, SAM launchers and patrol boats ----------
+  function buildGround(kind, color, accent) {
+    const g = new THREE.Group();
+    const M = materialsFor({ pattern: 'solid', c: [color, color, color], accent });
+    const add = (geo, m, x, y, z, parent) => { const me = new THREE.Mesh(geo, m); me.position.set(x || 0, y || 0, z || 0); me.castShadow = true; me.receiveShadow = true; (parent || g).add(me); return me; };
+    if (kind === 'aa') {
+      const bag = new THREE.MeshStandardMaterial({ color: 0x8a7d5c, roughness: 0.95 });
+      add(new THREE.TorusGeometry(6.5, 1.3, 6, 18).rotateX(Math.PI / 2), bag, 0, 1, 0);
+      add(new THREE.CylinderGeometry(2.2, 2.6, 1.6, 12), M.body, 0, 1.2, 0);
+      const gun = new THREE.Group(); gun.position.set(0, 2.6, 0); gun.rotation.x = 0.8; g.add(gun);
+      add(new THREE.BoxGeometry(2.6, 1.6, 2.4), M.body, 0, 0, 0, gun);
+      [-0.6, 0.6].forEach(x => add(cyl(0.22, 0.22, 7, 8), M.dark, x, 0.3, -4, gun));
+      add(new THREE.BoxGeometry(0.5, 0.5, 0.5), M.trim, 0, 1, 0.8, gun);
+    } else if (kind === 'sam') {
+      add(new THREE.BoxGeometry(3.6, 2.4, 9), M.body, 0, 1.6, 0);
+      add(new THREE.BoxGeometry(3.4, 2, 2.6), M.wing, 0, 3.4, -3.4);
+      const rack = new THREE.Group(); rack.position.set(0, 3.4, 2); rack.rotation.x = 0.55; g.add(rack);
+      [-0.8, 0.8].forEach(x => [0.4, 1.4].forEach(y => { add(cyl(0.45, 0.45, 7, 8), M.wing, x, y, -1.2, rack); add(new THREE.CircleGeometry(0.44, 8).rotateY(Math.PI), M.trim, x, y, 2.3, rack); }));
+      const dish = add(new THREE.CylinderGeometry(1.6, 1.6, 0.25, 16), M.dark, 0, 6.2, -3.4); dish.rotation.x = 1.1; dish.name = 'dish';
+      [[1.9, 3.2], [-1.9, 3.2], [1.9, -3.2], [-1.9, -3.2]].forEach(([x, z]) => add(cyl(0.7, 0.7, 0.8, 10).rotateY(Math.PI / 2), M.dark, x, 0.7, z));
+    } else {
+      // a patrol boat about 56 m long, bow toward -Z
+      add(new THREE.BoxGeometry(8, 5, 44), M.body, 0, 1.5, 4);
+      add(new THREE.ConeGeometry(4, 14, 4, 1).rotateX(-Math.PI / 2).rotateZ(Math.PI / 4).scale(1, 0.62, 1), M.body, 0, 2.2, -24);
+      add(new THREE.BoxGeometry(8.2, 0.4, 56), M.dark, 0, 4.1, -2);
+      add(new THREE.BoxGeometry(5, 4, 10), M.wing, 0, 6.2, 2);
+      add(new THREE.BoxGeometry(5.2, 1, 3), new THREE.MeshStandardMaterial({ color: 0x1b2830, metalness: 0.8, roughness: 0.1 }), 0, 7.5, -2.2);
+      add(new THREE.BoxGeometry(0.6, 7, 0.6), M.dark, 0, 11, 4);
+      add(cyl(1.2, 1.4, 3, 10).rotateX(Math.PI / 2), M.wing, 0, 6, 9.5);
+      [-13, 17].forEach(z => { add(new THREE.CylinderGeometry(1.6, 1.8, 1.4, 10), M.wing, 0, 5, z); add(cyl(0.2, 0.2, 5, 6), M.dark, 0, 5.6, z + (z < 0 ? -2.6 : 2.6)).rotation.x = z < 0 ? 0.25 : -0.25; });
+    }
+    return g;
+  }
+  function groundMesh(kind, color, accent) {
+    const key = 'gnd' + kind + color;
+    if (!templates[key]) templates[key] = buildGround(kind, color, accent);
+    return collectParts(templates[key].clone(true));
   }
 
   // ---------- mesh factory ----------
@@ -753,5 +817,5 @@ window.SkyAssets = function (THREE) {
   const cloud = new THREE.CanvasTexture(puffCanvas(128, 3, false));
   const smoke = new THREE.CanvasTexture(puffCanvas(64, 5, true));
 
-  return { TILE, SKINS, SKIN_BY_ID, ENEMY_PAINT, JETS, BOSS_TURRETS, planeMesh, planeFar, bossMesh, useModel, hasModel: id => !!custom[id], swatch, setEnvMap, cyl, glassMat, textures: { detail, waterNormal, cloud, smoke } };
+  return { TILE, SKINS, SKIN_BY_ID, ENEMY_PAINT, JETS, BOSS_TURRETS, turretsOf, planeMesh, planeFar, bossMesh, groundMesh, useModel, hasModel: id => !!custom[id], swatch, setEnvMap, cyl, glassMat, textures: { detail, waterNormal, cloud, smoke } };
 };
