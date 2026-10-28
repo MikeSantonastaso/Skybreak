@@ -28,8 +28,15 @@ A browser prototype of a roguelike jet dogfighting game. Pick a location and a j
 | Foul weather | 1 | Storm cells on every wave |
 
 - The highest danger at which you've downed each location's boss is saved and shown on the location card and the Records tab.
-- **Achievements** (Records tab): 27 feats, from First blood to Into the fire (wave 10 at danger 10). They pay credits or medals, or unlock paint schemes (Ace hunter, Hazard stripes, Inferno, Squadron colours, Hexed), perks (Gun-kill bounty, Big warheads) or a free F-16C. A toast pops up the moment you earn one.
+- **Achievements** (Records tab): 29 feats, from First blood to Into the fire (wave 10 at danger 10). They pay credits or medals, or unlock paint schemes (Ace hunter, Hazard stripes, Inferno, Squadron colours, Hexed), perks (Gun-kill bounty, Big warheads) or a free F-16C. A toast pops up the moment you earn one.
 - **Run summary:** the debrief shows time flown, accuracy, damage dealt and taken, best kill streak, damage split by weapon (each gun, the special, wingman, ricochets, arc rounds and so on), your build with its synergies, the danger modifiers and any achievements, and **Copy summary** puts a text version on the clipboard to share.
+
+## Daily sortie
+
+- Once a UTC day everyone gets the same sortie: one location, era and jet (stock guns, no perks), two danger modifiers, and the same waves, weather, ground targets and field upgrade offers. It's on the Survival tab, solo only.
+- **Score:** 1,000 a wave, 25 a kill, 500 a boss. Fly it as often as you like; your best counts. The debrief shows the score, **Copy summary** puts it at the top of the text, and the Survival tab keeps your best for the last month of days.
+- **Shared board:** today's top 20 callsigns (each keeps their best) come from a small service next to the matchmaking server, `server/board.js`. Set it up on the droplet with `curl -fsSL https://raw.githubusercontent.com/MikeSantonastaso/Skybreak/main/server/setup-board.sh | sudo bash`; it serves `https://board.<ip-with-dashes>.sslip.io` behind the same Caddy. Add `?board=https://host` to the URL to use another. If the board is down the sortie still works and says so. Scores are sent by the browser and only sanity-checked, so the board keeps friends honest; it isn't cheat-proof.
+- Two achievements: fly a daily sortie, and fly one on 5 different days.
 
 ## Strike waves, weather and bosses
 

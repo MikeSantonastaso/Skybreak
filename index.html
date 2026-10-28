@@ -275,6 +275,16 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
 .coop input:focus { outline: none; border-color: var(--amber); }
 .coop .or { font-size: 12px; color: var(--muted); }
 .coophead { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.daily { display: grid; gap: 8px; }
+.dailycard { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; border: 1px solid var(--line, rgba(235,228,210,0.18)); padding: 12px; }
+.dailycard .dl { display: grid; gap: 6px; align-content: start; }
+.dailycard .dl span { color: var(--muted); font-size: 13px; }
+.dailycard .dl .hist { font-size: 12px; }
+.dailycard .dl .btn { justify-self: start; margin-top: 4px; }
+.dailycard .board ol { margin: 0; padding-left: 22px; display: grid; gap: 3px; font-size: 13px; }
+.dailycard .board li span { color: var(--muted); margin-left: 8px; }
+.dailycard .board li .r { float: right; color: var(--amber); }
+@media (max-width: 640px) { .dailycard { grid-template-columns: 1fr; } }
 .seat { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
 .seat > span { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-right: 4px; }
 .seat button[aria-pressed="true"] { border-color: var(--amber, #f2b33d); color: var(--amber, #f2b33d); }
@@ -390,6 +400,7 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
       <div class="col">
         <div id="pane-survival" class="col" role="tabpanel" aria-labelledby="tab-survival">
           <p class="note lede">How long can you last? Wave 1 is one fighter, wave 2 is two, and so on, with newer jets, aces and new kinds of fighter mixed in as the waves climb. Every tenth wave brings the location's boss: down it to open the next location. After every wave, pick a field upgrade for the rest of the run, or a field repair. Credits and medals pay out for every wave you survive.</p>
+          <div class="daily" id="dailyBox"></div>
           <div>
             <div class="label"><span>Era</span></div>
             <div class="eras eraPick" id="eraList"></div>
@@ -548,7 +559,7 @@ const Y_AXIS = new V3(0, 1, 0);
 const SAVE_KEY = 'skybreak-save-v3';
 const defaultSave = () => ({ points: 0, credits: 0, totalKills: 0, runs: 0, locs: { arctic: true }, bosses: {}, survBest: {},
   planes: { f5: true }, skins: { factory: true }, skin: {}, guns: {}, loadout: {}, secs: {}, secondary: {}, perks: {}, groups: {}, equip: null, allSlots: false, loc: 'arctic', plane: 'f5', pullBack: true, ctl: 'mouse',
-  danger: {}, dangerBest: {}, ach: {}, life: {} });
+  danger: {}, dangerBest: {}, ach: {}, life: {}, daily: {} });
 // what each rank of the old skill web cost, so ranks trained there come back as medals (anything not listed cost 2)
 const OLD_WEB_COST = { armor: 1, engine: 1, guns: 1, seekers: 1, controls: 1, supply: 1, reactive: 4, turbofan: 4, ap: 4, pylon: 4, instinct: 4, blackmkt: 4,
   tub: 3, damctl: 3, overhaul: 3, arearule: 3, hotbarrel: 3, match: 3, warhead: 3, datalink: 3, fbw: 3, evasive: 3, contracts: 3, scrounger: 3,
@@ -560,7 +571,7 @@ try {
   if (s) {
     save = Object.assign(defaultSave(), s, { locs: obj('locs', { arctic: true }), bosses: obj('bosses'), survBest: obj('survBest'),
       planes: obj('planes', { f5: true }), skins: obj('skins', { factory: true }), skin: obj('skin'), guns: obj('guns'), loadout: obj('loadout'), secs: obj('secs'), secondary: obj('secondary'), perks: obj('perks'), groups: obj('groups'),
-      danger: obj('danger'), dangerBest: obj('dangerBest'), ach: obj('ach'), life: obj('life') });
+      danger: obj('danger'), dangerBest: obj('dangerBest'), ach: obj('ach'), life: obj('life'), daily: obj('daily') });
     // perks were unlocked as true; now each holds its tier, from I to V
     for (const id in save.perks) if (save.perks[id] === true) save.perks[id] = 1;
     // the skill web and the old 12-skill tree are gone: every rank comes back as medals for perks
@@ -831,7 +842,7 @@ const SEC_ORDER = ['missile', 'rockets', 'flak', 'emp', 'rail'];
 // (in the game these are called specials: the secondary fire group is the second set of guns)
 const KILL_REFUND = 2, SEC_MIN_COOLDOWN = 4;
 const secOwned = id => !SECONDARIES[id].price || !!save.secs[id];
-const secondaryOf = pid => { const id = save.secondary[pid], E = ERAS[PLANES[pid].era || 'modern']; return SECONDARIES[id] && secOwned(id) && E.secs.includes(id) ? id : E.secs[0]; };
+const secondaryOf = pid => { const id = daily ? null : save.secondary[pid], E = ERAS[PLANES[pid].era || 'modern']; return SECONDARIES[id] && secOwned(id) && E.secs.includes(id) ? id : E.secs[0]; };
 // charges and cooldown for a jet's secondary, before (pid) or with (m) perks
 function secondarySpec(pid, m) {
   const id = secondaryOf(pid), S = SECONDARIES[id];
@@ -891,6 +902,58 @@ const LOCS = {
 };
 const LOC_ORDER = ['arctic', 'desert', 'ocean', 'city', 'canyon'];
 
+// ---- the daily sortie: once a UTC day everyone gets the same location, era, jet (stock guns, no perks), danger
+// modifiers, waves, weather, ground targets and field upgrade offers. Scores go on a shared board ----
+let daily = null; // today's sortie while one is being flown
+const hashStr = t => { let h = 2166136261; for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+const mulberry = a => () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+// run f with Math.random swapped for a stream seeded by key, so every player gets the same result
+function seeded(key, f) { const r = Math.random; Math.random = mulberry(hashStr(key)); try { return f(); } finally { Math.random = r; } }
+const dayKey = () => new Date().toISOString().slice(0, 10);
+const DAILY_DANGER = ['thin', 'swarm', 'armor', 'aces', 'rails', 'early', 'flares', 'storm'];
+function dailySpec(day) {
+  return seeded('daily|' + day, () => {
+    const pick = a => a[Math.floor(Math.random() * a.length)];
+    const eraId = pick(ERA_ORDER), X = ERAS[eraId], danger = {};
+    const loc = pick(LOC_ORDER), plane = pick(X.planes);
+    const ids = DAILY_DANGER.slice();
+    for (let i = 0; i < 2; i++) danger[ids.splice(Math.floor(Math.random() * ids.length), 1)[0]] = 1;
+    return { day, era: eraId, loc, plane, danger };
+  });
+}
+// in a daily run the waves and upgrade offers come from the day's seed
+const daySeed = (tag, f) => (run && run.daily ? seeded(run.daily.day + '|' + run.wave + '|' + tag, f) : f());
+const dailyScore = (waves, kills, bosses) => waves * 1000 + kills * 25 + bosses * 500;
+function startDaily() {
+  if (coopRoom()) return;
+  daily = dailySpec(dayKey());
+  composeEra(); buildWorld();
+  startSurvival(daily.danger);
+  run.daily = daily;
+}
+function endDaily() {
+  if (!daily) return;
+  daily = null;
+  composeEra(); buildWorld();
+}
+
+// the shared daily board, a small service next to the matchmaking server (server/board.js). ?board=https://host overrides it.
+// If it's down the daily sortie still works and keeps your own scores.
+const BOARD_URL = new URLSearchParams(location.search).get('board') || 'https://board.165-245-229-241.sslip.io';
+const board = { day: '', top: null, err: false, at: 0 };
+function boardFetch(day, force) {
+  if (!force && board.day === day && (board.top || board.err) && performance.now() - board.at < 60000) return;
+  board.day = day; board.at = performance.now();
+  const ctl = 'AbortController' in window ? new AbortController() : null;
+  if (ctl) setTimeout(() => ctl.abort(), 5000);
+  fetch(BOARD_URL + '/daily/' + day, { signal: ctl && ctl.signal }).then(r => (r.ok ? r.json() : Promise.reject(r.status)))
+    .then(d => { board.top = Array.isArray(d.top) ? d.top : []; board.err = false; renderDaily(); }, () => { board.top = null; board.err = true; renderDaily(); });
+}
+function boardSubmit(day, entry) {
+  fetch(BOARD_URL + '/daily/' + day, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(entry) })
+    .then(r => (r.ok ? r.json() : Promise.reject(r.status))).then(d => { if (Array.isArray(d.top)) { board.day = day; board.top = d.top; board.err = false; board.at = performance.now(); } if (d.rank) toast('Daily board', 'You placed #' + d.rank + ' today'); }, () => {});
+}
+
 // ---- eras: every run is flown in one. An era brings its own jets, guns, specials, enemy fighters, bosses and a few
 // field upgrades of its own; locations, perks, paint and progress are shared. tiers: the enemy fighters from oldest to newest
 // (a location flies the one that matches its threat). msl: how the enemies' missiles fly, when they carry any ----
@@ -927,18 +990,18 @@ let era = null, coopLoc = null, coopEra = null; // coopLoc, coopEra: the host's 
 function composeEra() {
   if (!LOCS[save.loc] || !save.locs[save.loc]) save.loc = 'arctic';
   if (!ERAS[save.era]) save.era = 'modern';
-  const X = ERAS[coopEra || save.era];
-  // your jet for this era: the one you last flew in it, or its free starter
+  const X = ERAS[coopEra || (daily && daily.era) || save.era];
+  // your jet for this era: the one you last flew in it, or its free starter (the daily sortie lends you one)
   save.eraPlane = save.eraPlane || {};
-  if (!PLANES[save.plane] || !planeOwned(save.plane) || !X.planes.includes(save.plane)) {
+  if (!daily && !PLANES[save.plane] || !planeOwned(save.plane) || !X.planes.includes(save.plane)) {
     const last = save.eraPlane[X.id];
     save.plane = last && PLANES[last] && planeOwned(last) && X.planes.includes(last) ? last : X.planes[0];
   }
-  save.eraPlane[X.id] = save.plane;
-  const L = LOCS[coopLoc || save.loc], P = PLANES[save.plane], enemyId = locEnemy(L, X), E = ENEMY_JETS[enemyId];
+  if (!daily) save.eraPlane[X.id] = save.plane;
+  const L = LOCS[coopLoc || (daily && daily.loc) || save.loc], P = PLANES[daily ? daily.plane : save.plane], enemyId = locEnemy(L, X), E = ENEMY_JETS[enemyId];
   // the mounted guns, each firing from its own hardpoint in its fire group. era.gun is the main one (most damage per second),
   // used for your wingman and your teammates' tracers; each group's main gun sets the lead sight while it's selected
-  const lo = loadoutOf(P.id), ls = loadoutSpec(P.id, lo), gr = groupsOf(P.id, lo);
+  const lo = daily ? Object.assign({}, P.stock) : loadoutOf(P.id), ls = loadoutSpec(P.id, lo), gr = groupsOf(P.id, lo);
   const mounts = P.hardpoints.filter(hp => lo[hp.id]).map(hp => ({ hp, gun: GUNS[lo[hp.id]], group: gr[hp.id] }));
   const mainOf = list => list.reduce((a, m) => (!a || m.gun.rof * m.gun.dmg > a.gun.rof * a.gun.dmg ? m : a), null);
   const main = mainOf(mounts).gun;
@@ -2293,7 +2356,7 @@ function startSurvival(danger) {
   clearCombat();
   // the perks you equipped in the hangar, at the tiers you've bought; they stay put for the whole run
   const perks = {};
-  for (const id of equipped()) perks[id] = perkTier(PERK_BY_ID[id]);
+  if (!daily) for (const id of equipped()) perks[id] = perkTier(PERK_BY_ID[id]);
   run = { survival: true, wave: 0, hull: 0, perks, up: {}, kills: 0, cleared: 0, bosses: 0, unlocked: [],
     rerolls: 1, bank: 0, synNote: '', windUsed: false, wingT: 0, huntT: 0, phoenixUsed: 0, hitCount: 0, over: false, seen: {}, deathT: 0, mission: null, coop: !!(net && net.active), downNote: '',
     danger: Object.assign({}, danger || save.danger),
@@ -2442,7 +2505,7 @@ const synsHeld = () => Object.keys(SYNERGIES).filter(syn).map(t => SYNERGIES[t].
 function offerPerks() {
   // after a boss wave every card is an epic
   const bossWave = isBossWave(run.wave);
-  let picks = upgradeChoices(bossWave);
+  let rolls = 0, picks = daySeed('up0', () => upgradeChoices(bossWave));
   const next = run.wave + 1, skipPay = 30 + 10 * run.wave;
   const go = f => () => { run.synNote = ''; f(); run.hull = clamp(run.hull, 1, maxHull()); nextWave(); };
   const render = () => {
@@ -2458,7 +2521,7 @@ function offerPerks() {
         ' Wave ' + next + ' brings ' + plural(next, 'fighter', 'fighters') + (isBossWave(next) ? ' and the ' + bossFor(next / bossEvery()).name : isStrikeWave(next) ? ', and ground targets to knock out' : '') + '.',
       cards,
       buttons: [
-        run.rerolls > 0 && { label: 'Reroll (' + run.rerolls + ' left)', onClick: () => { run.rerolls--; picks = upgradeChoices(bossWave); render(); } },
+        run.rerolls > 0 && { label: 'Reroll (' + run.rerolls + ' left)', onClick: () => { run.rerolls--; rolls++; picks = daySeed('up' + rolls, () => upgradeChoices(bossWave)); render(); } },
         { label: 'Skip · +' + skipPay + ' credits', onClick: go(() => { run.bank += skipPay; }) },
         { label: run.coop ? 'Leave the team and bank it' : 'End here and bank it', onClick: () => endRun('bail') },
       ].filter(Boolean),
@@ -2526,6 +2589,8 @@ const ACH = [
   { id: 'carrier', name: 'Flat-top', d: 'Down a carrier boss.', r: { md: 3 }, test: ev => ev.kind === 'boss' && ev.key === 'carrier' },
   { id: 'airship', name: 'Zeppelin buster', d: 'Down an airship boss.', r: { md: 3 }, test: ev => ev.kind === 'boss' && ev.key === 'airship' },
   { id: 'storm10', name: 'Storm rider', d: 'Down 10 enemies inside storm cells, over any number of runs.', r: { cr: 800 }, test: ev => ev.kind === 'kill' && (save.life.storm || 0) >= 10 },
+  { id: 'daily1', name: 'Morning sortie', d: 'Fly a daily sortie.', r: { cr: 300 }, test: ev => ev.kind === 'daily' },
+  { id: 'daily5', name: 'Regular', d: 'Fly daily sorties on 5 different days.', r: { md: 4 }, test: ev => ev.kind === 'daily' && Object.keys(save.daily).length >= 5 },
   { id: 'kills1000', name: 'Thousand', d: 'Down 1,000 fighters, over any number of runs.', r: { cr: 2000 }, test: ev => ev.kind === 'kill' && save.totalKills + run.kills >= 1000 },
   { id: 'explorer', name: 'World tour', d: 'Open every location.', r: { cr: 1000 }, test: ev => ev.kind === 'boss' && LOC_ORDER.every(id => save.locs[id]) },
 ];
@@ -2575,18 +2640,29 @@ function endSurvival(reason) {
   const loc = era.loc.id, waves = run.cleared;
   const hadSkins = new Set(A.SKINS.filter(skinOwned).map(sk => sk.id));
   // a co-op run pays out like a solo one but doesn't count toward your solo best
-  const bk = bestKey(loc), prev = save.survBest[bk] || 0, record = waves > prev && !run.coop;
+  const bk = bestKey(loc), prev = save.survBest[bk] || 0, record = waves > prev && !run.coop && !run.daily;
   const heat = dangerOf(run.danger), pay = dangerPay(heat);
   const medals = Math.ceil((waves + 3 * run.bosses) * pay.md);
   const credits = Math.round((run.kills * 12 + waves * 30 + run.bosses * 250) * (0.8 + 0.2 * era.loc.threat) * run.mods.credMul * pay.cr) + run.bank;
   save.points += medals; save.credits += credits; save.runs++; save.totalKills += run.kills;
   if (record) save.survBest[bk] = waves;
+  let dnote = '';
+  if (run.daily) {
+    const D = run.daily, score = dailyScore(waves, run.kills, run.bosses), rec = save.daily[D.day] || { best: 0, tries: 0 };
+    rec.tries++; const beat = score > rec.best; if (beat) Object.assign(rec, { best: score, wave: waves, kills: run.kills });
+    save.daily[D.day] = rec; run.dailyScore = score;
+    // keep a month of days
+    Object.keys(save.daily).sort().slice(0, -30).forEach(k => delete save.daily[k]);
+    dnote = ' Daily sortie score ' + score.toLocaleString() + (beat ? (rec.tries > 1 ? ', your best today.' : '.') : ' (your best today is ' + rec.best.toLocaleString() + ').');
+    boardSubmit(D.day, { name: callsign(), score, wave: waves, kills: run.kills, bosses: run.bosses, plane: era.plane.short });
+    achEvent({ kind: 'daily' });
+  }
   const fresh = A.SKINS.filter(sk => skinOwned(sk) && !hadSkins.has(sk.id));
   persist();
   $('dbTitle').textContent = reason === 'bail' ? 'Run banked' : run.coop ? 'Team shot down' : 'Shot down';
   const held = upsHeld();
-  $('dbSub').textContent = (run.coop ? 'Your team survived ' : 'You survived ') + plural(waves, 'wave', 'waves') + ' over ' + era.name + ' in the ' + era.plane.short + '.' +
-    (run.coop ? ' Co-op runs don\'t count toward your solo best.' : record ? (prev ? ' New best here, up from ' + prev + '.' : ' New best here.') : ' Best here is ' + prev + '.') +
+  $('dbSub').textContent = dnote.trim() + (dnote ? ' ' : '') + (run.coop ? 'Your team survived ' : 'You survived ') + plural(waves, 'wave', 'waves') + ' over ' + era.name + ' in the ' + era.plane.short + '.' +
+    (run.coop ? ' Co-op runs don\'t count toward your solo best.' : run.daily ? '' : record ? (prev ? ' New best here, up from ' + prev + '.' : ' New best here.') : ' Best here is ' + prev + '.') +
     (run.bosses ? ' ' + plural(run.bosses, 'boss', 'bosses') + ' downed.' : '') + (run.unlocked.length ? ' You unlocked ' + run.unlocked.map(id => LOCS[id].name).join(' and ') + '.' : '') +
     (fresh.length ? ' New paint: ' + fresh.map(sk => sk.name).join(', ') + '.' : '') + (held.length ? ' Field upgrades: ' + held.join(', ') + '.' : '');
   $('dbStats').innerHTML = [['Waves', waves], ['Kills', run.kills], ['Credits', '+' + credits.toLocaleString()], ['Medals', '+' + medals]].map(([l, v]) => '<div><b>' + v + '</b><span>' + l + '</span></div>').join('');
@@ -2612,7 +2688,7 @@ function runSummary(waves, credits, medals) {
   if (ups.length || syns.length) h += '<div class="sumlabel">Build</div><div class="items">' + ups.map(u => '<span class="chip r-' + u.rar + '">' + esc(u.name) + (up(u.id) > 1 ? ' <b>×' + up(u.id) + '</b>' : '') + '</span>').join('') + syns.map(n => '<span class="chip syn">' + esc(n) + '</span>').join('') + '</div>';
   if (mods.length) h += '<div class="sumlabel">Danger</div><div class="items">' + mods.map(m => '<span class="chip r-cursed">' + esc(m) + '</span>').join('') + '</div>';
   if (st.ach.length) h += '<div class="sumlabel">Achievements</div><div class="items">' + st.ach.map(id => '<span class="chip got">' + esc(ACH_BY_ID[id].name) + ' <b>' + esc(rewardText(ACH_BY_ID[id].r)) + '</b></span>').join('') + '</div>';
-  const text = ['SKYBREAK · ' + era.name + ' · ' + era.plane.short + (run.coop ? ' · co-op' : '') + ' · danger ' + heat,
+  const text = [(run.daily ? 'SKYBREAK DAILY ' + run.daily.day + ' · score ' + dailyScore(waves, run.kills, run.bosses).toLocaleString() + '\n' : '') + 'SKYBREAK · ' + era.name + ' · ' + era.plane.short + (run.coop ? ' · co-op' : '') + ' · danger ' + heat,
     'Waves ' + waves + ' · kills ' + run.kills + ' · bosses ' + run.bosses + ' · ' + time,
     'Accuracy ' + acc + ' · best streak ' + st.bestStreak + ' · damage dealt ' + Math.round(total) + ', taken ' + Math.round(st.taken),
     dmg.length ? 'Damage: ' + dmg.map(([k, v]) => k + ' ' + Math.round(v / total * 100) + '%').join(', ') : '',
@@ -2658,11 +2734,11 @@ function startMission(type, node, opts) {
   // strike waves trade some fighters for ground or naval targets; storms can roll in on any wave from the fourth
   const nf = boss ? Math.ceil(run.wave / 2) : strike ? Math.ceil(run.wave * 0.7) : run.wave;
   // co-op: the host flies the enemies and every guest sees copies, so a guest's wave starts empty
-  run.mission.queue = coopGuest() ? [] : coopScaleWave(survivalWave(nf, skill), nf, skill);
-  run.mission.storms = coopGuest() ? coop.hz || [] : stormsFor(run.wave);
+  run.mission.queue = coopGuest() ? [] : daySeed('wave', () => coopScaleWave(survivalWave(nf, skill), nf, skill));
+  run.mission.storms = coopGuest() ? coop.hz || [] : daySeed('storm', () => stormsFor(run.wave));
   buildStorms(run.mission.storms);
   const gk = strike && !coopGuest() ? strikeKinds(run.wave) : [];
-  if (gk.length) placeGround(gk);
+  if (gk.length) daySeed('ground', () => placeGround(gk));
   run.mission.spawnT = 0;
   const tough = run.mission.queue.filter(s => s.ace || s.up).length;
   run.st.waveTaken = 0; run.st.waveSize = run.mission.queue.length + enemies.length + (boss ? 1 : 0);
@@ -3892,11 +3968,12 @@ $('dbCopy').addEventListener('click', () => {
   const done = ok => { $('dbCopy').textContent = ok ? 'Copied' : 'Copy failed'; setTimeout(() => { $('dbCopy').textContent = 'Copy summary'; }, 2000); };
   try { navigator.clipboard.writeText(lastSummary).then(() => done(true), () => done(false)); } catch (e) { done(false); }
 });
-$('dbAgain').addEventListener('click', () => (coopRoom() ? coopLaunch() : startSurvival()));
+$('dbAgain').addEventListener('click', () => (coopRoom() ? coopLaunch() : daily ? startDaily() : startSurvival()));
 
 function toHangar() {
   clearCombat();
   run = null; previewSkin = null;
+  endDaily();
   state = 'hangar'; showScreen('hangar'); $('hud').hidden = true; $('touch').hidden = true;
   setupShowcase();
   renderHangar();
@@ -4068,8 +4145,25 @@ function renderSurvival() {
     el.appendChild(b);
   });
   renderDanger();
+  renderDaily();
   const eq = equipped().map(id => PERK_BY_ID[id].name + ' ' + ROMAN[perkTier(PERK_BY_ID[id])]);
   $('survNote').textContent = 'You fly the ' + era.plane.name + ' with its ' + era.sec.name.toLowerCase() + (eq.length ? ', and ' + eq.join(', ') : ' and no perks equipped') + '. Pick another jet in the Hangar tab, its guns in Loadout, and your perks in Perks.';
+}
+function renderDaily() {
+  const el = $('dailyBox');
+  if (!el) return;
+  const day = dayKey(), D = dailySpec(day), X = ERAS[D.era], P = PLANES[D.plane], mine = save.daily[day];
+  const dz2 = Object.keys(D.danger).map(id => DANGER_BY_ID[id].name).join(', ');
+  boardFetch(day);
+  let tb = '';
+  if (board.day === day && board.top) tb = board.top.length ? '<ol>' + board.top.slice(0, 10).map(r => '<li><b>' + esc(r.name) + '</b><span>' + esc(r.plane || '') + ' · wave ' + (r.wave | 0) + '</span><span class="r">' + (r.score | 0).toLocaleString() + '</span></li>').join('') + '</ol>' : '<p class="note">No scores yet today. Be the first.</p>';
+  else if (board.err) tb = '<p class="note">The shared board is offline. Your scores are still kept here.</p>';
+  else tb = '<p class="note">Loading today\'s board…</p>';
+  const hist = Object.keys(save.daily).sort().reverse().filter(k => k !== day).slice(0, 5).map(k => k.slice(5) + ' · ' + save.daily[k].best.toLocaleString()).join('   ');
+  el.innerHTML = '<div class="label"><span>Daily sortie · ' + day + ' UTC</span><span>' + (mine ? 'Your best ' + mine.best.toLocaleString() + ' · ' + plural(mine.tries, 'try', 'tries') : 'Not flown yet today') + '</span></div>' +
+    '<div class="dailycard"><div class="dl"><b>' + LOCS[D.loc].name + ' · ' + X.name + ' · ' + P.short + '</b><span>Danger: ' + dz2 + '. Stock guns, no perks. Everyone gets the same waves, weather and upgrade offers today. Score: 1,000 a wave, 25 a kill, 500 a boss.</span>' +
+    (hist ? '<span class="hist">Earlier: ' + hist + '</span>' : '') + '<button class="btn" id="dailyGo"' + (coopRoom() ? ' disabled title="Leave the co-op room to fly the daily sortie"' : '') + '>Fly today\'s sortie</button></div><div class="board">' + tb + '</div></div>';
+  $('dailyGo').addEventListener('click', startDaily);
 }
 function renderDanger() {
   const el = $('dangerList'), guest = coopRoom() && !net.isHost;
