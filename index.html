@@ -1385,7 +1385,7 @@ function buildWorld() {
 
 // ================= aircraft meshes =================
 // every model, paint scheme and texture lives in assets.js
-const { JETS, BOSS_TURRETS, cyl, planeMesh, bossMesh } = A;
+const { JETS, turretsOf, cyl, planeMesh, bossMesh, groundMesh } = A;
 // gun pods hang under the pylons that carry one
 const podMat = new THREE.MeshStandardMaterial({ color: 0x737a74, metalness: 0.45, roughness: 0.5 }), podDark = new THREE.MeshStandardMaterial({ color: 0x2b2f2d, metalness: 0.6, roughness: 0.4 });
 const podParts = [[cyl(0.2, 0.2, 2.2, 12), podMat, 0, 0, 0], [cyl(0.03, 0.2, 0.5, 12), podMat, 0, 0, -1.35], [cyl(0.2, 0.12, 0.3, 12), podMat, 0, 0, 1.25],
@@ -1706,12 +1706,21 @@ class Plane {
   }
   kill(from) {
     this.dying = true; this.dieT = 0; this.fall = 0;
+    // a flak site or SAM launcher just blows up where it stands; ships sink
+    if (this.ground && !this.sink) { explosion(this.pos, 1.6); onPlaneDown(this, from); this.remove(); return; }
     if (this.boss) this.spin = 0.35;
     explosion(this.pos, this.boss ? 2 : 0.6, this.vel);
     onPlaneDown(this, from);
   }
   dyingUpdate(dt) {
     this.dieT += dt;
+    if (this.sink) {
+      this.pos.y -= (this.boss ? 1.4 : 2.2) * dt; this.mesh.rotateZ(0.03 * dt); this.mesh.rotateX(-0.015 * dt);
+      this.smokeT -= dt;
+      if (this.smokeT <= 0) { this.smokeT = 0.08; const k = this.boss ? 3 : 1.5; spawnFx(tv.copy(this.pos).add(tv2.set(rand(-6, 6) * k, 8, rand(-20, 20) * k)), { color: 0x222222, opacity: 0.65, size: 9 * k, grow: 2.5, life: 3, rise: 6 }); if (Math.random() < 0.4) spawnFx(this.pos, { add: true, color: 0xff8a33, size: 7 * k, grow: 0.5, life: 0.4 }); }
+      if (this.dieT > (this.boss ? 14 : 8)) this.remove();
+      return;
+    }
     this.mesh.rotateZ(this.spin * dt);
     this.axes();
     fA.crossVectors(this.fwd, fB.set(0, -1, 0));
@@ -1901,7 +1910,7 @@ function fireMissile(p, target, dmg, o) {
   o = o || {};
   const m = missileMesh(p.team);
   const side = (missiles.length % 2 ? 1 : -1);
-  m.position.copy(p.pos).addScaledVector(p.up, -1.2).addScaledVector(p.right, side * 2.4);
+  m.position.copy(p.pos).addScaledVector(p.up, o.lift || -1.2).addScaledVector(p.right, side * 2.4);
   m.quaternion.copy(p.quat);
   missiles.push({ mesh: m, pos: m.position, dir: (o.dir || p.fwd).clone(), speed: p.speed + (o.boost || 0), target, life: o.life || 8, smokeT: 0, owner: p, team: p.team, dmg: dmg || 75,
     turn: o.turn || 3.6, max: o.max || 720, g: o.g || 120, lead: o.lead == null ? 1 : o.lead, fuse: o.fuse || 16, flareChecked: false, burst: o.burst || 0, small: !!o.small, fake: coopFake });
@@ -1943,7 +1952,7 @@ function fireSecondary(st) {
   } else if (st.secId === 'rail') {
     // hitscan: everything within a few metres of the line down the nose takes the full hit
     railEnd.copy(player.pos).addScaledVector(player.fwd, S.range);
-    const hits = enemies.filter(e => validTarget(e) && segSphere(player.pos, railEnd, e.pos, (e.boss ? 24 : 11) * e.s.size));
+    const hits = enemies.filter(e => validTarget(e) && segSphere(player.pos, railEnd, e.pos, (e.boss && e.heavy ? 24 : 11) * e.s.size));
     missileHit = true; dmgSrc = S.name;
     for (const e of hits) e.damage(dmg, player);
     missileHit = false; dmgSrc = '';
@@ -1990,6 +1999,8 @@ function updateMissiles(dt) {
       const ang = m.dir.angleTo(want);
       // the seeker only sees about 60 degrees off its nose: break hard across it and it goes dumb
       if (ang > 1.05 && dist > m.fuse * 1.5) { m.target = null; if (t === player) popText('Missile defeated'); }
+      // storm cloud blinds the seeker
+      else if (storms.length && inStorm(t.pos) && Math.random() < dt * 0.7) { m.target = null; if (t === player) popText('Missile lost you in the storm'); }
       else {
         const maxTurn = Math.min(m.turn, m.g * 9.8 / Math.max(m.speed, 1)) * dt;
         if (ang > 1e-4) { tv2.crossVectors(m.dir, want).normalize(); m.dir.applyAxisAngle(tv2, Math.min(ang, maxTurn)); }
@@ -2009,7 +2020,7 @@ function updateMissiles(dt) {
     if (m.team === 0) {
       for (const e of enemies) {
         if (!e.alive || e.dying) continue;
-        const r = e.heavy ? 22 * (e.boss ? 1 : 0.6) + (m.burst ? m.fuse : 0) : m.fuse;
+        const r = e.heavy ? (e.boss ? 8.5 * e.s.size : e.ground ? 24 : 13) + (m.burst ? m.fuse : 0) : m.fuse;
         if (e.pos.distanceToSquared(m.pos) < r * r) { if (!m.burst && !m.fake) { missileHit = true; dmgSrc = era.sec.name; e.damage(m.dmg, m.owner); missileHit = false; dmgSrc = ''; } done = true; break; }
       }
       if (!done) done = coopMissileHitsMate(m);
@@ -2240,7 +2251,8 @@ function clearCombat() {
   for (const m of missiles) freeMissile(m);
   missiles.length = 0;
   for (const d of debris) { d.mesh.visible = false; debrisFree.push(d); }
-  debris.length = 0; killMarks.length = 0; hitStopT = 0;
+  debris.length = 0; killMarks.length = 0; hitStopT = 0; shells.length = 0;
+  clearStorms();
   if (player && player.mesh.parent) scene.remove(player.mesh);
   player = null;
   coopClear();
@@ -2416,7 +2428,7 @@ function offerPerks() {
       title: bossWave ? 'Boss down · pick an epic' : 'Wave ' + run.wave + ' cleared',
       sub: run.downNote + (run.synNote || '') + 'Hull ' + Math.round(run.hull) + ' / ' + maxHull() + '. Pick a field upgrade for the rest of the run. Three of one tag open a synergy' +
         (syns.length ? ' (online: ' + syns.join(', ') + ')' : '') + (held.length ? '. So far: ' + held.join(', ') : '') + '.' +
-        ' Wave ' + next + ' brings ' + plural(next, 'fighter', 'fighters') + (isBossWave(next) ? ' and the ' + era.boss.name.toLowerCase() : '') + '.',
+        ' Wave ' + next + ' brings ' + plural(next, 'fighter', 'fighters') + (isBossWave(next) ? ' and the ' + bossFor(next / bossEvery()).name : isStrikeWave(next) ? ', and ground targets to knock out' : '') + '.',
       cards,
       buttons: [
         run.rerolls > 0 && { label: 'Reroll (' + run.rerolls + ' left)', onClick: () => { run.rerolls--; picks = upgradeChoices(bossWave); render(); } },
@@ -2440,6 +2452,7 @@ const DANGER = [
   { id: 'norepair', name: 'No ground crew', max: 1, pts: 2, d: () => 'No field repairs or spare parts between waves.' },
   { id: 'noreroll', name: 'No second chances', max: 1, pts: 1, d: () => 'No rerolls.' },
   { id: 'rush', name: 'Boss rush', max: 1, pts: 3, d: () => 'A boss every 5 waves instead of every 10.' },
+  { id: 'storm', name: 'Foul weather', max: 1, pts: 1, d: () => 'Storm cells on every wave.' },
 ];
 const DANGER_BY_ID = Object.fromEntries(DANGER.map(d => [d.id, d]));
 const dangerOf = set => DANGER.reduce((a, d) => a + Math.min((set || {})[d.id] || 0, d.max) * d.pts, 0);
@@ -2481,6 +2494,11 @@ const ACH = [
   { id: 'ww2_10', name: 'The few', d: 'Clear wave 10 in the WW2 era.', r: { cr: 1200 }, test: ev => ev.kind === 'wave' && era.eraId === 'ww2' && run.wave >= 10 },
   { id: 'fut_10', name: 'Future shock', d: 'Clear wave 10 in the Future era.', r: { cr: 1200 }, test: ev => ev.kind === 'wave' && era.eraId === 'future' && run.wave >= 10 },
   { id: 'eras', name: 'Through the ages', d: 'Clear wave 5 in all three eras.', r: { md: 5 }, test: ev => ev.kind === 'wave' && ERA_ORDER.every(id => (save.life['era_' + id] || 0) >= 5) },
+  { id: 'ground25', name: 'Mud mover', d: 'Destroy 25 ground or naval targets, over any number of runs.', r: { cr: 1000 }, test: ev => ev.kind === 'kill' && (save.life.ground || 0) >= 25 },
+  { id: 'stealth', name: 'Shadow hunter', d: 'Down a stealth ace boss.', r: { cr: 1500 }, test: ev => ev.kind === 'boss' && ev.key === 'ace' },
+  { id: 'carrier', name: 'Flat-top', d: 'Down a carrier boss.', r: { md: 3 }, test: ev => ev.kind === 'boss' && ev.key === 'carrier' },
+  { id: 'airship', name: 'Zeppelin buster', d: 'Down an airship boss.', r: { md: 3 }, test: ev => ev.kind === 'boss' && ev.key === 'airship' },
+  { id: 'storm10', name: 'Storm rider', d: 'Down 10 enemies inside storm cells, over any number of runs.', r: { cr: 800 }, test: ev => ev.kind === 'kill' && (save.life.storm || 0) >= 10 },
   { id: 'kills1000', name: 'Thousand', d: 'Down 1,000 fighters, over any number of runs.', r: { cr: 2000 }, test: ev => ev.kind === 'kill' && save.totalKills + run.kills >= 1000 },
   { id: 'explorer', name: 'World tour', d: 'Open every location.', r: { cr: 1000 }, test: ev => ev.kind === 'boss' && LOC_ORDER.every(id => save.locs[id]) },
 ];
@@ -2606,16 +2624,25 @@ function startMission(type, node, opts) {
   if (run.mods.wingman) spawnAlly(run.mods.wingman);
   const skill = Math.min(0.2 + era.loc.threat * 0.06 + depth * 0.08, 0.97);
   // every tenth wave the location's boss flies in, with half the wave as escorts
-  const boss = isBossWave(run.wave);
+  const boss = isBossWave(run.wave), strike = isStrikeWave(run.wave);
+  run.mission.boss = boss ? bossFor(run.wave / bossEvery()) : null;
+  // strike waves trade some fighters for ground or naval targets; storms can roll in on any wave from the fourth
+  const nf = boss ? Math.ceil(run.wave / 2) : strike ? Math.ceil(run.wave * 0.7) : run.wave;
   // co-op: the host flies the enemies and every guest sees copies, so a guest's wave starts empty
-  run.mission.queue = coopGuest() ? [] : coopScaleWave(survivalWave(boss ? Math.ceil(run.wave / 2) : run.wave, skill), boss ? Math.ceil(run.wave / 2) : run.wave, skill);
+  run.mission.queue = coopGuest() ? [] : coopScaleWave(survivalWave(nf, skill), nf, skill);
+  run.mission.storms = coopGuest() ? coop.hz || [] : stormsFor(run.wave);
+  buildStorms(run.mission.storms);
+  const gk = strike && !coopGuest() ? strikeKinds(run.wave) : [];
+  if (gk.length) placeGround(gk);
   run.mission.spawnT = 0;
   const tough = run.mission.queue.filter(s => s.ace || s.up).length;
   run.st.waveTaken = 0; run.st.waveSize = run.mission.queue.length + enemies.length + (boss ? 1 : 0);
   const vnote = coopGuest() ? { line: '', intro: '' } : variantNote(run.mission.queue);
   if (boss && !coopGuest()) spawnBoss(depth, run.wave / bossEvery());
   for (let i = 0; i < survLive() && run.mission.queue.length; i++) spawnSpec(run.mission.queue.shift());
-  let sub = (boss ? 'The ' + era.boss.name.toLowerCase() + ' and ' + plural(run.mission.queue.length + enemies.length - 1, 'escort', 'escorts') : plural(run.mission.queue.length + enemies.length, 'fighter', 'fighters')) + ' inbound' + (tough ? ', ' + tough + ' of them tougher than the rest' : '');
+  const air = run.mission.queue.length + enemies.filter(e => !e.ground).length;
+  let sub = (boss ? 'The ' + run.mission.boss.name + ' and ' + plural(air - 1, 'escort', 'escorts') : (gk.length ? 'Strike: ' + strikeLine(gk) + ' below, and ' : '') + plural(air, 'fighter', 'fighters')) + ' inbound' + (tough ? ', ' + tough + ' of them tougher than the rest' : '');
+  if (run.mission.storms.length) sub += ' · storm cells in the area';
   lockTarget = null; locked = false; shake = 0; hurtT = 0; timeScale = 1; slowmoT = 0;
   state = 'playing';
   showScreen(null);
@@ -2626,7 +2653,7 @@ function startMission(type, node, opts) {
   if (vnote.intro) sub += '. ' + vnote.intro;
   if (coopGuest()) sub = coop.sub;
   run.mission.sub = sub;
-  flashMsg((boss ? 'BOSS WAVE ' : 'WAVE ') + run.wave, sub + (mouseMode() && !isTouch && !document.pointerLockElement ? ' · click to capture the mouse' : ''), vnote.intro ? 5 : 2.6);
+  flashMsg((boss ? 'BOSS WAVE ' : strike ? 'STRIKE WAVE ' : 'WAVE ') + run.wave, sub + (mouseMode() && !isTouch && !document.pointerLockElement ? ' · click to capture the mouse' : ''), vnote.intro ? 5 : 2.6);
   beep(660, 0.12, 0.12); setTimeout(() => beep(880, 0.16, 0.12), 140);
 }
 function objectiveText(alive) {
@@ -2685,33 +2712,312 @@ function spawnAlly(w) {
   a.missiles = w.missiles;
   allies.push(a);
 }
-// tier: 1 on wave 10, 2 on wave 20, and so on; each tier adds hull and gunners' damage
+// ---- bosses. The first boss wave brings the location's own boss; after that it takes turns with a stealth ace,
+// a carrier that launches fighters, and an armored airship (at sea the carrier comes first, and it's a ship) ----
+const EXTRA_BOSS = {
+  ace: { ww2: 'Der Graf, Me 262 ace', modern: 'Su-57 stealth ace', future: 'Reaper prime' },
+  carrier: { ww2: 'Akagi carrier', modern: 'Kuznetsov carrier', future: 'Tidebreaker carrier' },
+  skycarrier: { ww2: 'Horten flying carrier', modern: 'Sky carrier', future: 'Hive carrier' },
+  airship: { ww2: 'Graf Zeppelin airship', modern: 'Aerostat battleship', future: 'Cloud fortress' },
+};
+function bossFor(tier) {
+  const L = era.boss, E = era.eraId;
+  if (tier <= 1) return Object.assign({ key: 'loc' }, L);
+  const sea = era.loc.id === 'ocean', order = sea ? ['carrier', 'ace', 'airship'] : ['ace', 'airship', 'carrier'];
+  const key = order[(Math.round(tier) - 2) % 3];
+  const base = { key, hp: L.hp, alt: L.alt, speedFrac: L.speedFrac, turretRof: L.turretRof, turretDmg: L.turretDmg, accent: L.accent };
+  if (key === 'ace') return Object.assign(base, { kind: 'ace', name: EXTRA_BOSS.ace[E], model: era.X.tiers[era.X.tiers.length - 1], hp: L.hp * 0.3 });
+  if (key === 'airship') return Object.assign(base, { kind: 'airship', name: EXTRA_BOSS.airship[E], hp: L.hp * 1.5, alt: L.alt - 150, speedFrac: 0.16, size: 4.2, flak: true,
+    color: E === 'future' ? 0x23272c : E === 'ww2' ? 0x9a9686 : 0x8e9499, accent: E === 'future' ? 0x7fe9f2 : L.accent });
+  return Object.assign(base, sea
+    ? { kind: 'ship', ship: true, name: EXTRA_BOSS.carrier[E], hp: L.hp * 1.2, alt: 0, speedFrac: 0.05, size: 5.5, color: E === 'future' ? 0x2a2f36 : 0x5a6169 }
+    : { kind: 'wing', name: EXTRA_BOSS.skycarrier[E], hp: L.hp * 1.1, color: 0x3a3f45 }, { launch: true, flak: true });
+}
+// the radius of a circle around (cx, cz) that stays over open water, or 0
+function seaRing(cx, cz, rs) {
+  for (const r of rs) {
+    let ok = true;
+    for (let i = 0; i < 24 && ok; i++) { const a = i / 24 * Math.PI * 2; if (heightAt(cx + Math.cos(a) * r, cz + Math.sin(a) * r) > -8) ok = false; }
+    if (ok) return r;
+  }
+  return 0;
+}
+// tier: 1 on the first boss wave, 2 on the second, and so on; each tier adds hull and gunners' damage
 function spawnBoss(depth, tier) {
-  const b = era.boss;
-  const stats = { size: 2.6, minSpeed: era.minSpeed, maxSpeed: era.maxSpeed, corner: era.corner, gmax: 3, thrust: era.thrust, pitch: 0.3, roll: 0.5, yaw: 0.2, hp: Math.round(b.hp * (0.7 + 0.3 * tier) * coopHpMul() * run.mods.enemyHp * (1 + 0.2 * dz('armor'))) };
+  const b = run.mission.boss || bossFor(tier);
+  const hp = Math.round(b.hp * (0.7 + 0.3 * tier) * coopHpMul() * run.mods.enemyHp * (1 + 0.2 * dz('armor')));
+  if (b.kind === 'ace') return spawnAceBoss(b, hp);
+  const stats = { size: b.size || 2.6, minSpeed: era.minSpeed, maxSpeed: era.maxSpeed, corner: era.corner, gmax: 3, thrust: era.thrust, pitch: 0.3, roll: 0.5, yaw: 0.2, hp };
   const e = new Plane(stats, bossMesh(b.kind, b.color, b.accent), 1);
-  e.boss = true; e.heavy = true; e.ace = true; e.name = b.name; e.skill = 1; e.throttle = 0.9;
-  e.circR = 1700; e.alt = b.alt; e.circW = era.maxSpeed * b.speedFrac / e.circR;
+  bossFlags(e, b);
+  e.throttle = 0.9;
+  e.cx = 0; e.cz = 0;
+  e.circR = b.ship ? seaRing(0, 0, [1500, 2100, 1100, 2700, 800]) || 1500 : 1700; e.alt = b.alt; e.circW = era.maxSpeed * b.speedFrac / e.circR;
   e.circA = Math.atan2(coopAnchor().pos.z, coopAnchor().pos.x) + Math.PI;
-  e.turretRof = b.turretRof; e.turretDmg = b.turretDmg * (0.7 + depth * 0.06);
-  e.turrets = BOSS_TURRETS.map(t => ({ p: new V3(t[0], t[1], t[2]), cd: rand(0, 1.5) }));
+  e.turretDmg = b.turretDmg * (0.7 + depth * 0.06);
+  if (b.launch) e.launch = { t: 5, left: 3 + 2 * Math.round(tier) };
   e.pos.set(Math.cos(e.circA) * e.circR, e.alt, Math.sin(e.circA) * e.circR);
   enemies.push(e);
 }
+// what a boss is, shared by the host's real one and a guest's copy
+function bossFlags(e, b) {
+  e.boss = true; e.heavy = true; e.ace = true; e.name = b.name; e.skill = 1; e.bkey = b.key;
+  e.ship = !!b.ship; e.sink = !!b.ship;
+  e.turretRof = b.turretRof; e.turretDmg = b.turretDmg;
+  e.turrets = turretsOf(b.kind).map(t => ({ p: new V3(t[0], t[1], t[2]), cd: rand(0, 1.5) }));
+  if (b.flak) { e.flakR = 3000; e.flakCd = rand(1, 3); }
+}
+// the stealth ace: a fighter flown by the best pilot in the sky. It only shows up on the HUD inside 2.5 km and can only be locked inside 1.5 km
+function spawnAceBoss(b, hp) {
+  spawnEnemy(1, true, 'fighter', b.model);
+  const e = enemies[enemies.length - 1];
+  e.s = Object.assign({}, e.s, { hp, maxSpeed: e.s.maxSpeed * 1.06, thrust: e.s.thrust * 1.1 });
+  e.maxHp = e.hp = hp;
+  aceFlags(e, b);
+  e.missiles = era.X.noMissiles ? 2 : 6; e.mslCd = rand(4, 7);
+}
+function aceFlags(e, b) { e.boss = true; e.ace = true; e.name = b.name; e.bkey = 'ace'; e.cloak = true; e.vdef = { tag: 'STEALTH', seen: 2500 }; }
 function heavyUpdate(e, dt) {
   const prev = tv.copy(e.pos);
   if (e.boss) {
     e.circA += e.circW * dt;
-    e.pos.set(Math.cos(e.circA) * e.circR, e.alt + Math.sin(e.circA * 3) * 60, Math.sin(e.circA) * e.circR);
+    e.pos.set(e.cx + Math.cos(e.circA) * e.circR, e.alt + (e.ship ? 0 : Math.sin(e.circA * 3) * 60), e.cz + Math.sin(e.circA) * e.circR);
   }
   e.vel.subVectors(e.pos, prev).divideScalar(Math.max(dt, 1e-4));
   e.speed = e.vel.length();
   mm.lookAt(tv2.set(0, 0, 0), tv3.copy(e.vel).normalize(), Y_AXIS);
   e.quat.setFromRotationMatrix(mm);
-  if (e.boss) e.mesh.rotateZ(-0.12);
+  if (e.boss && !e.ship) e.mesh.rotateZ(-0.12);
   e.axes(); e.animate(dt); e.trails(dt);
+  if (e.ship) shipWake(e, dt);
+  // carriers put a fighter in the air every few seconds until the deck is empty
+  if (e.launch && e.launch.left > 0 && !(e.stunT > 0)) {
+    e.launch.t -= dt;
+    if (e.launch.t <= 0 && enemies.filter(validTarget).length < survLive() + 2) {
+      e.launch.t = 8; e.launch.left--;
+      spawnEnemy(Math.min(0.3 + era.loc.threat * 0.06 + run.mission.depth * 0.08, 0.97), false, 'fighter', era.enemy.model);
+      const f = enemies[enemies.length - 1];
+      f.pos.copy(e.pos).addScaledVector(e.up, e.ship ? 16 : -8).addScaledVector(e.fwd, e.ship ? -40 : 0);
+      f.quat.copy(e.quat); if (e.ship) f.mesh.rotateX(0.25); f.axes();
+      f.speed = f.s.maxSpeed * 0.6; f.vel.copy(f.fwd).multiplyScalar(f.speed);
+      popText(e.name + ' launching fighters');
+    }
+  }
+  if (!(e.stunT > 0)) flakFire(e, dt);
   turretFire(e, dt);
 }
+function shipWake(e, dt) {
+  e.wakeT = (e.wakeT || 0) - dt;
+  if (e.wakeT > 0 || camera.position.distanceToSquared(e.pos) > 4000 * 4000) return;
+  e.wakeT = 0.12;
+  const k = e.s.size;
+  spawnFx(tv.copy(e.pos).addScaledVector(e.fwd, 14 * k).setY(1), { color: 0xffffff, opacity: 0.5, size: 6 * k, grow: 2.2, life: 3 });
+  spawnFx(tv.copy(e.pos).addScaledVector(e.fwd, -12 * k).setY(1), { color: 0xffffff, opacity: 0.35, size: 3 * k, grow: 1.5, life: 1.2 });
+}
+
+// ---- ground and naval targets: strike waves bring flak batteries and SAM sites (warships at sea) that have to be
+// knocked out along with the fighters. Flak bursts near you; SAMs launch missiles from the ground ----
+const GROUND = {
+  aa: { size: 1.5, hp: 130, flakR: 2600, tag: 'FLAK', name: { ww2: '88 mm flak battery', modern: 'Flak battery', future: 'Pulse battery' }, one: 'flak battery', many: 'flak batteries' },
+  sam: { size: 1.6, hp: 110, sam: true, tag: 'SAM', name: { modern: 'SAM site', future: 'Lance missile battery' }, one: 'SAM site', many: 'SAM sites' },
+  boat: { size: 3.2, hp: 260, flakR: 2400, samEra: true, tag: 'SHIP', name: { ww2: 'Escort destroyer', modern: 'Missile corvette', future: 'Hover frigate' }, one: 'warship', many: 'warships' },
+};
+const isStrikeWave = w => w >= 3 && w % 4 === 3 && !isBossWave(w);
+function strikeKinds(w) {
+  const n = 2 + Math.floor(w / 8) + (coopHost() ? coopPilots() - 1 : 0), sea = era.loc.id === 'ocean', out = [];
+  for (let i = 0; i < n; i++) out.push(sea ? 'boat' : era.eraId !== 'ww2' && i % 3 === 2 ? 'sam' : 'aa');
+  return out;
+}
+const strikeLine = kinds => Object.keys(GROUND).map(k => { const n = kinds.filter(x => x === k).length; return n ? n + ' ' + (n > 1 ? GROUND[k].many : GROUND[k].one) : ''; }).filter(Boolean).join(', ');
+function groundColors(kind) {
+  if (era.eraId === 'future') return [0x2a2e33, 0x7fe9f2];
+  if (kind === 'boat') return [0x6b737b, 0xb3261e];
+  if (era.eraId === 'ww2') return [0x5d6448, 0xc8b25a];
+  return [/desert|canyon/.test(era.world.kind) ? 0xa08a64 : 0x5f6a5a, 0xf2c230];
+}
+// put the targets in a cluster somewhere around the middle of the arena, on land (or on open water for warships)
+function placeGround(kinds) {
+  const cx = rand(-700, 700), cz = rand(-700, 700);
+  for (const k of kinds) {
+    let x = cx, z = cz, r = 0;
+    for (let i = 0; i < 60; i++) {
+      const a = rand(0, Math.PI * 2), d = rand(120, 1400);
+      x = cx + Math.cos(a) * d; z = cz + Math.sin(a) * d;
+      if (k === 'boat') { r = seaRing(x, z, [260, 180, 110]); if (r) break; }
+      else if (!era.world.waterOp || heightAt(x, z) > 2) break;
+    }
+    spawnGround(k, x, z, r || 150);
+  }
+}
+function spawnGround(kind, x, z, r) {
+  const G = GROUND[kind], c = groundColors(kind), depth = run.mission.depth;
+  const hp = Math.round(G.hp * (1 + depth * 0.06) * coopHpMul() * run.mods.enemyHp * (1 + 0.2 * dz('armor')));
+  const e = new Plane({ size: G.size, maxSpeed: 1, hp }, groundMesh(kind, c[0], c[1]), 1);
+  groundFlags(e, kind);
+  e.pos.set(x, kind === 'boat' ? 0 : groundAt(x, z), z);
+  e.quat.setFromAxisAngle(Y_AXIS, rand(0, Math.PI * 2)); e.axes();
+  if (kind === 'boat') { e.cx = x - r; e.cz = z; e.circR = r; e.circA = 0; e.circW = (Math.random() < 0.5 ? 1 : -1) * 14 / r; }
+  enemies.push(e);
+}
+function groundFlags(e, kind) {
+  const G = GROUND[kind];
+  e.ground = kind; e.heavy = true; e.skill = 0.6; e.speed = 0; e.vel.set(0, 0, 0);
+  e.name = G.name[era.eraId] || G.name.modern; e.gtag = G.tag; e.sink = kind === 'boat';
+  e.flakR = G.flakR || 0; e.flakCd = rand(1, 3);
+  e.sam = !!(G.sam || (G.samEra && era.eraId !== 'ww2')); e.samCd = rand(4, 8);
+  e.dish = e.mesh.getObjectByName('dish');
+  if (kind === 'boat') {
+    e.turrets = [[0, 6, -15], [0, 6, 19]].map(t => ({ p: new V3(t[0], t[1], t[2]), cd: rand(0, 1.5) }));
+    e.turretRof = 3; e.turretDmg = 2 * (0.7 + (run.mission ? run.mission.depth : 0) * 0.06);
+  }
+}
+function groundUpdate(e, dt) {
+  if (e.ground === 'boat' && !e.puppet) {
+    const prev = tv.copy(e.pos);
+    e.circA += e.circW * dt;
+    e.pos.set(e.cx + Math.cos(e.circA) * e.circR, 0, e.cz + Math.sin(e.circA) * e.circR);
+    e.vel.subVectors(e.pos, prev).divideScalar(Math.max(dt, 1e-4)); e.speed = e.vel.length();
+    if (e.speed > 0.1) { mm.lookAt(tv2.set(0, 0, 0), tv3.copy(e.vel).normalize(), Y_AXIS); e.quat.setFromRotationMatrix(mm); e.axes(); }
+  }
+  if (e.ground === 'boat') shipWake(e, dt);
+  if (e.dish) e.dish.rotation.y += 1.2 * dt;
+  if (e.stunT > 0) { e.stunT -= dt; return; }
+  if (e.turrets) turretFire(e, dt);
+  flakFire(e, dt);
+  // only the host's real launcher fires SAMs; a guest sees them through the usual missile messages
+  if (e.sam && !e.puppet) samFire(e, dt);
+}
+function samFire(e, dt) {
+  e.samCd -= dt;
+  if (e.samCd > 0) return;
+  let tgt = null, td = 4500;
+  for (const t of [player].concat(coopMatePlanes(), allies)) {
+    if (!validTarget(t) || inStorm(t.pos)) continue;
+    const d = t.pos.distanceTo(e.pos);
+    if (d > 600 && d < td) { td = d; tgt = t; }
+  }
+  if (!tgt) { e.samCd = 1.5; return; }
+  e.samCd = rand(10, 14);
+  if (tgt === player && Math.random() < era.stealth) return;
+  const dir = tv.subVectors(tgt.pos, e.pos).normalize(); dir.y = Math.max(dir.y, 0) + 0.6; dir.normalize();
+  fireMissile(e, tgt, 24 + 3 * era.loc.threat, Object.assign({}, era.X.msl || { turn: 2.0, max: 640, g: 62, lead: 1, life: 7, fuse: 20 }, { dir: dir.clone(), boost: 160, lift: e.ground === 'boat' ? 10 : 6, life: 9 }));
+  spawnFx(e.pos, { color: 0xdddddd, opacity: 0.6, size: 14, grow: 2, life: 2, rise: 4 });
+  if (tgt === player) popText((e.ground === 'boat' ? 'Ship' : 'SAM') + ' launch!');
+}
+// flak: a shell fused to burst where it thinks you'll be. Each client fires its own copies at its own jet
+const shells = [];
+function flakFire(e, dt) {
+  if (!e.flakR) return;
+  e.flakCd -= dt;
+  if (e.flakCd > 0) return;
+  let tgt = null, td = e.flakR;
+  for (const t of [player].concat(allies)) { if (!validTarget(t)) continue; const d = t.pos.distanceTo(e.pos); if (d < td) { td = d; tgt = t; } }
+  if (!tgt) { e.flakCd = 0.5; return; }
+  e.flakCd = rand(0.9, 1.6) * (e.boss ? 0.6 : 1);
+  const tt = clamp(td / 750, 0.4, 4), err = 25 + td * 0.035;
+  const at = tgt.pos.clone().addScaledVector(tgt.vel, tt).add(tv.set(rand(-1, 1), rand(-1, 1), rand(-1, 1)).multiplyScalar(err));
+  shells.push({ pos: at, t: tt, dmg: 5 * (0.7 + (run.mission ? run.mission.depth : 0) * 0.06), src: e });
+  if (camera.position.distanceToSquared(e.pos) < 2500 * 2500) spawnFx(tv2.copy(e.pos).addScaledVector(e.up, 4 * e.s.size), { add: true, color: 0xffd080, size: 4 * e.s.size, life: 0.1 });
+}
+function updateShells(dt) {
+  const fut = era.eraId === 'future';
+  for (let i = shells.length - 1; i >= 0; i--) {
+    const sh = shells[i];
+    sh.t -= dt;
+    if (sh.t > 0) continue;
+    shells[i] = shells[shells.length - 1]; shells.pop();
+    spawnFx(sh.pos, { add: true, color: fut ? 0x7fe9f2 : 0xffb050, size: 14, grow: 1.2, life: 0.18 });
+    spawnFx(sh.pos, { color: fut ? 0x2a3a40 : 0x2b2b2b, opacity: 0.8, size: 16, grow: 1.8, life: 2.6, rise: 1.5 });
+    for (const t of [player].concat(allies)) {
+      if (!validTarget(t)) continue;
+      const d = t.pos.distanceTo(sh.pos);
+      if (d < 60) { t.damage(sh.dmg * (1 - d / 60) * 1.6, sh.src); if (t === player) { hurtT = Math.max(hurtT, 0.3); addShake(0.45); } }
+      else if (t === player && d < 180) addShake(0.2 * (1 - d / 180));
+    }
+    const cd = camera.position.distanceTo(sh.pos);
+    if (cd < 2200) burst(0.3, 240, clamp(0.28 - cd / 8000, 0.03, 0.25), 'lowpass');
+  }
+}
+
+// ---- weather: storm cells. Inside one the air is rough, fog closes in and nothing can be locked; thunderheads throw
+// lightning at whatever flies through, and in the desert and the canyon they're dust storms with even rougher air ----
+let storms = [], stormGroup = null, stormFog = 0;
+const boltMat = new THREE.LineBasicMaterial({ color: 0xf4f8ff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false });
+function stormsFor(w) {
+  if (Math.random() >= (dz('storm') ? 1 : w >= 4 ? 0.3 : 0)) return [];
+  const dust = /desert|canyon/.test(era.world.kind) ? 1 : 0, out = [], n = 2 + Math.floor(Math.random() * 2);
+  for (let i = 0; i < n; i++) { const a = rand(0, Math.PI * 2), d = rand(400, 2600); out.push([Math.round(Math.cos(a) * d), Math.round(Math.sin(a) * d), Math.round(rand(420, 680)), dust]); }
+  return out;
+}
+function inStorm(p) {
+  for (const c of storms) { const dx = p.x - c.x, dz2 = p.z - c.z; if (p.y < c.top && dx * dx + dz2 * dz2 < c.r * c.r) return c; }
+  return null;
+}
+function clearStorms() {
+  if (stormGroup) { scene.remove(stormGroup); stormGroup.traverse(o => { if (o.material) o.material.dispose(); }); stormGroup = null; }
+  storms = []; stormFog = 0;
+  if (scene.fog && era) { scene.fog.near = era.world.fogNear; scene.fog.far = era.world.fogFar; }
+}
+function buildStorms(list) {
+  clearStorms();
+  storms = list.map(([x, z, r, dust]) => ({ x, z, r, dust: !!dust, top: 2700, boltT: rand(1, 4), turb: new V3(), turbT: 0 }));
+  if (!storms.length) return;
+  stormGroup = new THREE.Group();
+  const fogC = new THREE.Color(era.world.fog);
+  for (const c of storms) {
+    const col = c.dust ? new THREE.Color(0xb48a5c).lerp(fogC, 0.3) : new THREE.Color(0x4c535e);
+    const mats = [0.75, 0.95, 1.15].map(k => new THREE.SpriteMaterial({ map: A.textures.cloud, color: col.clone().multiplyScalar(k), transparent: true, opacity: c.dust ? 0.6 : 0.85, depthWrite: false }));
+    const g0 = groundAt(c.x, c.z);
+    for (let i = 0; i < 18; i++) {
+      const k = i / 17, a = rand(0, Math.PI * 2), d = rand(0, c.r * 0.4), sz = c.r * (2 + (k > 0.8 ? 1.4 : 0) + rand(0, 0.4));
+      const spr = new THREE.Sprite(mats[Math.min(2, Math.floor(k * 3))]);
+      spr.position.set(c.x + Math.cos(a) * d, g0 + 100 + k * (c.top - g0 - 200), c.z + Math.sin(a) * d);
+      spr.scale.set(sz, sz * 0.7, 1);
+      stormGroup.add(spr);
+    }
+  }
+  scene.add(stormGroup);
+}
+function bolt(a, b) {
+  const pts = [], n = 12;
+  for (let i = 0; i <= n; i++) { const p = new V3().lerpVectors(a, b, i / n); if (i && i < n) p.add(new V3(rand(-40, 40), rand(-20, 20), rand(-40, 40))); pts.push(p); }
+  const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), boltMat);
+  line.userData.life = 0.22; scene.add(line); arcs.push(line);
+  spawnFx(a, { add: true, color: 0xdfe8ff, opacity: 0.6, size: 700, life: 0.16 });
+  spawnFx(b, { add: true, color: 0xffffff, size: 40, life: 0.2 });
+  const d = camera.position.distanceTo(b);
+  if (d < 6000) setTimeout(() => burst(1.4, 90, clamp(0.5 - d / 12000, 0.05, 0.45), 'lowpass'), Math.min(3000, d / 0.34));
+}
+function updateStorms(dt) {
+  if (!storms.length) return;
+  const here = validTarget(player) ? inStorm(player.pos) : null;
+  stormFog = lerp(stormFog, here ? 1 : 0, 1 - Math.exp(-2 * dt));
+  scene.fog.near = lerp(era.world.fogNear, 30, stormFog); scene.fog.far = lerp(era.world.fogFar, here && here.dust ? 650 : 1100, stormFog);
+  for (const c of storms) {
+    // rough air: a fresh gust every third of a second for everything inside
+    c.turbT -= dt;
+    if (c.turbT <= 0) { c.turbT = rand(0.2, 0.45); const k = c.dust ? 1.5 : 1; c.turb.set(rand(-1, 1) * k, rand(-1, 1) * k, rand(-1, 1) * k); }
+    if (here === c) {
+      player.ang.x += c.turb.x * 9 * dt; player.ang.z += c.turb.z * 14 * dt; player.vel.y += c.turb.y * 30 * dt;
+      addShake(0.14 * (c.dust ? 1.4 : 1));
+      if (!c.told) { c.told = true; popText(c.dust ? 'Dust storm · no locks in here' : 'Storm cell · no locks in here'); }
+    }
+    for (const e of enemies) if (!e.heavy && !e.puppet && validTarget(e) && inStorm(e.pos) === c) { e.ang.x += c.turb.x * 6 * dt; e.ang.z += c.turb.z * 10 * dt; }
+    if (c.dust) continue;
+    c.boltT -= dt;
+    if (c.boltT > 0) continue;
+    c.boltT = rand(2.5, 6);
+    // a guest's lightning only strikes their own jet; the host's strikes everything it flies
+    const pool = [player].concat(allies, coopGuest() ? [] : enemies.filter(e => !e.heavy)).filter(t => validTarget(t) && inStorm(t.pos) === c);
+    const t = pool.length && Math.random() < 0.6 ? pool[Math.floor(Math.random() * pool.length)] : null;
+    const end = t ? t.pos.clone() : new V3(c.x + rand(-0.7, 0.7) * c.r, 0, c.z + rand(-0.7, 0.7) * c.r);
+    if (!t) end.y = groundAt(end.x, end.z);
+    bolt(new V3(end.x + rand(-150, 150), c.top - 400, end.z + rand(-150, 150)), end);
+    if (t === player) { player.damage(10 + 2 * era.loc.threat, null); hurtT = 0.5; addShake(0.8); popText('Lightning strike!'); }
+    else if (t) t.damage(t.ally ? 20 : 35, null);
+  }
+}
+
 // gunners shoot at whoever is closest
 function turretFire(e, dt) {
   let tgt = null, td = 1000;
@@ -2738,7 +3044,9 @@ function onPlaneDown(p, from) {
 }
 function creditKill(p, msl) {
   run.kills++;
-  popText(p.boss ? 'Boss down' : p.ace ? 'Ace down' : 'Splash one');
+  popText(p.boss ? 'Boss down' : p.ground ? (p.sink ? 'Ship sunk' : 'Target destroyed') : p.ace ? 'Ace down' : 'Splash one');
+  if (p.ground) save.life.ground = (save.life.ground || 0) + 1;
+  if (p.pos && inStorm(p.pos)) save.life.storm = (save.life.storm || 0) + 1;
   hitStop(p.boss ? 0.22 : p.ace ? 0.11 : 0.055);
   const st = run.st, now = st.t;
   if (p.ace && !p.boss) { st.aces++; save.life.aces = (save.life.aces || 0) + 1; }
@@ -2764,8 +3072,9 @@ function bossDown() {
   if (next && !save.locs[next]) { save.locs[next] = true; run.unlocked.push(next); }
   save.dangerBest[loc] = Math.max(save.dangerBest[loc] || 0, dangerOf(run.danger));
   persist();
-  achEvent({ kind: 'boss' });
-  flashMsg('TARGET DESTROYED', era.boss.name + ' is going down' + (run.unlocked.includes(next) ? ' · ' + LOCS[next].name + ' unlocked' : ''), 3);
+  const b = (run.mission && run.mission.boss) || era.boss;
+  achEvent({ kind: 'boss', key: b.key });
+  flashMsg('TARGET DESTROYED', b.name + (b.ship ? ' is sinking' : ' is going down') + (run.unlocked.includes(next) ? ' · ' + LOCS[next].name + ' unlocked' : ''), 3);
 }
 
 // ---------------- pilots ----------------
@@ -2775,7 +3084,7 @@ function pickTarget(e) {
     // with Cover me, fighters going after you count as much closer
     let best = null, bd = Infinity;
     for (const o of enemies) {
-      if (!validTarget(o)) continue;
+      if (!validTarget(o) || o.ground) continue;
       const onMe = e.cover && (o.target === player || (o.puppet && net && o.tgt === net.slot));
       const d = o.pos.distanceTo(e.pos) * (o.heavy ? 1.5 : 1) * (onMe ? 0.2 : 1);
       if (d < bd) { bd = d; best = o; }
@@ -2837,7 +3146,7 @@ function aiControl(e, dt) {
   const hunter = e.vdef && e.vdef.standoff;
   if (e.state === 'attack' && t && e.missiles > 0 && e.mslCd <= 0 && dist > 500 && dist < (hunter ? 3800 : 3000) && e.fwd.dot(dirT) > (hunter ? 0.9 : 0.93)) {
     e.mslCd = hunter ? rand(6, 9) : rand(9, 16);
-    if (!(t === player && Math.random() < era.stealth)) {
+    if (!(t === player && Math.random() < era.stealth) && !inStorm(t.pos)) {
       e.missiles--;
       fireMissile(e, t, e.ally ? 60 * e.gunMul : 26 + 4 * era.loc.threat, e.ally ? null : Object.assign({}, era.X.msl || { turn: 2.0, max: 640, g: 62, lead: 1, life: 7, fuse: 20 }));
       if (t === player) popText(era.X.mslWord + ' launch!');
@@ -2869,7 +3178,8 @@ function steer(e, desired, c) {
   }
   if (e.aoa > (e.s.stallAoa || STALL_AOA) * 0.9) c.pitch = Math.min(c.pitch, 0);
 }
-const lockable = e => !(e.vdef && e.vdef.noLock);
+// ghosts can't be locked; a stealth ace only up close; nothing inside a storm cell
+const lockable = e => !(e.vdef && e.vdef.noLock) && !(e.cloak && player && e.pos.distanceToSquared(player.pos) > 1500 * 1500) && !inStorm(e.pos);
 function noseTarget(range, cone) {
   let best = null, bestA = cone;
   // teammates can be locked too: friendly fire is on
@@ -2989,7 +3299,7 @@ function updatePlaying(dt) {
       e.flybyT = (e.flybyT || 0) - dt;
       const fd2 = e.pos.distanceToSquared(player.pos);
       if (e.flybyT <= 0 && fd2 < 160 * 160 && tv.subVectors(e.vel, player.vel).lengthSq() > 140 * 140) { e.flybyT = 4; whoosh(clamp(0.5 - Math.sqrt(fd2) / 400, 0.1, 0.45)); addShake(0.12); }
-      const rr = (e.boss ? 16 : 8) * player.s.size;
+      const rr = (e.boss && e.heavy ? 16 : 8) * player.s.size;
       if (e.pos.distanceToSquared(player.pos) < rr * rr) {
         if (e.heavy) player.damage(999, e);
         else { withSrc('Ramming', () => e.damage(999, player)); player.damage(45, e); }
@@ -3011,6 +3321,7 @@ function updatePlaying(dt) {
       if (!e.alive) continue;
       if (e.dying) { e.dyingUpdate(dt); continue; }
       if (e.puppet) { coopPuppetUpdate(e, dt); continue; }
+      if (e.ground) { groundUpdate(e, dt); continue; }
       if (e.heavy) { heavyUpdate(e, dt); continue; }
       const c = aiControl(e, dt);
       e.fly(dt, c);
@@ -3027,6 +3338,8 @@ function updatePlaying(dt) {
   allies = allies.filter(a => a.alive);
   updateBullets(dt);
   updateMissiles(dt);
+  updateShells(dt);
+  updateStorms(dt);
 
   // mission flow (in co-op the host runs it while any pilot is still flying, and tells the guests)
   const teamLive = live || coopAnyMateUp();
@@ -3292,7 +3605,7 @@ function drawHud(dt) {
       const b = (x, y, dx, dy) => { hud.beginPath(); hud.moveTo(x + dx * s * 0.45, y); hud.lineTo(x, y); hud.lineTo(x, y + dy * s * 0.45); hud.stroke(); };
       b(p.x - s, p.y - s, 1, 1); b(p.x + s, p.y - s, -1, 1); b(p.x - s, p.y + s, 1, -1); b(p.x + s, p.y + s, -1, -1);
       hud.fillStyle = col;
-      hud.fillText((d >= 1000 ? (d / 1000).toFixed(1) + 'km' : Math.round(d) + 'm') + (e.boss ? ' BOSS' : e.ace ? ' ACE' : e.vdef ? ' ' + e.vdef.tag : ''), p.x, p.y + s + 14);
+      hud.fillText((d >= 1000 ? (d / 1000).toFixed(1) + 'km' : Math.round(d) + 'm') + (e.boss ? ' BOSS' : e.ground ? ' ' + e.gtag : e.ace ? ' ACE' : e.vdef ? ' ' + e.vdef.tag : ''), p.x, p.y + s + 14);
       // health tick
       hud.fillStyle = 'rgba(0,0,0,0.5)'; hud.fillRect(p.x - s, p.y - s - 7, s * 2, 3);
       hud.fillStyle = col; hud.fillRect(p.x - s, p.y - s - 7, s * 2 * (e.hp / e.maxHp), 3);
@@ -3376,6 +3689,15 @@ function drawHud(dt) {
   hud.beginPath(); hud.arc(cx, cy, R / 2, 0, Math.PI * 2); hud.stroke();
   const heading = Math.atan2(player.fwd.x, -player.fwd.z);
   const rr = 3000;
+  for (const c of storms) {
+    const dx = c.x - player.pos.x, dz = c.z - player.pos.z, sh = Math.sin(heading), ch = Math.cos(heading);
+    const ahead = dx * sh - dz * ch, rt = dx * ch + dz * sh, d = Math.hypot(ahead, rt);
+    if (d - c.r > rr) continue;
+    const a2 = Math.atan2(ahead, rt), k = Math.min(d / rr, 1.4) * R;
+    hud.save(); hud.beginPath(); hud.arc(cx, cy, R, 0, Math.PI * 2); hud.clip();
+    hud.fillStyle = c.dust ? 'rgba(200,160,110,0.25)' : 'rgba(160,170,190,0.25)';
+    hud.beginPath(); hud.arc(cx + Math.cos(a2) * k, cy - Math.sin(a2) * k, c.r / rr * R, 0, Math.PI * 2); hud.fill(); hud.restore();
+  }
   for (const e of sorted.concat(allies.filter(a => a.alive && !a.dying), coopMatePlanes().filter(validTarget))) {
     if (e.vdef && e.vdef.seen && e.pos.distanceTo(player.pos) > e.vdef.seen) continue;
     const dx = e.pos.x - player.pos.x, dz = e.pos.z - player.pos.z;
@@ -3383,7 +3705,8 @@ function drawHud(dt) {
     const ahead = east * sh + north * ch, rt = east * ch - north * sh;
     const dd = Math.min(Math.hypot(ahead, rt) / rr * R, R - 3), a2 = Math.atan2(ahead, rt);
     hud.fillStyle = e.ally || e.mateSlot != null ? '#8fd69a' : e.ace ? red : e.vdef && e.vdef.noLock ? ghostCol : amber;
-    hud.fillRect(cx + Math.cos(a2) * dd - 2.5, cy - Math.sin(a2) * dd - 2.5, 5, 5);
+    if (e.ground) { hud.strokeStyle = hud.fillStyle; hud.lineWidth = 1.5; hud.strokeRect(cx + Math.cos(a2) * dd - 3, cy - Math.sin(a2) * dd - 3, 6, 6); hud.lineWidth = 1; }
+    else hud.fillRect(cx + Math.cos(a2) * dd - 2.5, cy - Math.sin(a2) * dd - 2.5, 5, 5);
   }
   for (const m of missiles) {
     if (m.team === 0) continue;
@@ -4193,7 +4516,9 @@ function coopUpdate(dt) {
   for (const m of coop.mates.values()) coopMateUpdate(m, dt);
 }
 function enemyDef(e) {
-  if (e.boss) return { b: 1, hp: Math.round(e.maxHp), td: e.turretDmg, tr: e.turretRof };
+  if (e.ground) return { g: e.ground, hp: Math.round(e.maxHp) };
+  if (e.boss && e.heavy) return { b: 1, k: e.bkey, hp: Math.round(e.maxHp), td: e.turretDmg, tr: e.turretRof };
+  if (e.boss) return { b: 1, k: 'ace', m: e.model, hp: Math.round(e.maxHp), sz: e.s.size, sk: 1, ar: 0 };
   return { m: e.model, ace: e.ace ? 1 : 0, v: e.variant, hp: Math.round(e.maxHp), sz: e.s.size, sk: n1(e.skill || 0.5), ar: e.s.armor || 0 };
 }
 function coopSendWorld() {
@@ -4222,15 +4547,20 @@ function coopInterp(p, s, dt) {
 // ---- guests: the host's enemies ----
 function makePuppet(id, d) {
   let e;
-  if (d.b) {
-    const b = era.boss;
-    e = new Plane({ size: 2.6, maxSpeed: era.maxSpeed, hp: d.hp }, bossMesh(b.kind, b.color, b.accent), 1);
-    e.boss = true; e.heavy = true; e.ace = true; e.name = b.name; e.skill = 1;
-    e.turretRof = d.tr; e.turretDmg = d.td; e.turrets = BOSS_TURRETS.map(t => ({ p: new V3(t[0], t[1], t[2]), cd: rand(0, 1.5) }));
+  const b = (run.mission && run.mission.boss) || bossFor(1);
+  if (d.g) {
+    const c = groundColors(d.g);
+    e = new Plane({ size: GROUND[d.g].size, maxSpeed: 1, hp: d.hp }, groundMesh(d.g, c[0], c[1]), 1);
+    groundFlags(e, d.g);
+  } else if (d.b && d.k !== 'ace') {
+    e = new Plane({ size: b.size || 2.6, maxSpeed: era.maxSpeed, hp: d.hp }, bossMesh(b.kind, b.color, b.accent), 1);
+    bossFlags(e, b);
+    e.turretRof = d.tr; e.turretDmg = d.td;
   } else {
     const j = ENEMY_JETS[d.m] || ENEMY_JETS[era.enemy.model];
     e = new Plane({ size: d.sz, maxSpeed: j.flight.maxSpeed, hp: d.hp, armor: d.ar }, lodPlane(d.m, d.ace ? 'ace' : d.v || d.m), 1);
     e.ace = !!d.ace; e.variant = d.v || null; e.vdef = VARIANTS[d.v] || null; e.skill = d.sk; e.model = d.m;
+    if (d.b) aceFlags(e, b);
   }
   e.puppet = true; e.nid = id; e.gunCd = rand(0, 0.3);
   e.damage = function (amount, from) { coopHitEnemy(this, amount, from); };
@@ -4265,7 +4595,8 @@ function coopPuppetUpdate(e, dt) {
   e.animate(dt); e.trails(dt);
   if (e.stunned) return;
   // the copy fires real rounds here when the host's fighter fires, so its guns can hit you
-  if (e.heavy) { if (e.turrets) turretFire(e, dt); return; }
+  if (e.ground) { groundUpdate(e, dt); return; }
+  if (e.heavy) { if (e.ship) shipWake(e, dt); if (e.turrets) turretFire(e, dt); flakFire(e, dt); return; }
   e.gunCd -= dt;
   if (e.firing && e.gunCd <= 0) enemyGun(e, 0.7 + run.mission.depth * 0.06, e.tgt === net.slot);
 }
@@ -4385,7 +4716,7 @@ function coopFlakHitsMates(m) {
 }
 const coopDownLine = from => (from && from.mateSlot != null ? 'Shot down by ' + nameOf(from.mateSlot) + '. ' : '') + 'You\'re back in after this wave';
 function coopDown(from) { if (run.coop) coop.downBy = from && from.mateSlot != null ? from.mateSlot : -1; }
-function coopKillBy(slot, p) { if (coopHost()) net.send({ t: 'k', b: p.boss ? 1 : 0, a: p.ace ? 1 : 0, m: missileHit ? 1 : 0 }, slot); }
+function coopKillBy(slot, p) { if (coopHost()) net.send({ t: 'k', b: p.boss ? 1 : 0, a: p.ace ? 1 : 0, g: p.ground ? 1 : 0, s: p.sink ? 1 : 0, m: missileHit ? 1 : 0 }, slot); }
 function coopBossDown() { if (coopHost()) coopSend({ t: 'bd' }); }
 
 // ---- missiles: everyone sees everyone's, but only the shooter's copy (or the host's, for enemies) does damage ----
@@ -4444,7 +4775,7 @@ function coopCheckReady() {
   coop.ready.clear(); coop.waiting = false;
   run.downNote = ''; coop.downBy = -1;
   coopGo = true; nextWave(); coopGo = false;
-  net.send({ t: 'wave', n: run.wave, sub: run.mission.sub, pilots: coop.members.size });
+  net.send({ t: 'wave', n: run.wave, sub: run.mission.sub, pilots: coop.members.size, hz: run.mission.storms });
 }
 function coopRespawnPenalty() {
   const ids = Object.keys(run.up).filter(id => run.up[id] > 0 && UP_BY_ID[id].rar !== 'cursed');
@@ -4489,7 +4820,7 @@ function coopMessage(f, msg) {
       missileHit = !!msg.m; e.damage(msg.d, (m && m.p) || { mateSlot: f }); missileHit = false;
       break;
     }
-    case 'k': if (coopOn()) creditKill({ boss: msg.b, ace: msg.a }, msg.m); break;
+    case 'k': if (coopOn()) creditKill({ boss: msg.b, ace: msg.a, ground: msg.g, sink: msg.s }, msg.m); break;
     case 'bd': if (coopGuest() && !run.over) bossDown(); break;
     case 'ff':
       if (coopOn() && player && validTarget(player)) {
@@ -4523,7 +4854,7 @@ function coopMessage(f, msg) {
     case 'rd': if (coopGuest()) { coop.ready = new Set(msg.r); coopWaiting(); } break;
     case 'wave':
       if (!coopGuest() || run.over) break;
-      coop.sub = msg.sub; coop.queue = 0; coop.ready.clear(); coop.waiting = false;
+      coop.sub = msg.sub; coop.hz = msg.hz || []; coop.queue = 0; coop.ready.clear(); coop.waiting = false;
       run.wave = msg.n - 1; run.downNote = ''; coop.downBy = -1;
       coopGo = true; nextWave(); coopGo = false;
       break;

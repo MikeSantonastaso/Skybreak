@@ -25,10 +25,22 @@ A browser prototype of a roguelike jet dogfighting game. Pick a location and a j
 | No ground crew | 2 | No field repairs or spare parts between waves |
 | No second chances | 1 | No rerolls |
 | Boss rush | 3 | A boss every 5 waves instead of every 10 |
+| Foul weather | 1 | Storm cells on every wave |
 
 - The highest danger at which you've downed each location's boss is saved and shown on the location card and the Records tab.
-- **Achievements** (Records tab): 22 feats, from First blood to Into the fire (wave 10 at danger 10). They pay credits or medals, or unlock paint schemes (Ace hunter, Hazard stripes, Inferno, Squadron colours, Hexed), perks (Gun-kill bounty, Big warheads) or a free F-16C. A toast pops up the moment you earn one.
+- **Achievements** (Records tab): 27 feats, from First blood to Into the fire (wave 10 at danger 10). They pay credits or medals, or unlock paint schemes (Ace hunter, Hazard stripes, Inferno, Squadron colours, Hexed), perks (Gun-kill bounty, Big warheads) or a free F-16C. A toast pops up the moment you earn one.
 - **Run summary:** the debrief shows time flown, accuracy, damage dealt and taken, best kill streak, damage split by weapon (each gun, the special, wingman, ricochets, arc rounds and so on), your build with its synergies, the danger modifiers and any achievements, and **Copy summary** puts a text version on the clipboard to share.
+
+## Strike waves, weather and bosses
+
+- **Strike waves** (waves 3, 7, 11 and every fourth wave after, unless it's a boss wave) bring ground targets that have to be knocked out along with the fighters, and a few fewer fighters to make room. Over land they're flak batteries, which burst shells around you out to about 2.5 km, and (in the Modern and Future eras) SAM sites, which launch missiles from the ground. At sea they're warships that circle on open water with flak, deck guns and, after WW2, missiles. Ground targets show as hollow squares on the radar.
+- **Storm cells** can roll in on any wave from the fourth (about one wave in three, or every wave with the Foul weather modifier). They show as grey patches on the radar. Inside one the air is rough, the fog closes in and nothing can be locked, by you or the enemy, and a missile that follows you in can lose you. Thunderheads throw lightning at whatever flies through (enemies included); in the desert and the canyon they're dust storms with no lightning but rougher air.
+- **More bosses:** the first boss wave brings the location's own boss. After that it takes turns with three others, each named for the era:
+  - a **stealth ace** (Su-57 stealth ace, Der Graf in an Me 262, Reaper prime): a fighter flown by the best pilot in the sky, which only shows on the HUD inside 2.5 km and can only be locked inside 1.5 km;
+  - a **carrier** that launches fighters every few seconds until it goes down: a warship circling at sea (Kuznetsov, Akagi, Tidebreaker), a flying carrier anywhere else;
+  - an **airship** (Graf Zeppelin, Aerostat battleship, Cloud fortress): huge, slow, armored and bristling with guns and flak.
+  At the Pacific Fleet the carrier comes first. Any boss opens the next location.
+- Five achievements go with these: destroy 25 ground or naval targets, down a stealth ace, a carrier and an airship, and down 10 enemies inside storm cells.
 
 ## Eras
 
