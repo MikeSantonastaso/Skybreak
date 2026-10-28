@@ -69,28 +69,45 @@ window.SkyNet = (function () {
     }
   ];
 
-  function peerOptions() {
-    const options = {
-      debug: 2,
-      config: {
-        iceServers: ICE_SERVERS,
-        iceTransportPolicy: 'all'
-      }
-    };
+  // Matchmaking brokers, tried in order. The first is Skybreak's own
+  // peerjs-server; the second ({}) is PeerJS's free public broker, used when
+  // ours is down. ?peer=host:port in the URL replaces both.
+  const OWN_BROKER = {
+    host: 'peer.165-245-229-241.sslip.io',
+    port: 443,
+    path: '/',
+    secure: true,
+    key: 'peerjs'
+  };
 
+  const BROKER_ERRORS = ['network', 'server-error', 'socket-error', 'socket-closed'];
+
+  function brokers() {
     const custom = new URLSearchParams(location.search).get('peer');
 
     if (custom) {
       const [host, port] = custom.split(':');
 
-      options.host = host;
-      options.port = Number(port) || 443;
-      options.path = '/';
-      options.secure = !/^(localhost|127\.|192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(host);
-      options.key = 'peerjs';
+      return [{
+        host,
+        port: Number(port) || 443,
+        path: '/',
+        secure: !/^(localhost|127\.|192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(host),
+        key: 'peerjs'
+      }];
     }
 
-    return options;
+    return [OWN_BROKER, {}];
+  }
+
+  function peerOptions(b) {
+    return Object.assign({
+      debug: 2,
+      config: {
+        iceServers: ICE_SERVERS,
+        iceTransportPolicy: 'all'
+      }
+    }, brokers()[b]);
   }
 
   const newCode = () =>
@@ -117,6 +134,7 @@ window.SkyNet = (function () {
     const TIMEOUT = 15000;
     let roster = [];
     let pingT = null;
+    let onMissing = null;
 
     const status = t => h.status && h.status(t);
 
@@ -156,6 +174,7 @@ window.SkyNet = (function () {
       closed = true;
       clearInterval(pingT);
       pingT = null;
+      onMissing = null;
 
       for (const c of conns.values()) {
         try { c.close(); } catch (e) {}
@@ -182,13 +201,24 @@ window.SkyNet = (function () {
       if (h.closed) h.closed(reason || '');
     }
 
-    function startPeer(id) {
+    function startPeer(id, b) {
       return loadPeerJs().then(() => new Promise((resolve, reject) => {
-        const p = new window.Peer(id, peerOptions());
+        const p = new window.Peer(id, peerOptions(b));
         let opened = false;
+
+        // A broker that never answers counts as unreachable.
+        const wait = setTimeout(() => {
+          if (opened) return;
+          const err = new Error('The matchmaking server did not answer.');
+          err.type = 'network';
+          try { p.destroy(); } catch (e) {}
+          reject(err);
+        }, 8000);
 
         p.on('open', () => {
           opened = true;
+          clearTimeout(wait);
+          console.info('[net] Matchmaking via', brokers()[b].host || 'public PeerJS');
           resolve(p);
         });
 
@@ -196,13 +226,15 @@ window.SkyNet = (function () {
           console.error('[net] PeerJS error:', err.type, err);
 
           if (!opened) {
+            clearTimeout(wait);
             try { p.destroy(); } catch (e) {}
             reject(err);
             return;
           }
 
           if (!isHost && err.type === 'peer-unavailable') {
-            shut('No room with that code. Check it and try again.');
+            if (onMissing) onMissing(err);
+            else shut('No room with that code. Check it and try again.');
           } else if (
             ['network', 'server-error', 'socket-error', 'socket-closed']
               .includes(err.type)
@@ -232,19 +264,23 @@ window.SkyNet = (function () {
       isHost = true;
       me = 0;
 
-      const tryOpen = n => {
+      const tryOpen = (n, b) => {
         code = newCode();
         status('Opening a room…');
 
-        return startPeer(PREFIX + code).catch(err => {
+        return startPeer(PREFIX + code, b).catch(err => {
           if (err && err.type === 'unavailable-id' && n < 4) {
-            return tryOpen(n + 1);
+            return tryOpen(n + 1, b);
+          }
+          if (err && BROKER_ERRORS.includes(err.type) && !closed && b + 1 < brokers().length) {
+            console.warn('[net] Matchmaking server unreachable, trying the next one.');
+            return tryOpen(0, b + 1);
           }
           throw err;
         });
       };
 
-      return tryOpen(0).then(p => {
+      return tryOpen(0, 0).then(p => {
         if (closed) {
           p.destroy();
           throw new Error('Room creation cancelled.');
@@ -381,7 +417,22 @@ window.SkyNet = (function () {
 
       status('Finding room ' + c1 + '…');
 
-      return startPeer(undefined).then(p => new Promise((resolve, reject) => {
+      // Look on each broker in turn: the host may have fallen back to the
+      // public one, or ours may be down.
+      const tryBroker = b => findRoom(c1, name, info, b).catch(err => {
+        const retry = err && (err.type === 'peer-unavailable' || BROKER_ERRORS.includes(err.type));
+        if (retry && !closed && b + 1 < brokers().length) return tryBroker(b + 1);
+        throw err;
+      });
+
+      return tryBroker(0).catch(err => {
+        shut();
+        throw friendly(err);
+      });
+    }
+
+    function findRoom(c1, name, info, b) {
+      return startPeer(undefined, b).then(p => new Promise((resolve, reject) => {
         if (closed) {
           p.destroy();
           reject(new Error('Connection cancelled.'));
@@ -399,6 +450,19 @@ window.SkyNet = (function () {
         hostConn = conn;
 
         let welcomed = false;
+        let dropped = false;
+
+        // No room with this code on this broker: release it so join() can try the next.
+        onMissing = err => {
+          dropped = true;
+          onMissing = null;
+          clearTimeout(timeout);
+          try { conn.close(); } catch (e) {}
+          try { p.destroy(); } catch (e) {}
+          if (peer === p) peer = null;
+          if (hostConn === conn) hostConn = null;
+          reject(err);
+        };
 
         const timeout = setTimeout(() => {
           if (!welcomed) {
@@ -420,6 +484,7 @@ window.SkyNet = (function () {
 
           if (m.t === 'welcome') {
             welcomed = true;
+            onMissing = null;
             clearTimeout(timeout);
             me = m.slot;
             status('');
@@ -457,6 +522,7 @@ window.SkyNet = (function () {
         });
 
         conn.on('close', () => {
+          if (dropped) return;
           clearTimeout(timeout);
 
           if (!welcomed) {
@@ -469,10 +535,7 @@ window.SkyNet = (function () {
         conn.on('error', err => {
           console.error('[net] Guest data connection error:', err);
         });
-      })).catch(err => {
-        shut();
-        throw friendly(err);
-      });
+      }));
     }
 
     function friendly(err) {
