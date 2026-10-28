@@ -102,6 +102,12 @@ Survival for one to four pilots over the internet, with no server of our own. On
 
 How it works: `net.js` uses [PeerJS](https://peerjs.com) (loaded from cdnjs only when you open a room) and Skybreak's own broker (`peer.165-245-229-241.sslip.io`, falling back to PeerJS's free public broker if it's down) to introduce the browsers, then the game talks peer to peer over WebRTC, falling back to PeerJS's relay when a firewall blocks a direct link. The host's game flies the enemies and runs the waves; each pilot's game flies their own jet and decides when enemy fire hits them, and the shooter's game decides friendly fire. If the host leaves, the run ends and everyone banks what they earned. Add `?peer=host:port` to the URL to use a different [peerjs-server](https://github.com/peers/peerjs-server) instead. `server/setup.sh` sets up the broker on a fresh Ubuntu 24.04 server: run it as root and it installs peerjs-server as a service behind Caddy with a free HTTPS certificate.
 
+## Stalls, G and energy
+
+- **Stalls:** too slow, or past the wing's stall angle, and your jet departs: a wing drops, the nose falls and the controls go mushy, with a buffet and a stall horn, until you have flying speed again. Push the nose down and add power. Jets' fly-by-wire limiter keeps you short of the stall angle; WW2 fighters have no limiter and drop a wing hardest; future jets vector their thrust and barely depart at all.
+- **G:** pull past your tolerance (6 G in WW2, 9 G for Modern jets, 12 G with Future inertial suits) and the edges of the screen grey in; keep pulling and you black out for a few seconds with the stick limp. Hard negative G reds you out the same way. The G readout turns amber, then red, and the mouse-aim instructor eases the pull as you grey out (it won't stop you if you insist). The **G-suit** field upgrade adds 1.5 G of tolerance per rank.
+- **Energy:** the ENERGY readout shows whether you're gaining (green ▲) or bleeding (amber or red ▼) total energy, height plus speed, in metres a second. The speed readout turns green around your jet's corner speed, where it turns tightest.
+
 ## Controls (mouse aim)
 
 | Input | Action |

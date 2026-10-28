@@ -244,7 +244,8 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
 .bar span { text-align: right; font-size: 13px; letter-spacing: 0; }
 .readouts { display: flex; gap: 18px; }
 .readouts b { display: block; font-family: var(--display); font-weight: 900; font-size: 30px; line-height: 0.95; }
-.readouts small { font-size: 10px; letter-spacing: 0.16em; color: var(--muted); }
+.readouts small { font-size: 10px; letter-spacing: 0.16em; color: var(--muted); white-space: nowrap; }
+@media (max-width: 560px) { .readouts { gap: 10px; } .readouts b { font-size: 22px; } .readouts small { letter-spacing: 0.08em; } }
 .hud-br { position: absolute; top: calc(186px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); text-align: right; font-size: 13px; letter-spacing: 0.08em; text-shadow: 0 1px 2px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 3px; }
 .hud-br b { color: var(--amber); }
 .msg { position: absolute; top: 22%; left: 0; right: 0; text-align: center; font-family: var(--display); font-weight: 900; font-size: clamp(36px, 7vw, 72px); color: var(--amber); text-shadow: 0 2px 8px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.3s; }
@@ -254,7 +255,8 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
 #hud.in-cockpit .readouts { display: none; }
 #hud.in-cockpit .hud-bl { bottom: auto; top: calc(92px + env(safe-area-inset-top, 0px)); width: min(240px, 40vw); }
 #vignette { position: fixed; inset: 0; pointer-events: none; z-index: 2; box-shadow: inset 0 0 160px 40px rgba(255, 50, 30, 0.75); opacity: 0; }
-#gvig { position: fixed; inset: 0; pointer-events: none; z-index: 2; background: radial-gradient(ellipse at center, rgba(0,0,0,0) 38%, rgba(0,0,0,0.92) 100%); opacity: 0; }
+#gvig { position: fixed; inset: 0; pointer-events: none; z-index: 2; background: radial-gradient(ellipse at center, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.75) 30%, rgba(0,0,0,0.98) 62%); opacity: 0; }
+#rvig { position: fixed; inset: 0; pointer-events: none; z-index: 2; background: radial-gradient(ellipse at center, rgba(150,0,0,0.25) 0%, rgba(140,0,0,0.6) 40%, rgba(90,0,0,0.95) 75%); opacity: 0; }
 .hud-pause { position: absolute; top: calc(12px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); pointer-events: auto; background: rgba(0,0,0,0.35); border: 1px solid rgba(235,228,210,0.25); color: var(--paper); padding: 6px 10px; font-size: 12px; letter-spacing: 0.1em; }
 
 /* touch */
@@ -328,6 +330,7 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
 <canvas id="hudc"></canvas>
 <div id="vignette"></div>
 <div id="gvig"></div>
+<div id="rvig"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <div id="hud" hidden>
@@ -346,6 +349,7 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
       <div><b id="hAlt">0</b><small>ALT M</small></div>
       <div><b id="hThr">70</b><small>THR %</small></div>
       <div><b id="hG">1.0</b><small>G</small></div>
+      <div><b id="hE">0</b><small>ENERGY</small></div>
     </div>
   </div>
   <div class="hud-br" id="hWeap"></div>
@@ -889,7 +893,7 @@ const LOC_ORDER = ['arctic', 'desert', 'ocean', 'city', 'canyon'];
 const ERAS = {
   ww2: { id: 'ww2', name: 'WW2', title: 'Piston fighters', mslWord: 'Rocket',
     blurb: 'Propellers, wing guns and no guided missiles. Win it with deflection shooting and by keeping your speed up.',
-    planes: ['p51', 'spit', 'f4u', 'p47'], tiers: ['bf109', 'zero', 'fw190', 'ki84', 'me262'], secs: ['rockets', 'flak'], spawnK: 0.65, noMissiles: true,
+    planes: ['p51', 'spit', 'f4u', 'p47'], tiers: ['bf109', 'zero', 'fw190', 'ki84', 'me262'], secs: ['rockets', 'flak'], spawnK: 0.65, noMissiles: true, gTol: 6, fbw: false,
     gun: { rof: 9, dmg: 4, speed: 800, spread: 0.006, range: 950, color: 0xffb36b, len: 11, sound: 1000 },
     msl: { turn: 0.9, max: 380, g: 16, lead: 0.3, life: 4, fuse: 18 },
     bosses: { arctic: { kind: 'bear', name: 'Fw 200 Condor', color: 0x6f7568, accent: 0xf2c230 }, desert: { kind: 'gunship', name: 'Ju 290 gunship', color: 0x8a7a58, accent: 0xc8102e },
@@ -897,10 +901,10 @@ const ERAS = {
       canyon: { kind: 'bear', name: 'Me 264 Amerika bomber', color: 0x5a6068, accent: 0xf2c230 } } },
   modern: { id: 'modern', name: 'Modern', title: 'Jet age', mslWord: 'Missile',
     blurb: 'Supersonic jets, rotary cannons, heat-seekers and flares. The original Skybreak.',
-    planes: ['f5', 'f16', 'f14', 'f18', 'f35'], tiers: ['mig21', 'mig29', 'su27', 'su35', 'su57'], secs: ['missile', 'rockets', 'flak', 'emp'], spawnK: 1 },
+    planes: ['f5', 'f16', 'f14', 'f18', 'f35'], tiers: ['mig21', 'mig29', 'su27', 'su35', 'su57'], secs: ['missile', 'rockets', 'flak', 'emp'], spawnK: 1, gTol: 9 },
   future: { id: 'future', name: 'Future', title: 'Energy weapons', mslWord: 'Missile',
     blurb: 'Lasers, plasma, railguns and recharging shields at 14 G, against drone swarms and their motherships.',
-    planes: ['x9', 'valk', 'nova'], tiers: ['drone', 'wraith', 'lancer', 'mantis', 'reaper'], secs: ['missile', 'emp', 'rail'], spawnK: 1.1,
+    planes: ['x9', 'valk', 'nova'], tiers: ['drone', 'wraith', 'lancer', 'mantis', 'reaper'], secs: ['missile', 'emp', 'rail'], spawnK: 1.1, gTol: 12, tvc: true,
     gun: { rof: 7, dmg: 4.2, speed: 1800, spread: 0.004, range: 1500, color: 0xff3b6b, len: 22, sound: 1900 },
     msl: { turn: 2.4, max: 780, g: 80, lead: 1, life: 7, fuse: 20 },
     bosses: { arctic: { kind: 'wing', name: 'Glacier carrier', color: 0x1c2228, accent: 0x7fe9f2 }, desert: { kind: 'blackjack', name: 'Sandstorm lancer', color: 0x2a2620, accent: 0xff7a1a },
@@ -1641,12 +1645,22 @@ class Plane {
     const stab = 2.4 * clamp(Math.sqrt(q), 0.25, 1.3);
     const trim = clamp(9.8 * Math.max(this.up.y, 0) / (Cl * v * v + 1), 0, stall * 0.9);
     let tp = this.surf.pitch * s.pitch * PITCH_GAIN * turn * eff - (aoa - trim) * stab;
-    // fly-by-wire limiter: never pull past the angle that already gives the G limit (or the stall)
-    const aoaLim = Math.min(stall * 0.92, gmax * 9.8 / (Cl * v * v) * 1.1);
+    // fly-by-wire limiter: never pull past the angle that already gives the G limit (or the stall). A prop fighter has
+    // no limiter: slow down and haul back on the stick and it goes past the stall
+    const gAoa = gmax * 9.8 / (Cl * v * v) * 1.1;
+    const aoaLim = s.fbw === false ? Math.min(stall * 1.08, gAoa * 1.25) : Math.min(stall * 0.92, gAoa);
     if (aoa > aoaLim) tp = Math.min(tp, -(aoa - aoaLim) * 12);
     else if (aoa < -aoaLim * 0.5) tp = Math.max(tp, (-aoaLim * 0.5 - aoa) * 12);
-    const tr = this.surf.roll * s.roll * turn * clamp(q * 1.6, 0.15, 1) * comp;
-    const ty = this.surf.yaw * s.yaw * eff + slip * stab * 0.8;
+    let tr = this.surf.roll * s.roll * turn * clamp(q * 1.6, 0.15, 1) * comp;
+    let ty = this.surf.yaw * s.yaw * eff + slip * stab * 0.8;
+    // departure: too slow or past the stall, the wing quits. A wing drops, the nose falls and the controls go mushy
+    // until you have flying speed again
+    if (s.departs) {
+      const a0 = Math.abs(aoa);
+      if (!this.stalled && (a0 > stall * 1.02 || v < s.minSpeed)) { this.stalled = true; this.wingDrop = (Math.random() < 0.5 ? -1 : 1) * (s.tvc ? 0.25 : s.fbw === false ? 1.3 : 0.75); }
+      else if (this.stalled && a0 < stall * 0.75 && v > s.minSpeed * 1.15) this.stalled = false;
+      if (this.stalled) { tp = tp * (s.tvc ? 0.8 : 0.35) - (s.tvc ? 0.25 : 0.9) * Math.sign(aoa || 1); tr = tr * (s.tvc ? 0.8 : 0.4) + this.wingDrop; ty *= 0.5; }
+    }
     const kp = 1 - Math.exp(-10 * dt), kr = 1 - Math.exp(-12 * dt);
     this.ang.x += (tp - this.ang.x) * kp;
     this.ang.y += (ty - this.ang.y) * kp;
@@ -2154,7 +2168,11 @@ function readControls(dt) {
       const dz = v => Math.abs(v) < 0.04 ? 0 : v;
       // mouse back (down) pulls the stick back and raises the nose
       c.pitch = dz(vStick.y); c.roll = dz(vStick.x);
-    } else steer(player, tv.copy(player.pos).addScaledVector(aimDir, 2000), c);
+    } else {
+      steer(player, tv.copy(player.pos).addScaledVector(aimDir, 2000), c);
+      // the instructor eases the pull as you grey out, but won't stop you blacking out if you keep asking for it
+      if (run && run.gLoad > 0.7) c.pitch *= clamp((1 - run.gLoad) * 3, 0.4, 1);
+    }
     const keyPitch = (k.ArrowDown ? 1 : 0) - (k.ArrowUp ? 1 : 0);
     pitch = keyPitch || c.pitch; roll = keyRoll || c.roll; yaw = keyYaw || c.yaw;
   } else {
@@ -2221,7 +2239,7 @@ function perkMods() {
     turn: 1 + pv('tabs'), roll: syn('Flight') ? 1.1 : 1, ab: (up('afterburn') ? 1.25 : 1) * Math.pow(1.2, up('wep')), hunt: up('afterburn') > 0, slowmo: pv('time'),
     secCd: (1 - pv('rearm')) * (1 - pv('rack', 1)) * Math.pow(0.9, up('sec')), rack: pv('rack'), upRack: up('rack') + (syn('Special') ? 1 : 0) - up('rails'),
     secDmg: (1 + pv('warhead')) * (1 + 0.15 * up('lock')) * (up('rails') ? 1.6 : 1), lock: Math.pow(0.85, up('lock')), twin: up('twin') > 0, gunRearm: KILL_REFUND + pv('bounty'),
-    credMul: up('blood') ? 1.5 : 1, enemyHp: up('blood') ? 1.15 : 1,
+    credMul: up('blood') ? 1.5 : 1, enemyHp: up('blood') ? 1.15 : 1, gTol: 1.5 * up('gsuit'),
     // one wingman at most, from the Wingman perk; field upgrades make them tougher and deadlier this run
     wingman: run.perks.wing ? { hp: pv('wing') + 40 * up('wHull') + (ace ? 60 : 0), dmg: pv('wing', 1) * (1 + 0.25 * up('wGun')) * (ace ? 1.3 : 1), missiles: 2 + up('wMsl'), cover: up('wCover') > 0, back: up('squad') > 0 } : null,
   };
@@ -2233,6 +2251,8 @@ function playerStats() {
   return {
     size: e.size, abMax: 1.2, abMul: m.ab, stallAoa: e.stallAoa, minSpeed: e.minSpeed, maxSpeed: e.maxSpeed * m.speed * ld.speed,
     corner: e.corner, gmax: e.gmax, thrust: e.thrust * m.thrust * ld.thrust, induced: 1,
+    // only your jet can depart into a stall; prop fighters have no limiter, future jets vector their thrust out of it
+    departs: true, fbw: e.X.fbw !== false, tvc: !!e.X.tvc,
     pitch: e.pitch, roll: e.roll * m.roll, yaw: e.yaw, turnMul: m.turn * ld.turn,
     hp: Math.max(30, Math.round((e.hp + m.hp) * m.hpMul)), shield: e.shield + (e.shield ? m.shield : 0), armor: 0,
     dmgMul, rofMul, spreadMul, dmg: e.gun.dmg * dmgMul, rof: e.gun.rof * rofMul, spread: e.gun.spread * spreadMul, crit: m.crit, critMul: 2.5,
@@ -2356,6 +2376,7 @@ const UPGRADES = [
   { id: 'shieldcap', era: 'future', tag: 'Airframe', rar: 'common', name: 'Shield capacitor', max: 4, d: '+15 shield.' },
   { id: 'nanite', era: 'future', tag: 'Airframe', rar: 'rare', name: 'Nanite hull', max: 2, d: 'Repair 1.2 hull a second.' },
   { id: 'phase', era: 'future', tag: 'Flight', rar: 'epic', name: 'Phase shift', max: 1, d: '15% of enemy hits pass straight through you, and your shield recharges twice as fast.' },
+  { id: 'gsuit', tag: 'Flight', rar: 'common', name: 'G-suit', max: 2, d: 'Pull 1.5 G more before you start to grey out.' },
   { id: 'over', tag: 'Guns', rar: 'cursed', name: 'Overcharged barrels', max: 1, d: '+40% gun damage, but your guns heat 30% faster.' },
   { id: 'strip', tag: 'Flight', rar: 'cursed', name: 'Stripped airframe', max: 1, d: '+15% thrust and +8% top speed, but −20% max hull.' },
   { id: 'rails', tag: 'Special', rar: 'cursed', name: 'Glass rails', max: 1, d: '+60% special damage, but one fewer special charge.' },
@@ -2619,6 +2640,7 @@ function startMission(type, node, opts) {
   // the first wave starts with full charges; later waves keep whatever was left and how far the cooldown had run
   if (run.wave > 1) run.charges = Math.min(run.charges, st.charges);
   else { run.charges = st.charges; run.reloadT = 0; }
+  run.gLoad = 0; run.gRed = 0; run.glocT = 0; run.es = null; run.ps = 0;
   run.flares = Math.round((24 + run.mods.flares) * (dz('flares') ? 0.5 : 1)); run.flareCd = 0; run.warnT = 0; run.deathT = 0; run.windUsed = false; run.wingT = 0; run.huntT = 0;
   // a wingman who went down last wave is back for this one
   if (run.mods.wingman) spawnAlly(run.mods.wingman);
@@ -3191,14 +3213,41 @@ function noseTarget(range, cone) {
   }
   return best;
 }
+// ---- the pilot's body: sustained G past your tolerance greys you out and then blacks you out (G-LOC) for a few seconds;
+// hard negative G reds you out. Also the stall buffet and horn, and the energy trend for the HUD ----
+function bodyLimits(dt) {
+  const tol = (era.X.gTol || 9) + run.mods.gTol, g = player.g;
+  if (run.glocT > 0) {
+    run.glocT -= dt;
+    if (run.glocT <= 0) { run.gLoad = 0.5; run.gRed = 0; popText('Coming round'); }
+  } else {
+    if (g > tol) run.gLoad += (g - tol) * 0.2 * dt;
+    else run.gLoad = Math.max(0, run.gLoad - (g < tol - 2 ? 0.45 : 0.2) * dt);
+    if (g < -2.5) run.gRed += (-g - 2.5) * 0.35 * dt;
+    else run.gRed = Math.max(0, run.gRed - 0.5 * dt);
+    if (run.gLoad > 0.35 && !run.toldG) { run.toldG = true; popText('Greying out · ease the pull'); }
+    if (run.gLoad >= 1 || run.gRed >= 1) { run.glocT = 2.6; run.st.gloc = (run.st.gloc || 0) + 1; popText(run.gRed >= 1 ? 'Redout' : 'G-LOC · blacked out'); thump(90, 30, 0.6, 0.25); }
+  }
+  // the airframe shakes as it nears the stall; once stalled, the horn
+  const stall = player.s.stallAoa || STALL_AOA, nearStall = Math.abs(player.aoa) / stall;
+  if (player.stalled || nearStall > 0.85) addShake((player.stalled ? 0.22 : 0.08) * (era.X.tvc ? 0.4 : 1));
+  run.hornT = (run.hornT || 0) - dt;
+  if (player.stalled && run.hornT <= 0) { run.hornT = 0.5; beep(era.eraId === 'ww2' ? 380 : 520, 0.25, 0.07); if (!run.toldStall) { run.toldStall = true; popText('Stalled · nose down and add power'); } }
+  // specific energy (height plus speed as height) and how fast it's changing
+  const es = player.pos.y + player.speed * player.speed / 19.6;
+  if (run.es != null) run.ps = lerp(run.ps || 0, (es - run.es) / Math.max(dt, 1e-3), 1 - Math.exp(-3 * dt));
+  run.es = es;
+}
 function updatePlaying(dt) {
   const m = run.mission; m.t += dt; run.st.t += dt;
   const live = player.alive && !player.dying;
-  const ctl = live ? readControls(dt) : { pitch: 0, roll: 0, yaw: 0, throttle: 0, fire: false };
+  // blacked out: the stick goes limp until you come round
+  const ctl = live && !(run.glocT > 0) ? readControls(dt) : { pitch: 0, roll: 0, yaw: 0, throttle: 0, fire: false };
   const mods = run.mods;
   if (live) {
     player.fly(dt, ctl);
     player.trails(dt);
+    bodyLimits(dt);
     const st = player.s;
     // only the selected fire group shoots. Holding the trigger fills its heat gauge, and at the top it locks until it cools to HEAT_RESUME,
     // swapping to the other group if that one is ready. The group you aren't using cools the whole time
@@ -3472,8 +3521,8 @@ function updateSpeedLines() {
 }
 
 // ================= HUD =================
-const hEls = { wave: $('hWave'), en: $('hEnemies'), kills: $('hKills'), hull: $('hHull'), hullN: $('hHullN'), sh: $('hShield'), shN: $('hShieldN'), spd: $('hSpd'), alt: $('hAlt'), thr: $('hThr'), g: $('hG'), weap: $('hWeap'), warn: $('hWarn'), msg: $('hMsg') };
-let msgT = 0, popT = 0, popStr = '', gvig = 0;
+const hEls = { e: $('hE'), wave: $('hWave'), en: $('hEnemies'), kills: $('hKills'), hull: $('hHull'), hullN: $('hHullN'), sh: $('hShield'), shN: $('hShieldN'), spd: $('hSpd'), alt: $('hAlt'), thr: $('hThr'), g: $('hG'), weap: $('hWeap'), warn: $('hWarn'), msg: $('hMsg') };
+let msgT = 0, popT = 0, popStr = '', gvig = 0, rvig = 0;
 function flashMsg(t, sub, dur) { hEls.msg.innerHTML = ''; hEls.msg.textContent = t; if (sub) { const s = document.createElement('small'); s.textContent = sub; hEls.msg.appendChild(s); } hEls.msg.classList.add('show'); msgT = dur || 1.5; }
 function popText(t) { popStr = t; popT = 1.4; }
 const sp = new V3();
@@ -3504,7 +3553,14 @@ function drawHud(dt) {
   hEls.spd.textContent = Math.round(player.speed * 3.6);
   hEls.alt.textContent = Math.max(0, Math.round(player.pos.y));
   hEls.thr.textContent = player.throttle > 1.001 ? (era.style === 'prop' ? 'WEP' : 'AB') : Math.round(player.throttle * 100);
-  hEls.g.textContent = Math.max(0, player.g).toFixed(1);
+  hEls.g.textContent = player.g.toFixed(1);
+  // G turns amber as you grey out and red near blackout; speed goes green around corner speed, where the jet turns best
+  const gc = run.glocT > 0 || run.gLoad > 0.7 || run.gRed > 0.6 ? red : run.gLoad > 0.3 || run.gRed > 0.3 ? amber : '';
+  if (hEls.g.dataset.c !== gc) { hEls.g.dataset.c = gc; hEls.g.style.color = gc; }
+  const sc = Math.abs(player.speed / player.s.corner - 1) < 0.1 ? '#8fd69a' : '';
+  if (hEls.spd.dataset.c !== sc) { hEls.spd.dataset.c = sc; hEls.spd.style.color = sc; }
+  const ps = Math.round(run.ps || 0), et = (ps > 2 ? '▲' : ps < -2 ? '▼' : '') + Math.abs(ps);
+  if (hEls.e.textContent !== et) { hEls.e.textContent = et; hEls.e.style.color = ps > 2 ? '#8fd69a' : ps < -25 ? red : ps < -2 ? amber : ''; }
   const st = player.s;
   // both gun groups, the selected one marked, each with its own heat
   let wp = run.groups.map((G, i) => {
@@ -3523,12 +3579,15 @@ function drawHud(dt) {
     const inbound = missiles.some(m => m.target === player);
     if (clr < 60 && player.fwd.y < 0.1) warn = 'PULL UP';
     else if (inbound) warn = 'MISSILE · ' + (run.flares ? 'FLARES (F) AND BREAK' : 'BREAK HARD');
-    else if (player.aoa > (player.s.stallAoa || STALL_AOA) || player.speed < player.s.minSpeed) warn = 'STALL · EASE OFF AND ADD SPEED';
+    else if (run.glocT > 0) warn = 'BLACKED OUT';
+    else if (run.gLoad > 0.6 || run.gRed > 0.6) warn = run.gRed > run.gLoad ? 'REDOUT · EASE THE PUSH' : 'G · EASE THE PULL';
+    else if (player.stalled || player.aoa > (player.s.stallAoa || STALL_AOA) || player.speed < player.s.minSpeed) warn = 'STALL · NOSE DOWN AND ADD POWER';
     else if (Math.hypot(player.pos.x, player.pos.z) > ARENA) warn = Math.hypot(player.pos.x, player.pos.z) > ARENA * 1.2 ? 'OUT OF BOUNDS · TAKING DAMAGE' : 'LEAVING COMBAT AREA';
   }
   if (hEls.warn.textContent !== warn) hEls.warn.textContent = warn;
-  gvig = lerp(gvig, live ? clamp((player.g - 7.5) / 4, 0, 0.7) : 0, Math.min(1, dt * 3));
-  $('gvig').style.opacity = gvig;
+  gvig = lerp(gvig, live ? (run.glocT > 0 && run.gRed < 1 ? 1 : clamp(run.gLoad * 0.9, 0, 0.9)) : 0, Math.min(1, dt * (run.glocT > 0 ? 6 : 3)));
+  rvig = lerp(rvig, live ? (run.glocT > 0 && run.gRed >= 1 ? 0.95 : clamp(run.gRed * 0.85, 0, 0.85)) : 0, Math.min(1, dt * 4));
+  $('gvig').style.opacity = gvig; $('rvig').style.opacity = rvig;
   $('vignette').style.opacity = clamp(hurtT * 1.6 + (live && hf < 0.25 ? 0.25 + Math.sin(performance.now() / 180) * 0.1 : 0), 0, 0.9);
   hurtT = Math.max(0, hurtT - dt);
 
