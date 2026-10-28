@@ -275,6 +275,9 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
 .coop input:focus { outline: none; border-color: var(--amber); }
 .coop .or { font-size: 12px; color: var(--muted); }
 .coophead { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.seat { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+.seat > span { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-right: 4px; }
+.seat button[aria-pressed="true"] { border-color: var(--amber, #f2b33d); color: var(--amber, #f2b33d); }
 .coophead span { font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
 .coophead b { font-family: var(--display); font-size: 30px; font-weight: 900; color: var(--amber); letter-spacing: 0.18em; margin-right: auto; }
 .coophead .ghost { align-self: center; }
@@ -412,6 +415,7 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
             <div class="cooproom" id="coopRoom" hidden>
               <div class="coophead"><span>Room</span><b id="coopCodeShow"></b><button class="ghost" id="coopCopy">Copy invite link</button><button class="ghost" id="coopLeave">Leave room</button></div>
               <ul class="roster" id="coopRoster"></ul>
+              <div class="seat" id="coopSeat" hidden><span>Your seat</span><button class="ghost" data-seat="pilot">Fly your own jet</button><button class="ghost" data-seat="gunner">Ride as the host's gunner</button></div>
             </div>
             <p class="note" id="coopNote">Fly survival together over the internet. One pilot hosts and shares the four-letter code. Enemies get tougher and more numerous for every pilot, friendly fire and friendly missile locks are on, and a pilot who goes down comes back after the wave with half hull and one field upgrade lost.</p>
           </div>
@@ -1788,17 +1792,17 @@ function spawnBullet(owner, start, dir, gun, dmg, color, crit) {
   bullets.push({ mesh, pos: mesh.position, prev: start.clone(), vel: dir.clone().multiplyScalar(gun.speed).add(owner.vel), life: gun.range / gun.speed * (owner === player ? run.mods.range : 1), dmg, team: owner.team, owner, crit, fake: coopFake, src: gun.short });
 }
 let gunSoundAt = 0;
-function fireGun(p, gun, dmg, spread, color, at) {
+function fireGun(p, gun, dmg, spread, color, at, aim) {
   const o = at || gun.offsets[p.gunIdx++ % gun.offsets.length];
   const sz = p.s.size;
   const start = tv.set(o[0], o[1], o[2]).applyQuaternion(p.quat).add(p.pos);
   const conv = tv2.copy(p.fwd).multiplyScalar(380).add(p.pos);
-  const dir = tv3.subVectors(conv, start).normalize();
+  const dir = aim ? tv3.copy(aim) : tv3.subVectors(conv, start).normalize();
   dir.x += rand(-spread, spread); dir.y += rand(-spread, spread); dir.z += rand(-spread, spread);
   dir.normalize();
   const crit = p === player && Math.random() < (p.s.crit || 0);
   spawnBullet(p, start, dir, gun, crit ? dmg * (p.s.critMul || 2.5) : dmg, color, crit);
-  if (p === player && run.st) run.st.shots++;
+  if (p === player && run.st && !coopFake) run.st.shots++;
   if (p === player) {
     spawnFx(start, { add: true, color, size: 2.2 * sz, life: 0.05 });
     // a full loadout can fire hundreds of rounds a second; keep the sound to one shot per 30 ms
@@ -2069,9 +2073,11 @@ let aimYaw = 0, aimPitch = 0;
 const vStick = { x: 0, y: 0 };
 let headYaw = 0, headPitch = 0;
 const headQ = new THREE.Quaternion(), headE = new THREE.Euler(0, 0, 0, 'YXZ');
-function setCamMode(m) { camMode = m; vStick.x = vStick.y = 0; if (m === 0 && player) setAimFromDir(player.fwd); }
+function setCamMode(m) { if (player && player.gunner) m = 0; camMode = m; vStick.x = vStick.y = 0; if (m === 0 && player) setAimFromDir(player.fwd); }
 const aimDir = new V3(0, 0, -1);
 const mouseMode = () => save.ctl === 'mouse';
+// a gunner always aims with the mouse, whatever the control setting
+const aimMouse = () => mouseMode() || !!(player && player.gunner);
 function updateAimDir() { const cp = Math.cos(aimPitch); aimDir.set(-Math.sin(aimYaw) * cp, Math.sin(aimPitch), -Math.cos(aimYaw) * cp); }
 function setAimFromDir(d) { aimYaw = Math.atan2(-d.x, -d.z); aimPitch = Math.asin(clamp(d.y, -1, 1)); updateAimDir(); }
 function nudgeAim(dx, dy) { aimYaw -= dx; aimPitch = clamp(aimPitch - dy, -1.45, 1.45); updateAimDir(); }
@@ -2106,7 +2112,7 @@ glCanvas.addEventListener('mousedown', e => {
   if (e.button === 0) mouseFire = true;
   if (e.button === 2) missileRequest = true;
   if (e.button === 1) { e.preventDefault(); flareRequest = true; }
-  if (mouseMode() && document.pointerLockElement !== glCanvas && glCanvas.requestPointerLock) { try { const r = glCanvas.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (err) {} }
+  if (aimMouse() && document.pointerLockElement !== glCanvas && glCanvas.requestPointerLock) { try { const r = glCanvas.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (err) {} }
 });
 window.addEventListener('mouseup', e => { if (e.button === 0) mouseFire = false; });
 // the mouse wheel swaps gun groups, one swap per flick
@@ -2120,8 +2126,8 @@ glCanvas.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('mousemove', e => {
   if (state !== 'playing') return;
   if (keys.KeyV) { headYaw = clamp(headYaw - e.movementX * 0.003, -2.6, 2.6); headPitch = clamp(headPitch - e.movementY * 0.003, -0.7, 1.3); return; }
-  if (!mouseMode()) return;
-  if (camMode === 1) { vStick.x = clamp(vStick.x + e.movementX * 0.0045, -1, 1); vStick.y = clamp(vStick.y + e.movementY * 0.0045, -1, 1); return; }
+  if (!aimMouse()) return;
+  if (camMode === 1 && !player.gunner) { vStick.x = clamp(vStick.x + e.movementX * 0.0045, -1, 1); vStick.y = clamp(vStick.y + e.movementY * 0.0045, -1, 1); return; }
   nudgeAim(e.movementX * 0.0021, e.movementY * 0.0021);
 });
 document.addEventListener('pointerlockchange', () => {
@@ -2643,7 +2649,8 @@ function startMission(type, node, opts) {
   run.gLoad = 0; run.gRed = 0; run.glocT = 0; run.es = null; run.ps = 0;
   run.flares = Math.round((24 + run.mods.flares) * (dz('flares') ? 0.5 : 1)); run.flareCd = 0; run.warnT = 0; run.deathT = 0; run.windUsed = false; run.wingT = 0; run.huntT = 0;
   // a wingman who went down last wave is back for this one
-  if (run.mods.wingman) spawnAlly(run.mods.wingman);
+  if (run.mods.wingman && !gunnerSeat()) spawnAlly(run.mods.wingman);
+  if (gunnerSeat()) setupGunner();
   const skill = Math.min(0.2 + era.loc.threat * 0.06 + depth * 0.08, 0.97);
   // every tenth wave the location's boss flies in, with half the wave as escorts
   const boss = isBossWave(run.wave), strike = isStrikeWave(run.wave);
@@ -2675,7 +2682,7 @@ function startMission(type, node, opts) {
   if (vnote.intro) sub += '. ' + vnote.intro;
   if (coopGuest()) sub = coop.sub;
   run.mission.sub = sub;
-  flashMsg((boss ? 'BOSS WAVE ' : strike ? 'STRIKE WAVE ' : 'WAVE ') + run.wave, sub + (mouseMode() && !isTouch && !document.pointerLockElement ? ' · click to capture the mouse' : ''), vnote.intro ? 5 : 2.6);
+  flashMsg((boss ? 'BOSS WAVE ' : strike ? 'STRIKE WAVE ' : 'WAVE ') + run.wave, sub + (aimMouse() && !isTouch && !document.pointerLockElement ? ' · click to capture the mouse' : ''), vnote.intro ? 5 : 2.6);
   beep(660, 0.12, 0.12); setTimeout(() => beep(880, 0.16, 0.12), 140);
 }
 function objectiveText(alive) {
@@ -3238,6 +3245,56 @@ function bodyLimits(dt) {
   if (run.es != null) run.ps = lerp(run.ps || 0, (es - run.es) / Math.max(dt, 1e-3), 1 - Math.exp(-3 * dt));
   run.es = es;
 }
+// flares: each salvo has a good chance to pull every missile chasing you (your gunner can pop them too)
+function popFlares() {
+  if (run.flares <= 0 || run.flareCd > 0 || !validTarget(player)) return;
+  run.flares--; run.flareCd = 0.45;
+  dropFlares(player); coopSend({ t: 'fl' });
+  let fooled = 0;
+  for (const ms of missiles) if (ms.target === player && ms.pos.distanceTo(player.pos) < 3000 && Math.random() < 0.8) { ms.target = null; fooled++; }
+  if (fooled) popText(fooled > 1 ? 'Missiles decoyed' : 'Missile decoyed');
+}
+
+// ---- the gunner's seat: a co-op guest can ride on the host's jet and work a turret instead of flying.
+// The pilot's game flies the jet and takes the hits; the gunner's game aims and fires the turret ----
+const TURRET_GUN = { ww2: ['m2', 2], modern: ['m39', 1], future: ['pulse', 1] };
+const gunnerSeat = () => coopGuest() && coop.seat === 'gunner';
+const turretAim = new V3();
+function setupGunner() {
+  player.gunner = true; player.rideSlot = 0; player.mesh.visible = false;
+  player.damage = function () {};
+  const [gid, n] = TURRET_GUN[era.eraId] || TURRET_GUN.modern, gun = GUNS[gid], sz = era.size;
+  run.groups = [{ g: { mounts: [], heat: gun.heat * n, gun, name: 'TURRET ' + gun.short }, heat: 0, over: false, coolT: 0,
+    guns: Array.from({ length: n }, (_, i) => ({ hp: { at: [n > 1 ? (i ? 0.5 : -0.5) : 0, 1.6 * sz, 1.5 * sz] }, gun, cd: i * 0.03 })) }];
+  run.grp = 0; run.charges = 0;
+  for (const r of player.mesh.userData.msl || []) r.visible = false;
+  setCamMode(0);
+}
+function rideAlong(dt) {
+  const m = coop.mates.get(player.rideSlot), p = m && m.p;
+  if (m && m.dn) { player.alive = false; player.dying = true; flashMsg('YOUR PILOT IS DOWN', "You're back in after this wave", 4); return; }
+  if (validTarget(p)) {
+    player.pos.copy(p.pos); player.quat.copy(p.quat); player.vel.copy(p.vel); player.speed = p.speed; player.throttle = p.throttle; player.axes();
+    player.hp = m.hp || player.hp; player.maxHp = m.mh || player.maxHp;
+  }
+  // keys and the touch stick swing the turret too
+  const kx = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0), ky = (keys.KeyS || keys.ArrowDown ? 1 : 0) - (keys.KeyW || keys.ArrowUp ? 1 : 0);
+  if (kx || ky) nudgeAim(kx * 1.4 * dt, ky * dt);
+  if (touchStick.active) nudgeAim(touchStick.x * 1.3 * dt, touchStick.y * dt);
+  if (flareRequest && net) { net.send({ t: 'gf' }, player.rideSlot); popText('Flares'); }
+  flareRequest = false; missileRequest = false; swapRequest = null;
+}
+// everyone else sees a gunner's tracers leave the pilot's jet
+function gunnerTracers(m, dt) {
+  const src = m.gn === net.slot ? player : (coop.mates.get(m.gn) || {}).p;
+  if (m.gn === net.slot && !m.told) { m.told = true; popText(nameOf(m.slot) + ' is on your guns'); }
+  if (!validTarget(src) || !m.fi || !m.ad || m.dn) return;
+  m.fireT = (m.fireT || 0) - dt;
+  if (m.fireT > 0) return;
+  m.fireT = 1 / 14;
+  const gun = GUNS[(TURRET_GUN[era.eraId] || TURRET_GUN.modern)[0]], sz = src.s.size;
+  coopFake = true; fireGun(src, gun, 0, 0.004, gun.color, [0, 1.6 * sz, 1.5 * sz], turretAim.set(m.ad[0], m.ad[1], m.ad[2])); coopFake = false;
+}
 function updatePlaying(dt) {
   const m = run.mission; m.t += dt; run.st.t += dt;
   const live = player.alive && !player.dying;
@@ -3245,9 +3302,8 @@ function updatePlaying(dt) {
   const ctl = live && !(run.glocT > 0) ? readControls(dt) : { pitch: 0, roll: 0, yaw: 0, throttle: 0, fire: false };
   const mods = run.mods;
   if (live) {
-    player.fly(dt, ctl);
-    player.trails(dt);
-    bodyLimits(dt);
+    if (player.gunner) rideAlong(dt);
+    else { player.fly(dt, ctl); player.trails(dt); bodyLimits(dt); }
     const st = player.s;
     // only the selected fire group shoots. Holding the trigger fills its heat gauge, and at the top it locks until it cools to HEAT_RESUME,
     // swapping to the other group if that one is ready. The group you aren't using cools the whole time
@@ -3281,9 +3337,10 @@ function updatePlaying(dt) {
       for (const g of G.guns) {
         if (!on) { g.cd = Math.max(0, g.cd - dt); continue; }
         g.cd -= dt;
-        while (g.cd <= 0) { fireGun(player, g.gun, g.gun.dmg * st.dmgMul * hunt, g.gun.spread * st.spreadMul, g.gun.color, g.hp.at); g.cd += 1 / (g.gun.rof * st.rofMul); }
+        while (g.cd <= 0) { fireGun(player, g.gun, g.gun.dmg * st.dmgMul * hunt, g.gun.spread * st.spreadMul, g.gun.color, g.hp.at, player.gunner ? aimDir : null); g.cd += 1 / (g.gun.rof * st.rofMul); }
       }
     }
+    if (!player.gunner) {
     if (st.shield) {
       player.shieldDelay -= dt;
       if (player.shieldDelay <= 0) player.shield = Math.min(st.shield, player.shield + 12 * mods.shieldRate * dt);
@@ -3312,13 +3369,7 @@ function updatePlaying(dt) {
     } else run.wingT = 0;
     // flares: each salvo has a good chance to pull every missile chasing you
     run.flareCd -= dt;
-    if (flareRequest && run.flares > 0 && run.flareCd <= 0) {
-      run.flares--; run.flareCd = 0.45;
-      dropFlares(player); coopSend({ t: 'fl' });
-      let fooled = 0;
-      for (const ms of missiles) if (ms.target === player && ms.pos.distanceTo(player.pos) < 3000 && Math.random() < 0.8) { ms.target = null; fooled++; }
-      if (fooled) popText(fooled > 1 ? 'Missiles decoyed' : 'Missile decoyed');
-    }
+    if (flareRequest) popFlares();
     flareRequest = false;
     // missile warning tone, faster as it closes
     let near = Infinity;
@@ -3353,6 +3404,7 @@ function updatePlaying(dt) {
         if (e.heavy) player.damage(999, e);
         else { withSrc('Ramming', () => e.damage(999, player)); player.damage(45, e); }
       }
+    }
     }
   } else if (player.dying && player.alive) {
     player.dyingUpdate(dt);
@@ -3440,7 +3492,12 @@ function updateCamera(dt) {
   if (player.alive && !player.dying) {
     if (!keys.KeyV) { const k = 1 - Math.exp(-8 * dt); headYaw -= headYaw * k; headPitch -= headPitch * k; }
     headE.set(headPitch, headYaw, 0); headQ.setFromEuler(headE);
-    if (camMode === 1) {
+    if (player.gunner) {
+      // the gunner sits on the spine of the pilot's jet, looking where the turret points
+      player.mesh.visible = false;
+      camera.position.copy(player.pos).addScaledVector(player.up, 2.4 * sz).addScaledVector(player.fwd, -1.5 * sz);
+      camera.lookAt(tv.copy(camera.position).addScaledVector(aimDir, 300));
+    } else if (camMode === 1) {
       camera.quaternion.copy(player.quat).multiply(headQ);
       camera.position.copy(player.pos).addScaledVector(player.up, era.plane.eye[0]).addScaledVector(player.fwd, -era.plane.eye[1]);
       player.mesh.visible = false;
@@ -3464,7 +3521,7 @@ function updateCamera(dt) {
     const ab = clamp((player.throttle - 1) / 0.2, 0, 1);
     camera.fov = lerp(camera.fov, 62 + sf * 12 + ab * 6, dt * 2);
   } else {
-    player.mesh.visible = true;
+    player.mesh.visible = !player.gunner;
     const mate = run && run.coop && run.deathT > 2.5 ? coopWatch() : null;
     if (mate) {
       // spectate: ride behind a teammate until the wave ends
@@ -3567,11 +3624,14 @@ function drawHud(dt) {
     const sel = i === run.grp, heat = G.over ? '<b style="color:' + red + '">HOT</b>' : '<b>' + Math.round(G.heat * 100) + '%</b>';
     return '<div style="opacity:' + (sel ? 1 : 0.6) + '">' + (sel ? '▶ ' : '') + (i ? 'SEC ' : 'PRI ') + G.g.name + ' · ' + heat + '</div>';
   }).join('');
+  if (player.gunner) wp += '<div>GUNNER · ' + esc(nameOf(player.rideSlot)) + '\'s jet</div><div>F pops their flares</div>';
+  else {
   if (run.groups.length < 2) wp += '<div style="opacity:0.6">SEC · none fitted</div>';
   wp += '<div>' + era.sec.short + ' <b>' + run.charges + '/' + st.charges + '</b>' + (run.charges < st.charges ? ' · ' + Math.ceil(st.reload - run.reloadT) + 's' : '') + '</div>';
   if (st.secId === 'missile') wp += '<div>' + (lockTarget ? (locked ? '<b>LOCKED</b>' : 'LOCKING…') : 'NO TARGET') + '</div>';
   wp += '<div>FLARES <b>' + run.flares + '</b></div>';
   if (run.mods.wingman) { const a = allies.find(x => x.alive && !x.dying); wp += '<div>WINGMAN ' + (a ? '<b>' + Math.ceil(a.hp / a.maxHp * 100) + '%</b>' : '<b style="color:' + red + '">DOWN</b> · back next wave') + '</div>'; }
+  }
   if (hEls.weap.innerHTML !== wp) hEls.weap.innerHTML = wp;
   let warn = '';
   if (live) {
@@ -3603,15 +3663,16 @@ function drawHud(dt) {
   if (!live) return;
 
   // mouse aim marker
-  if (mouseMode() && camMode === 0) {
+  if (player.gunner && !document.pointerLockElement && !isTouch) { hud.fillStyle = paper; hud.fillText('Click to capture the mouse', W / 2, H - 28); }
+  if (mouseMode() && camMode === 0 && !player.gunner) {
     const am = project(tv.copy(player.pos).addScaledVector(aimDir, 1000));
     if (am.ok) { hud.strokeStyle = amber; hud.beginPath(); hud.arc(am.x, am.y, 5, 0, Math.PI * 2); hud.stroke(); hud.beginPath(); hud.arc(am.x, am.y, 1.5, 0, Math.PI * 2); hud.stroke(); }
     if (!document.pointerLockElement && !isTouch) { hud.fillStyle = paper; hud.fillText('Click to capture the mouse', W / 2, H - 28); }
   }
 
   // gun reticle at convergence
-  const ret = project(tv.copy(player.fwd).multiplyScalar(380).add(player.pos));
-  if (ret.ok && camMode === 0) {
+  const ret = project(tv.copy(player.gunner ? aimDir : player.fwd).multiplyScalar(380).add(player.pos));
+  if (ret.ok && (camMode === 0 || player.gunner)) {
     const rx = ret.x, ry = ret.y;
     hud.strokeStyle = paper; hud.globalAlpha = 0.9;
     hud.beginPath(); hud.arc(rx, ry, 14, 0, Math.PI * 2); hud.stroke();
@@ -4514,7 +4575,7 @@ function renderCockpit(dt) {
 const COOP_HP = 0.25, COOP_COUNT = 0.6, COOP_LIVE = 3; // for every pilot past the first: enemy hull, fighters per wave, fighters in the air at once
 const COOP_SEND = 1 / 20, COOP_WORLD = 1 / 15;
 let net = null, coopFake = false, coopGo = false;
-const coop = { members: new Set(), ready: new Set(), mates: new Map(), pup: new Map(), defs: {}, sub: '', queue: 0, nid: 0, sendT: 0, worldT: 0, worldN: 0,
+const coop = { seat: 'pilot', members: new Set(), ready: new Set(), mates: new Map(), pup: new Map(), defs: {}, sub: '', queue: 0, nid: 0, sendT: 0, worldT: 0, worldN: 0,
   info: '', status: '', err: '', waiting: false, ending: false, downBy: -1, ffAt: 0 };
 const coopQ = new THREE.Quaternion();
 const coopRoom = () => !!(net && net.active);
@@ -4569,7 +4630,8 @@ function coopUpdate(dt) {
     coop.sendT = COOP_SEND;
     const live = player.alive && !player.dying;
     net.send({ t: 's', p: packPose(player), th: n1(player.throttle), fi: live && run.firing ? 1 : 0, hp: Math.ceil(player.hp), mh: Math.round(player.maxHp),
-      dn: live ? 0 : 1, by: coop.downBy, pl: era.plane.id, sk: skinFor(era.plane.id), w: (allies[0] && validTarget(allies[0])) ? packPose(allies[0]) : 0 });
+      dn: live ? 0 : 1, by: coop.downBy, pl: era.plane.id, sk: skinFor(era.plane.id), w: (allies[0] && validTarget(allies[0])) ? packPose(allies[0]) : 0,
+      gn: player.gunner ? player.rideSlot : null, ad: player.gunner ? [n4(aimDir.x), n4(aimDir.y), n4(aimDir.z)] : null });
   }
   if (net.isHost) { coop.worldT -= dt; if (coop.worldT <= 0) { coop.worldT = COOP_WORLD; coopSendWorld(); } }
   for (const m of coop.mates.values()) coopMateUpdate(m, dt);
@@ -4680,6 +4742,8 @@ function makeMate(m) {
 }
 function coopMateUpdate(m, dt) {
   if (!m.snap) return;
+  // a gunner has no jet of their own
+  if (m.gn != null) { if (m.p) { scene.remove(m.p.mesh); m.p = null; } gunnerTracers(m, dt); return; }
   coopMateWingman(m, dt);
   if (m.p && (m.p.planeId !== m.pl || m.p.skinId !== m.sk)) { scene.remove(m.p.mesh); m.p = null; }
   if (!m.p) { if (m.dn) return; m.p = makeMate(m); }
@@ -4711,6 +4775,7 @@ function coopMateState(f, msg) {
   if (!m) coop.mates.set(f, m = { slot: f, p: null });
   m.snap = { at: performance.now(), p: msg.p.slice(0, 3), q: msg.p.slice(3, 7), v: msg.p.slice(7, 10) };
   m.th = msg.th; m.fi = msg.fi; m.hp = msg.hp; m.mh = msg.mh; m.dn = !!msg.dn; m.by = msg.by; m.pl = msg.pl; m.sk = msg.sk;
+  m.gn = msg.gn != null ? msg.gn : null; m.ad = msg.ad;
   m.wsnap = msg.w ? { at: m.snap.at, p: msg.w.slice(0, 3), q: msg.w.slice(3, 7), v: msg.w.slice(7, 10) } : null;
 }
 // a teammate's wingman, for show: their own game flies it and decides what it hits
@@ -4744,6 +4809,7 @@ function coopHitMate(p, amount, from) {
 }
 function coopBulletHitsMate(b) {
   for (const p of coopMatePlanes()) {
+    if (player.gunner && p.mateSlot === player.rideSlot) continue;
     if (!validTarget(p) || !segSphere(b.prev, b.pos, p.pos, 5 * p.s.size)) continue;
     spawnFx(tv3, { add: true, color: 0xfff1c0, size: 4, life: 0.14 });
     hitMarkerT = 0.12; p.damage(b.dmg, player);
@@ -4890,6 +4956,7 @@ function coopMessage(f, msg) {
         if (now - coop.ffAt > 1500) { coop.ffAt = now; popText('Hit by ' + nameOf(f) + '!'); }
       }
       break;
+    case 'gf': if (coopOn() && player && !player.gunner && run.mission) { popFlares(); popText(nameOf(f) + ' popped flares'); } break;
     case 'fl': {
       if (!coopOn()) break;
       const m = coop.mates.get(f), p = m && m.p;
@@ -4947,7 +5014,7 @@ function coopClosed(reason) {
 const callsign = () => (($('coopName').value || '').trim() || save.callsign || 'Pilot').slice(0, 16);
 function coopSyncInfo() {
   if (!coopRoom()) return;
-  const info = { plane: era.plane.short, loc: save.loc, era: era.eraId, busy: !!(run && run.coop && !run.over) };
+  const info = { plane: coop.seat === 'gunner' && !net.isHost ? 'Gunner' : era.plane.short, loc: save.loc, era: era.eraId, busy: !!(run && run.coop && !run.over) };
   const k = JSON.stringify(info);
   if (k !== coop.info) { coop.info = k; net.setInfo(info); }
 }
@@ -4976,6 +5043,7 @@ function coopRender() {
   // back in the hangar a guest returns to their own location
   if (state === 'hangar' && (coopLoc || coopEra) && !(run && run.coop && !run.over)) { coopLoc = null; coopEra = null; composeEra(); buildWorld(); setupShowcase(); }
   const live = coopRoom(), busy = !!(net && net.connecting);
+  $('coopSeat').hidden = !live || net.isHost;
   $('coopIdle').hidden = live; $('coopRoom').hidden = !live;
   $('coopHost').disabled = $('coopJoin').disabled = busy;
   if (document.activeElement !== $('coopName')) $('coopName').value = save.callsign || '';
@@ -4993,10 +5061,11 @@ function coopRender() {
       $('coopNote').textContent = coop.status || (ros.length === 1 ? 'Waiting for pilots. You can launch alone too.' : 'You pick the location. Everyone flies their own jet, loadout, perks and wingman. Enemy numbers and hull go up with every pilot.');
     } else {
       ls.textContent = 'Waiting for the host'; launch.disabled = true;
+      $('coopSeat').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.seat === (coop.seat || 'pilot') ? 'true' : 'false'));
       const L = LOCS[hostInfo.loc];
       $('launchEra').textContent = era.short + (L ? ' · ' + L.name.toUpperCase() : '');
       const HX = ERAS[hostInfo.era];
-      $('coopNote').textContent = coop.status || (hostInfo.busy ? 'The host is mid-run. You\'ll fly from their next launch.' : 'The host picks the era and location' + (L ? ' (' + (HX ? HX.name + ', ' : '') + L.name + ' for now)' : '') + ' and launches. You fly your own jet for that era and the host\'s danger.');
+      $('coopNote').textContent = coop.status || (hostInfo.busy ? 'The host is mid-run. You\'ll fly from their next launch.' : 'The host picks the era and location' + (L ? ' (' + (HX ? HX.name + ', ' : '') + L.name + ' for now)' : '') + ' and launches. You fly your own jet for that era and the host\'s danger, or ride on the host\'s jet as their gunner.');
     }
   } else {
     ls.textContent = 'Launch survival'; launch.disabled = false;
@@ -5016,6 +5085,7 @@ $('coopHost').addEventListener('click', () => coopAct(coopNet().host(callsign(),
 $('coopJoin').addEventListener('click', () => coopAct(coopNet().join($('coopCode').value, callsign(), {})));
 $('coopCode').addEventListener('keydown', e => { if (e.key === 'Enter') $('coopJoin').click(); });
 $('coopLeave').addEventListener('click', () => { if (net) net.leave(); });
+$('coopSeat').addEventListener('click', e => { const b = e.target.closest('[data-seat]'); if (!b) return; coop.seat = b.dataset.seat; coopRender(); });
 $('coopCopy').addEventListener('click', () => {
   const q = new URLSearchParams(location.search); q.set('room', net.code);
   const link = location.origin + location.pathname + '?' + q.toString();
@@ -5032,6 +5102,7 @@ function coopHudTeam() {
   const rows = [...coop.members].filter(s => coopRoom() && s !== net.slot).sort((a, b) => a - b).map(s => {
     const m = coop.mates.get(s);
     const down = m && m.dn;
+    if (m && m.gn != null) return '<div' + (down ? ' class="dn"' : '') + '>' + esc(nameOf(s)) + ' · gunner on ' + (m.gn === net.slot ? 'your jet' : esc(nameOf(m.gn)) + '\'s jet') + '</div>';
     return '<div' + (down ? ' class="dn"' : '') + '>' + esc(nameOf(s)) + ' · ' + (down ? 'DOWN' : m && m.mh ? Math.round(100 * m.hp / m.mh) + '%' : '…') + '</div>';
   });
   const html = '<div>TEAM · ' + plural(coopPilots(), 'pilot', 'pilots') + '</div>' + rows.join('');
@@ -5118,7 +5189,7 @@ loadManifest();
 requestAnimationFrame(frame);
 window.__skybreak = { get fps() { return fpsAvg; }, get state() { return state; }, get player() { return player; }, get enemies() { return enemies; }, get allies() { return allies; }, get run() { return run; }, startSurvival, nextWave, survivalWave, endRun, addUpgrade, offerPerks, selectGroup,
   wave(w) { run.wave = w - 1; nextWave(); },
-  nudge(dx, dy) { nudgeAim(dx, dy); }, setAim(y, p) { aimYaw = y; aimPitch = p; updateAimDir(); }, cam(m) { camMode = m; },
+  nudge(dx, dy) { nudgeAim(dx, dy); }, setAim(y, p) { aimYaw = y; aimPitch = p; updateAimDir(); }, cam(m) { camMode = m; }, aimAt(p) { setAimFromDir(tv.copy(p).sub(player.pos).normalize()); },
   setup(loc, plane) { save.locs[loc] = true; save.planes[plane] = true; save.loc = loc; save.plane = plane; save.era = PLANES[plane].era || 'modern'; composeEra(); buildWorld(); setupShowcase(); renderHangar(); },
   stick(x, y) { vStick.x = x; vStick.y = y; }, setCam(m) { setCamMode(m); }, head(y, p) { headYaw = y; headPitch = p; },
   get missiles() { return missiles; }, get locked() { return locked; }, flare() { flareRequest = true; }, get era() { return era; }, get save() { return save; },
