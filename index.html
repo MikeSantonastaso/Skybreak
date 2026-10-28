@@ -415,6 +415,7 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
           <label class="toggle"><input type="radio" name="ctl" id="optCtlMouse"> Mouse aim, War Thunder style. Point the mouse and the plane flies there.</label>
           <label class="toggle"><input type="radio" name="ctl" id="optCtlKeys"> Direct control with keyboard or gamepad</label>
           <label class="toggle"><input type="checkbox" id="optPull"> Pull back to climb in direct control (S or ↓ raises the nose)</label>
+          <label class="toggle"><input type="checkbox" id="optCalm"> Calm mode: much less screen shake, softer flashes and shorter hit-stop</label>
           <p class="note">A gamepad works too: left stick flies, right stick is rudder, RT fires, X swaps gun groups, LT fires the special, B drops flares, bumpers set throttle.</p>
           <button class="ghost" id="unlockBtn">Unlock everything (testing)</button>
           <button class="ghost" id="resetBtn">Reset all progress</button>
@@ -792,6 +793,26 @@ function resize() {
   camera.aspect = W / H; camera.updateProjectionMatrix();
 }
 window.addEventListener('resize', resize);
+// ---- adaptive quality: in a fight, drop the resolution and the particle budget while the frame rate sags,
+// and bring them back once there's headroom again ----
+const GFX = [{ dpr: 1.75, fx: 700 }, { dpr: 1.3, fx: 450 }, { dpr: 1, fx: 260 }];
+let gfxLevel = 0, gfxT = 0, gfxHold = 0;
+function setGfx(l) {
+  if (l === gfxLevel) return;
+  gfxLevel = l; fxCap = GFX[l].fx;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, GFX[l].dpr));
+  resize();
+}
+function tuneGfx(dt) {
+  gfxHold = Math.max(0, gfxHold - dt);
+  if (state !== 'playing') { gfxT = 0; return; }
+  gfxT += dt;
+  if (gfxT < 4) return;
+  gfxT = 0;
+  // after a drop, wait half a minute before trying the sharper setting again, so it doesn't flicker between the two
+  if (fpsAvg < 38 && gfxLevel < GFX.length - 1) { setGfx(gfxLevel + 1); gfxHold = 30; }
+  else if (fpsAvg > 57 && gfxLevel > 0 && gfxHold <= 0) setGfx(gfxLevel - 1);
+}
 resize();
 
 function blobTexture(inner, outer, size = 64) {
@@ -1198,6 +1219,15 @@ function fitPods(mesh, pid) {
   }
   return mesh;
 }
+// level of detail: other planes swap to a merged low-poly copy past LOD_FAR metres from the camera
+// (r128 picks the level of a THREE.LOD while it renders). The parts the game animates stay on the detailed copy
+const LOD_FAR = 900;
+function lodPlane(model, paint, livery) {
+  const near = planeMesh(model, paint, livery), lod = new THREE.LOD();
+  lod.addLevel(near, 0); lod.addLevel(A.planeFar(model, paint, livery), LOD_FAR);
+  lod.userData = near.userData;
+  return lod;
+}
 
 // ================= audio =================
 let actx = null, master = null, engine = null, noiseBuf = null, muted = false;
@@ -1214,8 +1244,15 @@ function initAudio() {
     const og = actx.createGain(), ng = actx.createGain(), eg = actx.createGain();
     og.gain.value = 0.25; ng.gain.value = 0.5; eg.gain.value = 0;
     osc.connect(og); nz.connect(ng); og.connect(f); ng.connect(f); f.connect(eg); eg.connect(master);
-    osc.start(); nz.start();
-    engine = { osc, f, og, ng, eg };
+    // the turbine whine, the afterburner's low roar and the wind over the canopy, each on its own gain
+    const whine = actx.createOscillator(); whine.type = 'triangle'; whine.frequency.value = 900;
+    const wg = actx.createGain(); wg.gain.value = 0; whine.connect(wg); wg.connect(eg);
+    const abF = actx.createBiquadFilter(); abF.type = 'lowpass'; abF.frequency.value = 170;
+    const abg = actx.createGain(); abg.gain.value = 0; nz.connect(abF); abF.connect(abg); abg.connect(eg);
+    const wF = actx.createBiquadFilter(); wF.type = 'bandpass'; wF.frequency.value = 900; wF.Q.value = 0.6;
+    const windg = actx.createGain(); windg.gain.value = 0; nz.connect(wF); wF.connect(windg); windg.connect(eg);
+    osc.start(); nz.start(); whine.start();
+    engine = { osc, f, og, ng, eg, whine, wg, abg, wF, windg };
   } catch (e) { actx = null; }
 }
 function burst(dur, freq, vol, type) {
@@ -1234,60 +1271,140 @@ function beep(freq, dur, vol) {
   g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
   o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.02);
 }
+// a pitch-dropping sine: the body of a gunshot, a kill or a blast
+function thump(f0, f1, dur, vol) {
+  if (!actx || muted || vol < 0.005) return;
+  const t = actx.currentTime, o = actx.createOscillator(), g = actx.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.02);
+}
+// noise swept up and back down: a jet tearing past
+function whoosh(vol) {
+  if (!actx || muted) return;
+  const t = actx.currentTime, s = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
+  s.buffer = noiseBuf; f.type = 'bandpass'; f.Q.value = 1.4;
+  f.frequency.setValueAtTime(350, t); f.frequency.exponentialRampToValueAtTime(2600, t + 0.35); f.frequency.exponentialRampToValueAtTime(420, t + 0.9);
+  g.gain.setValueAtTime(0.001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.3); g.gain.exponentialRampToValueAtTime(0.001, t + 0.95);
+  s.connect(f); f.connect(g); g.connect(master); s.start(t, Math.random() * 0.3); s.stop(t + 1);
+}
 function setEngine(on, throttle, speedFrac) {
   if (!engine) return;
   const t = actx.currentTime;
-  const prop = era.style === 'prop';
+  const prop = era.style === 'prop', ab = clamp((throttle - 1) / 0.2, 0, 1);
   engine.osc.frequency.setTargetAtTime(prop ? 38 + throttle * 46 : 50 + throttle * 30, t, 0.1);
   engine.og.gain.setTargetAtTime(prop ? 0.35 : 0.08, t, 0.2);
   engine.ng.gain.setTargetAtTime(prop ? 0.15 : 0.5 + throttle * 0.4, t, 0.2);
   engine.f.frequency.setTargetAtTime(prop ? 380 + throttle * 500 : 300 + throttle * 1400 + speedFrac * 400, t, 0.15);
+  engine.whine.frequency.setTargetAtTime(prop ? 200 : 700 + Math.min(throttle, 1) * 1100, t, 0.3);
+  engine.wg.gain.setTargetAtTime(prop ? 0 : 0.012 + Math.min(throttle, 1) * 0.02, t, 0.3);
+  engine.abg.gain.setTargetAtTime(ab * 1.6, t, 0.15);
+  engine.wF.frequency.setTargetAtTime(500 + speedFrac * 1400, t, 0.3);
+  engine.windg.gain.setTargetAtTime(clamp(speedFrac - 0.3, 0, 1) * 0.35, t, 0.3);
   engine.eg.gain.setTargetAtTime(on && !muted ? 0.32 : 0, t, 0.3);
 }
 function toggleMute() { muted = !muted; if (master) master.gain.value = muted ? 0 : 0.45; flashMsg(muted ? 'Sound off' : 'Sound on', '', 0.8); }
 
 // ================= effects =================
-const fxList = [], fxFree = { add: [], norm: [] };
+// Sprites, debris, bullets and missiles all come from pools and stay in the scene, hidden while they wait, so a fight
+// never builds new objects or reshuffles the scene. fxCap drops when the frame rate sags (see tuneGfx).
+let fxCap = 700;
+const fxList = [], fxFree = { add: [], norm: [], ring: [] };
+function ringTexture() {
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const g = c.getContext('2d'), gr = g.createRadialGradient(64, 64, 30, 64, 64, 64);
+  gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.7, 'rgba(255,255,255,0.9)'); gr.addColorStop(0.85, 'rgba(255,255,255,0.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+  return new THREE.CanvasTexture(c);
+}
+const TEX_RING = ringTexture();
+// o: color, size, life, and optionally add (glow), ring (a shockwave), opacity, grow, vel, grav (m/s² down), rise
 function spawnFx(pos, o) {
-  const kind = o.add ? 'add' : 'norm';
+  if (fxList.length >= fxCap) return;
+  const kind = o.ring ? 'ring' : o.add ? 'add' : 'norm';
   let s = fxFree[kind].pop();
   if (!s) {
-    s = new THREE.Sprite(new THREE.SpriteMaterial({ map: o.add ? TEX_SOFT : A.textures.smoke, transparent: true, depthWrite: false, blending: o.add ? THREE.AdditiveBlending : THREE.NormalBlending }));
-    s.userData.kind = kind;
+    s = new THREE.Sprite(new THREE.SpriteMaterial({ map: kind === 'ring' ? TEX_RING : kind === 'add' ? TEX_SOFT : A.textures.smoke, transparent: true, depthWrite: false, blending: kind === 'norm' ? THREE.NormalBlending : THREE.AdditiveBlending }));
+    s.userData.kind = kind; s.userData.vel = new V3();
+    scene.add(s);
   }
-  if (fxList.length > 700) return;
+  const u = s.userData;
+  s.visible = true;
   s.material.color.setHex(o.color);
   s.material.opacity = o.opacity == null ? 1 : o.opacity;
   s.position.copy(pos);
   s.scale.setScalar(o.size);
-  s.userData.life = s.userData.max = o.life;
-  s.userData.size = o.size; s.userData.grow = o.grow || 0;
-  s.userData.op = s.material.opacity;
-  s.userData.vel = o.vel ? o.vel.clone() : null;
-  s.userData.rise = o.rise || 0;
-  scene.add(s); fxList.push(s);
+  u.life = u.max = o.life;
+  u.size = o.size; u.grow = o.grow || 0;
+  u.op = s.material.opacity;
+  u.moving = !!o.vel; if (o.vel) u.vel.copy(o.vel);
+  u.grav = o.grav || 0;
+  u.rise = o.rise || 0;
+  fxList.push(s);
 }
 function updateFx(dt) {
   for (let i = fxList.length - 1; i >= 0; i--) {
     const s = fxList[i], u = s.userData;
     u.life -= dt;
-    if (u.life <= 0) { scene.remove(s); fxList.splice(i, 1); fxFree[u.kind].push(s); continue; }
+    if (u.life <= 0) { s.visible = false; fxList[i] = fxList[fxList.length - 1]; fxList.pop(); fxFree[u.kind].push(s); continue; }
     const k = 1 - u.life / u.max;
     s.scale.setScalar(u.size * (1 + u.grow * k));
     s.material.opacity = u.op * (1 - k);
-    if (u.vel) { s.position.addScaledVector(u.vel, dt); u.vel.multiplyScalar(1 - 1.5 * dt); }
+    if (u.moving) { u.vel.y -= u.grav * dt; s.position.addScaledVector(u.vel, dt); u.vel.multiplyScalar(1 - 1.5 * dt); }
     if (u.rise) s.position.y += u.rise * dt;
   }
 }
+// burning chunks that tumble out of a kill, trailing smoke
+const debris = [], debrisFree = [];
+const debrisGeo = new THREE.BoxGeometry(1.1, 0.22, 1.7), debrisMat = new THREE.MeshLambertMaterial({ color: 0x34383a });
+function spawnDebris(pos, vel, n, scale) {
+  for (let i = 0; i < n && debris.length < 60; i++) {
+    let d = debrisFree.pop();
+    if (!d) { d = { mesh: new THREE.Mesh(debrisGeo, debrisMat), vel: new V3(), spin: new V3() }; scene.add(d.mesh); }
+    d.mesh.visible = true; d.mesh.position.copy(pos); d.mesh.scale.setScalar(rand(0.6, 1.7) * scale);
+    d.vel.set(rand(-1, 1), rand(-0.4, 1), rand(-1, 1)).normalize().multiplyScalar(rand(25, 75) * Math.sqrt(scale));
+    if (vel) d.vel.addScaledVector(vel, 0.55);
+    d.spin.set(rand(-9, 9), rand(-9, 9), rand(-9, 9)); d.life = rand(1.6, 3.2); d.smokeT = rand(0, 0.06); d.hot = Math.random() < 0.7;
+    debris.push(d);
+  }
+}
+function updateDebris(dt) {
+  for (let i = debris.length - 1; i >= 0; i--) {
+    const d = debris[i], p = d.mesh.position;
+    d.life -= dt;
+    d.vel.y -= 9.8 * dt; d.vel.multiplyScalar(1 - 0.35 * dt); p.addScaledVector(d.vel, dt);
+    d.mesh.rotation.x += d.spin.x * dt; d.mesh.rotation.y += d.spin.y * dt; d.mesh.rotation.z += d.spin.z * dt;
+    d.smokeT -= dt;
+    if (d.hot && d.smokeT <= 0) {
+      d.smokeT = 0.07;
+      spawnFx(p, { color: 0x2c2c2c, opacity: 0.45, size: 2.4 * d.mesh.scale.x, grow: 2.2, life: 1.1, rise: 2 });
+      if (d.life > 1) spawnFx(p, { add: true, color: 0xff9a40, size: 1.8 * d.mesh.scale.x, life: 0.12 });
+    }
+    if (d.life <= 0 || p.y < groundAt(p.x, p.z)) { d.mesh.visible = false; debris[i] = debris[debris.length - 1]; debris.pop(); debrisFree.push(d); }
+  }
+}
+// camera shake: shake is trauma that drains over time; Calm mode in Settings turns it down along with the flashes
+let calmK = 1;
+function setCalm() { calmK = save.calm ? 0.3 : 1; }
+// Calm starts on for anyone whose system asks for reduced motion
+if (save.calm == null) save.calm = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+setCalm();
+function addShake(v) { shake = Math.max(shake, v * calmK); }
 const tv = new V3(), tv2 = new V3(), tv3 = new V3();
-function explosion(pos, scale) {
+function explosion(pos, scale, vel) {
   scale = scale || 1;
+  const d = camera.position.distanceTo(pos), near = d < 2500, busy = fxList.length > fxCap * 0.6;
+  spawnFx(pos, { add: true, color: 0xffffff, size: 55 * scale * (0.4 + 0.6 * calmK), grow: 0.4, life: 0.09 });
   spawnFx(pos, { add: true, color: 0xffd18a, size: 30 * scale, grow: 1.5, life: 0.35 });
-  for (let i = 0; i < 10; i++) spawnFx(pos, { add: true, color: i % 2 ? 0xff7a2a : 0xffb347, size: rand(8, 16) * scale, grow: 1.2, life: rand(0.5, 1.1), vel: tv.set(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize().multiplyScalar(rand(20, 60) * scale) });
-  for (let i = 0; i < 8; i++) spawnFx(pos, { color: 0x2a2a2a, opacity: 0.7, size: rand(12, 22) * scale, grow: 2.2, life: rand(1.8, 3), rise: 6, vel: tv.set(rand(-1, 1), rand(-0.3, 1), rand(-1, 1)).normalize().multiplyScalar(rand(8, 25)) });
-  const d = camera.position.distanceTo(pos);
-  shake = Math.max(shake, clamp(1.6 - d / 500, 0, 1.4) * scale);
-  burst(1.3, 220, clamp(1 - d / 2500, 0.05, 0.9), 'lowpass');
+  if (near) spawnFx(pos, { ring: true, color: 0xffd9a8, opacity: 0.7, size: 10 * scale, grow: 9, life: 0.5 });
+  for (let i = 0; i < (busy ? 5 : 10); i++) spawnFx(pos, { add: true, color: i % 2 ? 0xff7a2a : 0xffb347, size: rand(8, 16) * scale, grow: 1.2, life: rand(0.5, 1.1), vel: tv.set(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize().multiplyScalar(rand(20, 60) * scale) });
+  if (near && !busy) for (let i = 0; i < 12; i++) spawnFx(pos, { add: true, color: i % 3 ? 0xffe2a8 : 0xffffff, size: rand(1.4, 2.6) * Math.sqrt(scale), life: rand(0.4, 0.9), grav: 30, vel: tv.set(rand(-1, 1), rand(-0.6, 1), rand(-1, 1)).normalize().multiplyScalar(rand(90, 220) * Math.sqrt(scale)) });
+  for (let i = 0; i < (busy ? 4 : 8); i++) spawnFx(pos, { color: 0x2a2a2a, opacity: 0.7, size: rand(12, 22) * scale, grow: 2.2, life: rand(1.8, 3), rise: 6, vel: tv.set(rand(-1, 1), rand(-0.3, 1), rand(-1, 1)).normalize().multiplyScalar(rand(8, 25)) });
+  if (scale >= 0.6 && d < 3000) spawnDebris(pos, vel, Math.round(clamp(scale * 5, 3, 12)), Math.min(scale, 2.5));
+  addShake(clamp(1.6 - d / 500, 0, 1.4) * scale);
+  const vol = clamp(1 - d / 2500, 0.05, 0.9);
+  burst(1.3, 220, vol, 'lowpass');
+  thump(scale > 1.5 ? 70 : 110, 30, 0.7 + 0.2 * scale, vol * 0.8);
 }
 
 // ================= aircraft =================
@@ -1407,7 +1524,7 @@ class Plane {
   kill(from) {
     this.dying = true; this.dieT = 0; this.fall = 0;
     if (this.boss) this.spin = 0.35;
-    explosion(this.pos, this.boss ? 2 : 0.6);
+    explosion(this.pos, this.boss ? 2 : 0.6, this.vel);
     onPlaneDown(this, from);
   }
   dyingUpdate(dt) {
@@ -1432,7 +1549,7 @@ class Plane {
   remove() { this.alive = false; scene.remove(this.mesh); }
   trails(dt) {
     const frac = this.hp / this.maxHp;
-    if (frac > 0.5) return;
+    if (frac > 0.5 || camera.position.distanceToSquared(this.pos) > 5000 * 5000) return;
     this.smokeT -= dt;
     if (this.smokeT <= 0) {
       this.smokeT = frac < 0.25 ? 0.04 : 0.08;
@@ -1457,11 +1574,11 @@ const bulletPool = {};
 function spawnBullet(owner, start, dir, gun, dmg, color, crit) {
   const key = gun.len + '_' + color;
   const pool = bulletPool[key] || (bulletPool[key] = []);
-  const mesh = pool.pop() || bulletMesh(gun.len, color);
-  mesh.userData.key = key;
+  let mesh = pool.pop();
+  if (!mesh) { mesh = bulletMesh(gun.len, color); scene.add(mesh); }
+  mesh.userData.key = key; mesh.visible = true;
   mesh.position.copy(start);
   mesh.lookAt(tv2.copy(start).add(dir));
-  scene.add(mesh);
   bullets.push({ mesh, pos: mesh.position, prev: start.clone(), vel: dir.clone().multiplyScalar(gun.speed).add(owner.vel), life: gun.range / gun.speed * (owner === player ? run.mods.range : 1), dmg, team: owner.team, owner, crit, fake: coopFake });
 }
 let gunSoundAt = 0;
@@ -1479,7 +1596,7 @@ function fireGun(p, gun, dmg, spread, color, at) {
     spawnFx(start, { add: true, color, size: 2.2 * sz, life: 0.05 });
     // a full loadout can fire hundreds of rounds a second; keep the sound to one shot per 30 ms
     const now = performance.now();
-    if (now - gunSoundAt > 30) { gunSoundAt = now; burst(0.07, gun.sound, 0.18); }
+    if (now - gunSoundAt > 30) { gunSoundAt = now; burst(0.07, gun.sound, 0.18); thump(60 + gun.sound * 0.12, 40, 0.06, 0.07); }
   } else {
     const d = camera.position.distanceTo(p.pos);
     if (d < 900 && Math.random() < 0.5) burst(0.06, gun.sound * 0.8, 0.12 * (1 - d / 900));
@@ -1508,14 +1625,17 @@ function updateBullets(dt) {
           spawnFx(tv3, { add: true, color: b.crit ? 0xff8a3a : 0xfff1c0, size: b.crit ? 8 : 4, life: 0.14 });
           const at = tv3.clone();
           e.damage(b.owner === player && (e.heavy || e.ace) ? b.dmg * run.mods.ap : b.dmg, b.owner); hit = true;
-          if (b.owner === player) { hitMarkerT = 0.12; burst(0.04, 3200, 0.12, 'highpass'); onPlayerHit(e, b, at); }
+          if (b.owner === player) {
+            hitMarkerT = 0.12; burst(0.04, 3200, 0.12, 'highpass'); onPlayerHit(e, b, at);
+            for (let k = 0; k < 2; k++) spawnFx(at, { add: true, color: 0xffd890, size: 1.3, life: 0.3, grav: 20, vel: tv.set(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize().multiplyScalar(rand(40, 110)).add(e.vel) });
+          }
           break;
         }
       }
       if (!hit && b.owner === player) hit = coopBulletHitsMate(b);
     } else {
       if (player.alive && !player.dying && segSphere(b.prev, b.pos, player.pos, 4 * player.s.size) && Math.random() >= run.mods.ghost) {
-        player.damage(b.dmg, b.owner); hit = true; hurtT = 0.35; shake = Math.max(shake, 0.35);
+        player.damage(b.dmg, b.owner); hit = true; hurtT = 0.35; addShake(0.35);
         burst(0.05, 2000, 0.2, 'highpass');
       }
       if (!hit) for (const a of allies) {
@@ -1527,7 +1647,7 @@ function updateBullets(dt) {
       if (camera.position.distanceToSquared(b.pos) < 1200 * 1200 && Math.random() < 0.4) spawnFx(b.pos, { color: b.pos.y < 1 ? 0xffffff : era.world.kind === 'arctic' ? 0xf4f7f9 : 0xb59a76, opacity: 0.6, size: 4, grow: 2, life: 0.8, rise: 4 });
     }
     if (hit || b.life <= 0) {
-      scene.remove(b.mesh); bulletPool[b.mesh.userData.key].push(b.mesh); bullets.splice(i, 1);
+      b.mesh.visible = false; bulletPool[b.mesh.userData.key].push(b.mesh); bullets[i] = bullets[bullets.length - 1]; bullets.pop();
     }
   }
 }
@@ -1577,13 +1697,20 @@ let missileHit = false; // set while a missile deals its damage, so kills can te
 const missileGeo = cyl(0.14, 0.14, 3, 8), missileMat = new THREE.MeshPhongMaterial({ color: 0xe8e8e2, flatShading: true }), enemyMissileMat = new THREE.MeshPhongMaterial({ color: 0xc9c2a8, flatShading: true });
 // o: turn (rad/s cap), max (m/s), g (airframe G limit), lead (0 pure pursuit .. 1 full lead), life (s),
 // dir and boost (launch direction and extra speed), burst (a flak shell: blast radius, set off by fuse or at the end of its life)
+const missilePool = [[], []];
+function missileMesh(team) {
+  let m = missilePool[team ? 1 : 0].pop();
+  if (!m) { m = new THREE.Mesh(missileGeo, team ? enemyMissileMat : missileMat); m.userData.team = team ? 1 : 0; scene.add(m); }
+  m.visible = true;
+  return m;
+}
+function freeMissile(m) { m.mesh.visible = false; missilePool[m.mesh.userData.team].push(m.mesh); }
 function fireMissile(p, target, dmg, o) {
   o = o || {};
-  const m = new THREE.Mesh(missileGeo, p.team ? enemyMissileMat : missileMat);
+  const m = missileMesh(p.team);
   const side = (missiles.length % 2 ? 1 : -1);
   m.position.copy(p.pos).addScaledVector(p.up, -1.2).addScaledVector(p.right, side * 2.4);
   m.quaternion.copy(p.quat);
-  scene.add(m);
   missiles.push({ mesh: m, pos: m.position, dir: (o.dir || p.fwd).clone(), speed: p.speed + (o.boost || 0), target, life: o.life || 8, smokeT: 0, owner: p, team: p.team, dmg: dmg || 75,
     turn: o.turn || 3.6, max: o.max || 720, g: o.g || 120, lead: o.lead == null ? 1 : o.lead, fuse: o.fuse || 16, flareChecked: false, burst: o.burst || 0, small: !!o.small, fake: coopFake });
   coopMissileOut(p, target, dmg, o, missiles[missiles.length - 1]);
@@ -1688,13 +1815,13 @@ function updateMissiles(dt) {
         if (a.pos.distanceToSquared(m.pos) < m.fuse * m.fuse) {
           if (m.fake) { done = true; break; }
           a.damage(m.dmg, m.owner); done = true;
-          if (a === player) { hurtT = 0.6; shake = Math.max(shake, 0.9); popText('Hit by a missile'); }
+          if (a === player) { hurtT = 0.6; addShake(0.9); hitStop(0.07); popText('Hit by a missile'); }
           break;
         }
       }
     }
     if (done && m.burst) flakBurst(m);
-    if (done) { explosion(m.pos, m.burst ? 1.3 : m.small ? 0.4 : 0.7); scene.remove(m.mesh); missiles.splice(i, 1); }
+    if (done) { explosion(m.pos, m.burst ? 1.3 : m.small ? 0.4 : 0.7); freeMissile(m); missiles.splice(i, 1); }
   }
 }
 
@@ -1845,7 +1972,11 @@ function readControls(dt) {
 // ================= game state =================
 let state = 'hangar';
 let player = null, enemies = [], allies = [], run = null;
-let shake = 0, hurtT = 0, hitMarkerT = 0, timeScale = 1, slowmoT = 0;
+let shake = 0, hurtT = 0, hitMarkerT = 0, timeScale = 1, slowmoT = 0, hitStopT = 0;
+// kill markers: a cross that blooms where a jet you downed was
+const killMarks = [];
+// hit-stop: the game all but freezes for a few frames on a kill so it lands. Off in co-op, where everyone's clocks must agree
+function hitStop(t) { if (run && !run.coop) hitStopT = Math.max(hitStopT, t * calmK); }
 let lockTarget = null, lockT = 0, locked = false, lockBeepT = 0;
 let showcase = null, showT = 0;
 const camQ = new THREE.Quaternion();
@@ -1898,10 +2029,12 @@ function clearCombat() {
   for (const e of enemies) if (e.alive) scene.remove(e.mesh);
   for (const a of allies) if (a.alive) scene.remove(a.mesh);
   enemies = []; allies = [];
-  for (const b of bullets) { scene.remove(b.mesh); bulletPool[b.mesh.userData.key].push(b.mesh); }
+  for (const b of bullets) { b.mesh.visible = false; bulletPool[b.mesh.userData.key].push(b.mesh); }
   bullets.length = 0;
-  for (const m of missiles) scene.remove(m.mesh);
+  for (const m of missiles) freeMissile(m);
   missiles.length = 0;
+  for (const d of debris) { d.mesh.visible = false; debrisFree.push(d); }
+  debris.length = 0; killMarks.length = 0; hitStopT = 0;
   if (player && player.mesh.parent) scene.remove(player.mesh);
   player = null;
   coopClear();
@@ -1909,6 +2042,7 @@ function clearCombat() {
 
 // ---------------- survival: wave N is N fighters, a field upgrade between waves, and the location's boss every tenth wave ----------------
 const SURV_LIVE = 8; // fighters in the air at once; the rest of the wave joins as they fall
+const SURV_LIVE_MAX = 16; // a hard ceiling, however many pilots are flying
 const SURV_TIERS = ['mig21', 'mig29', 'su27', 'su35', 'su57'];
 const BOSS_EVERY = 10;
 function startSurvival() {
@@ -2184,7 +2318,7 @@ function spawnEnemy(skill, ace, kind, model, variant) {
   const a = Math.atan2(pl.fwd.z, pl.fwd.x) + rand(-0.9, 0.9), d = rand(1700, 2500);
   const x = clamp(pl.pos.x + Math.cos(a) * d, -ARENA, ARENA), z = clamp(pl.pos.z + Math.sin(a) * d, -ARENA, ARENA);
   const y = Math.max(groundAt(x, z) + 400, pl.pos.y + (kind === 'boomer' ? rand(300, 600) : rand(-150, 250)));
-  const mesh = planeMesh(model, ace ? 'ace' : variant || model);
+  const mesh = lodPlane(model, ace ? 'ace' : variant || model);
   const e = new Plane(enemyStats(skill, ace, model, variant), mesh, 1);
   e.pos.set(x, y, z);
   const look = tv.copy(pl.pos).add(tv2.set(rand(-500, 500), rand(-100, 100), rand(-500, 500)));
@@ -2198,7 +2332,7 @@ function spawnEnemy(skill, ace, kind, model, variant) {
 // your wingman (one per pilot): w is run.mods.wingman, with their hull, gun damage, missiles and orders
 function spawnAlly(w) {
   const st = { size: era.size, stallAoa: era.stallAoa, minSpeed: era.minSpeed, maxSpeed: era.maxSpeed * 0.97, corner: era.corner, gmax: era.gmax * 0.9, thrust: era.thrust, pitch: era.pitch, roll: era.roll, yaw: era.yaw, hp: w.hp };
-  const a = new Plane(st, planeMesh(era.plane.id, skinFor(era.plane.id), era.plane.livery), 0);
+  const a = new Plane(st, lodPlane(era.plane.id, skinFor(era.plane.id), era.plane.livery), 0);
   a.pos.copy(player.pos).addScaledVector(player.right, 70).addScaledVector(player.fwd, -50);
   a.quat.copy(player.quat); a.axes(); a.vel.copy(player.vel); a.speed = player.speed;
   a.ally = true; a.gunMul = w.dmg; a.cover = w.cover;
@@ -2260,6 +2394,9 @@ function onPlaneDown(p, from) {
 function creditKill(p, msl) {
   run.kills++;
   popText(p.boss ? 'Boss down' : p.ace ? 'Ace down' : 'Splash one');
+  hitStop(p.boss ? 0.22 : p.ace ? 0.11 : 0.055);
+  if (p.pos) killMarks.push({ pos: p.pos.clone(), t: 0, big: !!(p.boss || p.ace) });
+  thump(190, 48, 0.32, 0.3); setTimeout(() => beep(1480, 0.07, 0.04), 60);
   if (run.mods.vamp && player.alive && !player.dying) player.hp = Math.min(player.maxHp, player.hp + run.mods.vamp);
   if (run.mods.slowmo && !run.coop) slowmoT = Math.max(slowmoT, run.mods.slowmo);
   if (run.mods.hunt) run.huntT = 3;
@@ -2408,6 +2545,7 @@ function updatePlaying(dt) {
     // Linked triggers: every group that isn't locked fires with the trigger
     const linked = mods.dual && ctl.fire;
     run.firing = run.firing || (linked && run.groups.some(G => !G.over));
+    if (run.firing) addShake(0.05); // the guns rattle the airframe
     run.huntT = Math.max(0, run.huntT - dt);
     const hunt = run.huntT > 0 ? 1.3 : 1;
     for (const G of run.groups) {
@@ -2493,6 +2631,10 @@ function updatePlaying(dt) {
     if (r > ARENA * 1.2) player.damage(12 * dt, null);
     for (const e of enemies) {
       if (!validTarget(e)) continue;
+      // a jet tearing past close by
+      e.flybyT = (e.flybyT || 0) - dt;
+      const fd2 = e.pos.distanceToSquared(player.pos);
+      if (e.flybyT <= 0 && fd2 < 160 * 160 && tv.subVectors(e.vel, player.vel).lengthSq() > 140 * 140) { e.flybyT = 4; whoosh(clamp(0.5 - Math.sqrt(fd2) / 400, 0.1, 0.45)); addShake(0.12); }
       const rr = (e.boss ? 16 : 8) * player.s.size;
       if (e.pos.distanceToSquared(player.pos) < rr * rr) {
         if (e.heavy) player.damage(999, e);
@@ -2609,7 +2751,10 @@ function updateCamera(dt) {
     }
   }
   if (shake > 0) {
-    camera.position.x += rand(-1, 1) * shake * 1.2; camera.position.y += rand(-1, 1) * shake * 1.2;
+    // smooth noise rather than a fresh random every frame, with a little roll and pitch so it reads as a jolt, not a jitter
+    const t = performance.now() / 1000, n = (a, b, c) => Math.sin(t * a + c) * 0.6 + Math.sin(t * b + c * 2.3) * 0.4;
+    camera.position.x += n(37, 53, 0.4) * shake * 1.2; camera.position.y += n(41, 29, 1.9) * shake * 1.2;
+    camera.rotateZ(n(23, 31, 3.1) * shake * 0.03); camera.rotateX(n(19, 43, 4.7) * shake * 0.012);
     shake = Math.max(0, shake - dt * 2.2);
   }
   const gh = groundAt(camera.position.x, camera.position.z) + 2;
@@ -2816,6 +2961,20 @@ function drawHud(dt) {
       hud.beginPath(); hud.moveTo(14, 0); hud.lineTo(-6, -8); hud.lineTo(-2, 0); hud.lineTo(-6, 8); hud.closePath(); hud.fill();
       hud.restore(); hud.globalAlpha = 1;
     }
+  }
+
+  // kill markers
+  for (let i = killMarks.length - 1; i >= 0; i--) {
+    const k = killMarks[i]; k.t += dt;
+    if (k.t > 0.7) { killMarks.splice(i, 1); continue; }
+    tv.copy(k.pos).applyMatrix4(camInv);
+    if (tv.z >= 0) continue;
+    const p = project(k.pos), r = (k.big ? 15 : 10) + k.t * 28, q = r * 0.4;
+    hud.globalAlpha = 1 - k.t / 0.7; hud.strokeStyle = red; hud.lineWidth = 2.6;
+    hud.beginPath();
+    for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { hud.moveTo(p.x + sx * r, p.y + sy * r); hud.lineTo(p.x + sx * q, p.y + sy * q); }
+    hud.stroke();
+    hud.globalAlpha = 1; hud.lineWidth = 1.6;
   }
 
   // incoming missiles
@@ -3059,6 +3218,7 @@ function renderHangar() {
   $('optCtlMouse').checked = mouseMode();
   $('optCtlKeys').checked = !mouseMode();
   $('optPull').checked = !!save.pullBack;
+  $('optCalm').checked = !!save.calm;
   coopRender();
 }
 function renderSurvival() {
@@ -3324,6 +3484,7 @@ function renderPerks() {
 }
 
 $('optPull').addEventListener('change', e => { save.pullBack = e.target.checked; persist(); });
+$('optCalm').addEventListener('change', e => { save.calm = e.target.checked; persist(); setCalm(); });
 $('optCtlMouse').addEventListener('change', () => { save.ctl = 'mouse'; persist(); renderHangar(); });
 $('optCtlKeys').addEventListener('change', () => { save.ctl = 'keys'; persist(); renderHangar(); });
 $('launch').addEventListener('click', () => (coopRoom() ? coopLaunch() : startSurvival()));
@@ -3571,7 +3732,7 @@ const nidOf = e => e.nid || (e.nid = ++coop.nid);
 
 // ---- difficulty: more pilots, more and tougher fighters ----
 function coopHpMul() { return coopHost() ? 1 + COOP_HP * (coopPilots() - 1) : 1; }
-function survLive() { return SURV_LIVE + (coopHost() ? COOP_LIVE * (coopPilots() - 1) : 0); }
+function survLive() { return Math.min(SURV_LIVE_MAX, SURV_LIVE + (coopHost() ? COOP_LIVE * (coopPilots() - 1) : 0)); }
 function coopScaleWave(list, w, skill) {
   const n = coopHost() ? coopPilots() : 1;
   if (n < 2) return list;
@@ -3650,7 +3811,7 @@ function makePuppet(id, d) {
     e.turretRof = d.tr; e.turretDmg = d.td; e.turrets = BOSS_TURRETS.map(t => ({ p: new V3(t[0], t[1], t[2]), cd: rand(0, 1.5) }));
   } else {
     const j = ENEMY_JETS[d.m] || ENEMY_JETS[era.enemy.model];
-    e = new Plane({ size: d.sz, maxSpeed: j.flight.maxSpeed, hp: d.hp, armor: d.ar }, planeMesh(d.m, d.ace ? 'ace' : d.v || d.m), 1);
+    e = new Plane({ size: d.sz, maxSpeed: j.flight.maxSpeed, hp: d.hp, armor: d.ar }, lodPlane(d.m, d.ace ? 'ace' : d.v || d.m), 1);
     e.ace = !!d.ace; e.variant = d.v || null; e.vdef = VARIANTS[d.v] || null; e.skill = d.sk; e.model = d.m;
   }
   e.puppet = true; e.nid = id; e.gunCd = rand(0, 0.3);
@@ -3701,7 +3862,7 @@ function coopHitEnemy(e, amount, from) {
 // ---- teammates' jets ----
 function makeMate(m) {
   const P = PLANES[m.pl] || PLANES.f5;
-  const p = new Plane({ size: P.size, maxSpeed: P.flight.maxSpeed, hp: m.mh || P.hp }, planeMesh(P.id, m.sk, P.livery), 0);
+  const p = new Plane({ size: P.size, maxSpeed: P.flight.maxSpeed, hp: m.mh || P.hp }, lodPlane(P.id, m.sk, P.livery), 0);
   p.mateSlot = m.slot; p.planeId = P.id; p.skinId = m.sk;
   p.pos.set(m.snap.p[0], m.snap.p[1], m.snap.p[2]); p.quat.set(m.snap.q[0], m.snap.q[1], m.snap.q[2], m.snap.q[3]); p.axes();
   for (const r of p.mesh.userData.msl || []) r.visible = false;
@@ -3750,7 +3911,7 @@ function coopMateWingman(m, dt) {
   if (!w || !w.alive || w.dying || w.planeId !== m.pl) {
     if (w) scene.remove(w.mesh);
     const P = PLANES[m.pl] || PLANES.f5;
-    m.wp = new Plane({ size: P.size, maxSpeed: P.flight.maxSpeed, hp: 100 }, planeMesh(P.id, m.sk, P.livery), 0);
+    m.wp = new Plane({ size: P.size, maxSpeed: P.flight.maxSpeed, hp: 100 }, lodPlane(P.id, m.sk, P.livery), 0);
     m.wp.planeId = P.id; m.wp.damage = () => {};
     for (const r of m.wp.mesh.userData.msl || []) r.visible = false;
     m.wp.pos.set(m.wsnap.p[0], m.wsnap.p[1], m.wsnap.p[2]); m.wp.quat.set(m.wsnap.q[0], m.wsnap.q[1], m.wsnap.q[2], m.wsnap.q[3]); m.wp.axes();
@@ -3915,7 +4076,7 @@ function coopMessage(f, msg) {
       if (coopOn() && player && validTarget(player)) {
         const m = coop.mates.get(f);
         player.damage(msg.d, (m && m.p) || { mateSlot: f });
-        hurtT = 0.4; shake = Math.max(shake, 0.4); burst(0.05, 2000, 0.2, 'highpass');
+        hurtT = 0.4; addShake(0.4); burst(0.05, 2000, 0.2, 'highpass');
         const now = performance.now();
         if (now - coop.ffAt > 1500) { coop.ffAt = now; popText('Hit by ' + nameOf(f) + '!'); }
       }
@@ -4100,6 +4261,8 @@ function frame(now) {
   fpsAvg = lerp(fpsAvg, 1000 / Math.max(1, now - last), 0.05); last = now;
   if (run && run.coop) slowmoT = 0; // slow motion would knock co-op pilots out of step
   if (slowmoT > 0) { slowmoT -= dt; timeScale = lerp(0.3, 1, 1 - clamp(slowmoT / 1.2, 0, 1)); } else timeScale = 1;
+  if (run && run.coop) hitStopT = 0;
+  if (hitStopT > 0 && state === 'playing') { hitStopT -= dt; timeScale = 0.06; }
   const gdt = dt * timeScale;
   if (state !== 'hangar' && camera.view && camera.view.enabled) camera.clearViewOffset();
   if (state === 'playing' || (state === 'paused' && run && run.coop && run.mission)) {
@@ -4125,7 +4288,8 @@ function frame(now) {
       camera.updateProjectionMatrix();
     }
   }
-  if (state !== 'paused' || (run && run.coop)) { updateFx(gdt); updateArcs(gdt); }
+  if (state !== 'paused' || (run && run.coop)) { updateFx(gdt); updateArcs(gdt); updateDebris(gdt); }
+  tuneGfx(dt);
   updateSpeedLines();
   sky.position.copy(camera.position);
   placeSun(player && player.alive ? player.pos : showcase && showcase.parent ? showcase.position : camera.position);
