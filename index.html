@@ -750,8 +750,16 @@ const PLANES = {
     hardpoints: [{ id: 'gL', name: 'Gun bay, left', kind: 'bay', at: [-1.1, 0.1, -5] }, { id: 'gR', name: 'Gun bay, right', kind: 'bay', at: [1.1, 0.1, -5] }, { id: 'gC', name: 'Chin turret', kind: 'bay', at: [0, -0.6, -6.5] },
       { id: 'pL', name: 'Wing pylon, left', kind: 'pylon', at: [-3.6, -0.5, 1.5] }, { id: 'pR', name: 'Wing pylon, right', kind: 'pylon', at: [3.6, -0.5, 1.5] }],
     livery: [0x1d2228, 0xd694ff] },
+  volition: { id: 'volition', era: 'future', name: 'Volition', short: 'Volition', role: 'Strike interceptor', price: 24000,
+    blurb: 'The fastest thing in the hangar: twin plasma cannons, a six-missile rack and a 13 G frame built around one huge engine.',
+    size: 1.3, cockpit: 'future', eye: [0.95, -4.4], hp: 140, shield: 60, missiles: 6, lockTime: 0.45, lockRange: 4600,
+    flight: { minSpeed: 64, maxSpeed: 460, corner: 160, gmax: 13, thrust: 52, pitch: 1.85, roll: 5.8, yaw: 0.6 },
+    payload: 6, maxGuns: 4, guns: ['pulse', 'plasma', 'coil'], stock: { gL: 'plasma', gR: 'plasma', pL: 'coil' },
+    hardpoints: [{ id: 'gL', name: 'Gun bay, left', kind: 'bay', at: [-1.0, 0.1, -5] }, { id: 'gR', name: 'Gun bay, right', kind: 'bay', at: [1.0, 0.1, -5] },
+      { id: 'pL', name: 'Wing pylon, left', kind: 'pylon', at: [-4.2, -0.4, 2] }, { id: 'pR', name: 'Wing pylon, right', kind: 'pylon', at: [4.2, -0.4, 2] }],
+    livery: [0xe8eef2, 0x2aa6ff] },
 };
-const PLANE_ORDER = ['f5', 'f16', 'f14', 'f18', 'f35', 'p51', 'spit', 'f4u', 'bf109', 'x9', 'valk', 'nova'];
+const PLANE_ORDER = ['f5', 'f16', 'f14', 'f18', 'f35', 'p51', 'spit', 'f4u', 'bf109', 'x9', 'valk', 'nova', 'volition'];
 
 // ---- guns: bought once with credits, then fitted to the hardpoints of any jet that takes them ----
 // rof is rounds per second for one gun; weight counts against the jet's payload; drag cuts top speed;
@@ -978,7 +986,7 @@ const ERAS = {
     planes: ['f5', 'f16', 'f14', 'f18', 'f35'], tiers: ['mig21', 'mig29', 'su27', 'su35', 'su57'], secs: ['missile', 'rockets', 'flak', 'emp'], spawnK: 1, gTol: 9 },
   future: { id: 'future', name: 'Future', title: 'Energy weapons', mslWord: 'Missile',
     blurb: 'Lasers, plasma, railguns and recharging shields at 14 G, against drone swarms and their motherships.',
-    planes: ['x9', 'valk', 'nova'], tiers: ['drone', 'wraith', 'lancer', 'mantis', 'reaper'], secs: ['missile', 'emp', 'rail'], spawnK: 1.1, gTol: 12, tvc: true,
+    planes: ['x9', 'valk', 'nova', 'volition'], tiers: ['drone', 'wraith', 'lancer', 'mantis', 'reaper'], secs: ['missile', 'emp', 'rail'], spawnK: 1.1, gTol: 12, tvc: true,
     gun: { rof: 7, dmg: 4.2, speed: 1800, spread: 0.004, range: 1500, color: 0xff3b6b, len: 22, sound: 1900 },
     msl: { turn: 2.4, max: 780, g: 80, lead: 1, life: 7, fuse: 20 },
     bosses: { arctic: { kind: 'wing', name: 'Glacier carrier', color: 0x1c2228, accent: 0x7fe9f2 }, desert: { kind: 'blackjack', name: 'Sandstorm lancer', color: 0x2a2620, accent: 0xff7a1a },

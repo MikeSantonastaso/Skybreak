@@ -8,7 +8,10 @@
     "p51": {"file": "assets/jets/p51.glb", "rotY": 0, "stores": false, "credit": "P-51 Mustang by UlissesVinicios, CC BY 4.0"},
     "spit": {"file": "assets/jets/spit.glb", "rotY": 0, "stores": false, "credit": "Supermarine Spitfire Mk II by DedRam, CC BY 4.0"},
     "f4u": {"file": "assets/jets/f4u.glb", "rotY": 0, "stores": false, "credit": "Corsair Plane by G. (gunn24), CC BY 4.0"},
-    "bf109": {"file": "assets/jets/bf109.glb", "rotY": 0, "stores": false, "credit": "BF 109 F-2 Messerschmitt by GRIP420, CC BY 4.0"}
+    "bf109": {"file": "assets/jets/bf109.glb", "rotY": 0, "stores": false, "credit": "BF 109 F-2 Messerschmitt by GRIP420, CC BY 4.0"},
+    "x9": {"file": "assets/jets/cb1.glb", "rotY": 0, "stores": false, "credit": "SPACESHIP - CB1 by Lezalit, CC BY 4.0", "nozzles": [{"x": 0, "y": -0.02, "z": 6.6, "r": 0.72, "len": 0.3}, {"x": 2.34, "y": -0.34, "z": 4.6, "r": 0.55, "len": 0.3}]},
+    "valk": {"file": "assets/jets/cb2.glb", "rotY": 0, "stores": false, "credit": "SPACESHIP - CB2 by Lezalit, CC BY 4.0", "nozzles": [{"x": 0, "y": 0, "z": 7.3, "r": 0.62, "len": 0.3}, {"x": 2.5, "y": 0, "z": 5.9, "r": 0.31, "len": 0.3}]},
+    "volition": {"file": "assets/jets/volition.glb", "rotY": 0, "stores": false, "credit": "Volition Fighter by tulex_art, CC BY 4.0", "nozzles": [{"x": 1.67, "y": -1.5, "z": 2.2, "r": 0.45, "len": 0.3}]}
   },
   "skies": {
     "arctic": {"file": "assets/skies/arctic.hdr", "exposure": 1, "rot": 0, "credit": "Syferfontein 0d Clear sky by Greg Zaal and Jarod Guest, Poly Haven, CC0"},
