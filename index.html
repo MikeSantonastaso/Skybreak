@@ -283,6 +283,42 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
 .hud-tl .team { margin-top: 6px; display: grid; gap: 2px; font-size: 12px; }
 .coop .note.bad { color: var(--danger); }
 .hud-tl .team .dn { color: var(--danger, #ff5b4a); }
+/* danger modifiers */
+.danger { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
+.dz { text-align: left; background: rgba(255,255,255,0.03); border: 1px solid rgba(235,228,210,0.14); color: var(--paper); padding: 9px 10px; display: flex; flex-direction: column; gap: 4px; }
+.dz:not(:disabled):hover { border-color: var(--amber-dim); }
+.dz.on { border-color: var(--danger); background: rgba(255,91,74,0.08); }
+.dz:disabled { cursor: default; opacity: 0.6; }
+.dz .dn { font-weight: 700; font-size: 13.5px; display: flex; justify-content: space-between; gap: 8px; }
+.dz .dn em { font-style: normal; font-size: 11px; color: var(--muted); letter-spacing: 0.08em; }
+.dz.on .dn em { color: var(--danger); }
+.dz .dd { font-size: 12px; color: var(--muted); line-height: 1.35; }
+.dzsum { color: var(--danger); }
+/* run summary */
+.summary { text-align: left; margin: -6px 0 18px; display: flex; flex-direction: column; gap: 10px; }
+.summary:empty { display: none; }
+.sumhead { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--amber-dim); font-weight: 600; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+.sumgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px 12px; }
+@media (max-width: 560px) { .sumgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.sumgrid b { display: block; font-family: var(--display); font-size: 24px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.sumgrid span, .sumlabel { font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.dmgbars { display: grid; grid-template-columns: auto minmax(0, 1fr) 3.2em; gap: 4px 10px; align-items: center; font-size: 12.5px; }
+.dmgbars i { display: block; height: 7px; background: rgba(235,228,210,0.1); position: relative; }
+.dmgbars i b { position: absolute; inset: 0 auto 0 0; background: var(--amber); }
+.dmgbars em { font-style: normal; text-align: right; font-variant-numeric: tabular-nums; }
+.chip.r-rare { border-color: rgba(127,233,242,0.5); } .chip.r-epic { border-color: rgba(214,148,255,0.7); } .chip.r-cursed { border-color: rgba(255,91,74,0.6); }
+.chip.syn { border-color: var(--good); color: var(--good); } .chip.got { border-color: var(--amber); }
+/* achievements */
+.achs { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
+.ach { border: 1px solid rgba(235,228,210,0.12); background: rgba(255,255,255,0.02); padding: 10px; display: flex; flex-direction: column; gap: 4px; }
+.ach.done { border-color: var(--good); background: rgba(143,214,154,0.06); }
+.ach b { font-size: 14px; } .ach.done b { color: var(--good); }
+.ach span { font-size: 12px; color: var(--muted); line-height: 1.35; }
+.ach small { margin-top: auto; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--amber); }
+.toast { position: fixed; top: calc(52px + env(safe-area-inset-top, 0px)); left: 50%; transform: translate(-50%, -12px); z-index: 7; pointer-events: none; background: var(--panel); border: 1px solid var(--amber); padding: 9px 16px; display: flex; flex-direction: column; align-items: center; gap: 2px; opacity: 0; transition: opacity 0.3s, transform 0.3s; text-align: center; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast b { font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--amber); }
+.toast span { font-size: 12.5px; color: var(--paper); }
 </style>
 </head>
 <body>
@@ -291,6 +327,7 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
 <canvas id="hudc"></canvas>
 <div id="vignette"></div>
 <div id="gvig"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <div id="hud" hidden>
   <div class="hud-tl">
@@ -339,6 +376,7 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
       <button class="tab" role="tab" id="tab-hangar" aria-controls="pane-hangar">Hangar</button>
       <button class="tab" role="tab" id="tab-loadout" aria-controls="pane-loadout">Loadout</button>
       <button class="tab" role="tab" id="tab-perks" aria-controls="pane-perks">Perks<b id="ptsBadge"></b></button>
+      <button class="tab" role="tab" id="tab-records" aria-controls="pane-records">Records</button>
     </div>
     <div class="cols">
       <div class="col">
@@ -347,6 +385,10 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
           <div>
             <div class="label"><span>Location</span></div>
             <div class="eras" id="survList"></div>
+          </div>
+          <div>
+            <div class="label"><span>Danger</span><span id="dangerSum"></span></div>
+            <div class="danger" id="dangerList"></div>
           </div>
           <p class="note" id="survNote"></p>
           <div class="coop" id="coopBox">
@@ -402,6 +444,15 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
           <div class="slots" id="perkSlots"></div>
           <div class="perkgrid" id="perkShop"></div>
         </div>
+        <div id="pane-records" class="col" role="tabpanel" aria-labelledby="tab-records" hidden>
+          <p class="note lede">Achievements pay out credits and medals, or unlock paint, perks and jets. They count across every run, solo and co-op.</p>
+          <p class="note" id="achNote"></p>
+          <div class="achs" id="achList"></div>
+          <div>
+            <div class="label"><span>Danger records · highest danger with the boss down</span></div>
+            <div class="record" id="dangerRecords"></div>
+          </div>
+        </div>
       </div>
       <aside class="col">
         <button class="launch" id="launch"><span>Launch survival</span><small id="launchEra">F-5E</small></button>
@@ -440,10 +491,12 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
     <h2 id="dbTitle">Shot down</h2>
     <p class="sub" id="dbSub"></p>
     <div class="stats" id="dbStats"></div>
+    <div class="summary" id="dbSummary"></div>
     <p class="sub" id="dbPts"></p>
     <div class="row">
       <button class="btn primary" id="dbHangar">Back to hangar</button>
       <button class="btn" id="dbAgain">Fly again</button>
+      <button class="btn" id="dbCopy">Copy summary</button>
     </div>
   </div>
 </section>
@@ -481,7 +534,8 @@ const Y_AXIS = new V3(0, 1, 0);
 // ================= save data =================
 const SAVE_KEY = 'skybreak-save-v3';
 const defaultSave = () => ({ points: 0, credits: 0, totalKills: 0, runs: 0, locs: { arctic: true }, bosses: {}, survBest: {},
-  planes: { f5: true }, skins: { factory: true }, skin: {}, guns: {}, loadout: {}, secs: {}, secondary: {}, perks: {}, groups: {}, equip: null, allSlots: false, loc: 'arctic', plane: 'f5', pullBack: true, ctl: 'mouse' });
+  planes: { f5: true }, skins: { factory: true }, skin: {}, guns: {}, loadout: {}, secs: {}, secondary: {}, perks: {}, groups: {}, equip: null, allSlots: false, loc: 'arctic', plane: 'f5', pullBack: true, ctl: 'mouse',
+  danger: {}, dangerBest: {}, ach: {}, life: {} });
 // what each rank of the old skill web cost, so ranks trained there come back as medals (anything not listed cost 2)
 const OLD_WEB_COST = { armor: 1, engine: 1, guns: 1, seekers: 1, controls: 1, supply: 1, reactive: 4, turbofan: 4, ap: 4, pylon: 4, instinct: 4, blackmkt: 4,
   tub: 3, damctl: 3, overhaul: 3, arearule: 3, hotbarrel: 3, match: 3, warhead: 3, datalink: 3, fbw: 3, evasive: 3, contracts: 3, scrounger: 3,
@@ -492,7 +546,8 @@ try {
   const obj = (k, base) => Object.assign({}, base || {}, s[k] || {});
   if (s) {
     save = Object.assign(defaultSave(), s, { locs: obj('locs', { arctic: true }), bosses: obj('bosses'), survBest: obj('survBest'),
-      planes: obj('planes', { f5: true }), skins: obj('skins', { factory: true }), skin: obj('skin'), guns: obj('guns'), loadout: obj('loadout'), secs: obj('secs'), secondary: obj('secondary'), perks: obj('perks'), groups: obj('groups') });
+      planes: obj('planes', { f5: true }), skins: obj('skins', { factory: true }), skin: obj('skin'), guns: obj('guns'), loadout: obj('loadout'), secs: obj('secs'), secondary: obj('secondary'), perks: obj('perks'), groups: obj('groups'),
+      danger: obj('danger'), dangerBest: obj('dangerBest'), ach: obj('ach'), life: obj('life') });
     // perks were unlocked as true; now each holds its tier, from I to V
     for (const id in save.perks) if (save.perks[id] === true) save.perks[id] = 1;
     // the skill web and the old 12-skill tree are gone: every rank comes back as medals for perks
@@ -1509,8 +1564,9 @@ class Plane {
     if (!this.alive || this.dying) return;
     this.lastHitT = 0;
     if (this.s.armor) amount *= 1 - this.s.armor;
-    if (this === player && run) amount *= 1 - run.mods.dr;
+    if (this === player && run) { amount *= (1 - run.mods.dr) * (1 + 0.15 * dz('thin')); if (run.st) { run.st.taken += amount; run.st.waveTaken += amount; } }
     if (this.shield > 0) { const a = Math.min(this.shield, amount); this.shield -= a; amount -= a; this.shieldDelay = 2.5; }
+    tallyDmg(this, amount, from);
     this.hp -= amount;
     // Second wind: once a wave, dropping under a quarter of your hull repairs 40% of it
     if (this === player && run && run.mods.wind && !run.windUsed && this.hp > 0 && this.hp < this.maxHp * 0.25) {
@@ -1579,7 +1635,7 @@ function spawnBullet(owner, start, dir, gun, dmg, color, crit) {
   mesh.userData.key = key; mesh.visible = true;
   mesh.position.copy(start);
   mesh.lookAt(tv2.copy(start).add(dir));
-  bullets.push({ mesh, pos: mesh.position, prev: start.clone(), vel: dir.clone().multiplyScalar(gun.speed).add(owner.vel), life: gun.range / gun.speed * (owner === player ? run.mods.range : 1), dmg, team: owner.team, owner, crit, fake: coopFake });
+  bullets.push({ mesh, pos: mesh.position, prev: start.clone(), vel: dir.clone().multiplyScalar(gun.speed).add(owner.vel), life: gun.range / gun.speed * (owner === player ? run.mods.range : 1), dmg, team: owner.team, owner, crit, fake: coopFake, src: gun.short });
 }
 let gunSoundAt = 0;
 function fireGun(p, gun, dmg, spread, color, at) {
@@ -1592,6 +1648,7 @@ function fireGun(p, gun, dmg, spread, color, at) {
   dir.normalize();
   const crit = p === player && Math.random() < (p.s.crit || 0);
   spawnBullet(p, start, dir, gun, crit ? dmg * (p.s.critMul || 2.5) : dmg, color, crit);
+  if (p === player && run.st) run.st.shots++;
   if (p === player) {
     spawnFx(start, { add: true, color, size: 2.2 * sz, life: 0.05 });
     // a full loadout can fire hundreds of rounds a second; keep the sound to one shot per 30 ms
@@ -1624,7 +1681,8 @@ function updateBullets(dt) {
         if (segSphere(b.prev, b.pos, e.pos, 9 * e.s.size)) {
           spawnFx(tv3, { add: true, color: b.crit ? 0xff8a3a : 0xfff1c0, size: b.crit ? 8 : 4, life: 0.14 });
           const at = tv3.clone();
-          e.damage(b.owner === player && (e.heavy || e.ace) ? b.dmg * run.mods.ap : b.dmg, b.owner); hit = true;
+          dmgSrc = b.src; e.damage(b.owner === player && (e.heavy || e.ace) ? b.dmg * run.mods.ap : b.dmg, b.owner); dmgSrc = ''; hit = true;
+          if (b.owner === player && run.st) run.st.hits++;
           if (b.owner === player) {
             hitMarkerT = 0.12; burst(0.04, 3200, 0.12, 'highpass'); onPlayerHit(e, b, at);
             for (let k = 0; k < 2; k++) spawnFx(at, { add: true, color: 0xffd890, size: 1.3, life: 0.3, grav: 20, vel: tv.set(rand(-1, 1), rand(-1, 1), rand(-1, 1)).normalize().multiplyScalar(rand(40, 110)).add(e.vel) });
@@ -1659,17 +1717,17 @@ function onPlayerHit(e, b, at) {
   if (m.ricochet && Math.random() < 0.25) {
     let best = null, bd = 300;
     for (const o of enemies) { if (o === e || !validTarget(o)) continue; const d = o.pos.distanceTo(e.pos); if (d < bd) { bd = d; best = o; } }
-    if (best) { spawnArc(at, best.pos); best.damage(b.dmg * 0.6, player); }
+    if (best) { spawnArc(at, best.pos); withSrc('Ricochet', () => best.damage(b.dmg * 0.6, player)); }
   }
   if (m.splash) {
     spawnFx(at, { add: true, color: 0xffa040, size: 14, grow: 1.4, life: 0.28 });
-    for (const o of enemies) if (o !== e && o.alive && !o.dying && o.pos.distanceToSquared(at) < 900 * (o.s.size * o.s.size)) o.damage(b.dmg * m.splash, player);
+    for (const o of enemies) if (o !== e && o.alive && !o.dying && o.pos.distanceToSquared(at) < 900 * (o.s.size * o.s.size)) withSrc('Explosive rounds', () => o.damage(b.dmg * m.splash, player));
   }
   if (m.chain) {
     run.hitCount++;
     if (run.hitCount % m.chain === 0) {
       const near = enemies.filter(o => o !== e && o.alive && !o.dying && o.pos.distanceTo(e.pos) < 400).sort((a, c) => a.pos.distanceTo(e.pos) - c.pos.distanceTo(e.pos)).slice(0, 2);
-      near.forEach(o => { spawnArc(e.pos, o.pos); o.damage(b.dmg * 2, player); });
+      near.forEach(o => { spawnArc(e.pos, o.pos); withSrc('Arc rounds', () => o.damage(b.dmg * 2, player)); });
       if (!near.length) spawnArc(e.pos, tv2.copy(e.pos).add(tv.set(rand(-25, 25), rand(-25, 25), rand(-25, 25))));
     }
   }
@@ -1689,7 +1747,7 @@ function updateArcs(dt) {
 function phoenixBlast() {
   explosion(player.pos, 1.6);
   spawnFx(player.pos, { add: true, color: 0xffc070, size: 80, grow: 3, life: 0.6 });
-  for (const o of enemies) if (o.alive && !o.dying && !o.heavy && o.pos.distanceTo(player.pos) < 300) o.damage(80, player);
+  for (const o of enemies) if (o.alive && !o.dying && !o.heavy && o.pos.distanceTo(player.pos) < 300) withSrc('Phoenix', () => o.damage(80, player));
   flashMsg('PHOENIX', 'Back in the fight', 2); slowmoT = 1.2; hurtT = 0;
 }
 const missiles = [];
@@ -1722,13 +1780,15 @@ function flakBurst(m) {
   spawnFx(m.pos, { add: true, color: 0xffc070, size: m.burst * 0.7, grow: 1.6, life: 0.35 });
   spawnFx(m.pos, { color: 0x3a3a3a, opacity: 0.7, size: m.burst * 0.5, grow: 2, life: 1.8, rise: 3 });
   if (m.fake) return;
-  missileHit = true;
+  missileHit = true; dmgSrc = era.sec.name;
+  let n = 0;
   for (const e of enemies) {
     if (!e.alive || e.dying) continue;
     const d = e.pos.distanceTo(m.pos), r = m.burst + (e.heavy ? 20 : 0);
-    if (d < r) e.damage(m.dmg * (1 - 0.5 * d / r), m.owner);
+    if (d < r) { e.damage(m.dmg * (1 - 0.5 * d / r), m.owner); n++; }
   }
-  missileHit = false;
+  missileHit = false; dmgSrc = '';
+  if (m.owner === player && n > 1) achEvent({ kind: 'multi', n });
   if (m.owner === player) coopFlakHitsMates(m);
 }
 // fire the jet's secondary weapon (one charge)
@@ -1750,13 +1810,14 @@ function fireSecondary(st) {
     spawnFx(player.pos, { add: true, color: 0x9ff6ff, size: 60, grow: 14, life: 0.6 });
     burst(0.5, 3600, 0.3, 'highpass');
     let n = 0;
-    missileHit = true;
+    missileHit = true; dmgSrc = S.name;
     for (const e of enemies) {
       if (!validTarget(e) || e.pos.distanceTo(player.pos) > S.radius) continue;
       e.stunT = S.stun * (e.boss ? 0.5 : 1); e.damage(dmg, player); n++;
       if (n <= 6) spawnArc(player.pos, e.pos);
     }
-    missileHit = false;
+    missileHit = false; dmgSrc = '';
+    if (n > 1) achEvent({ kind: 'multi', n });
     let fried = 0;
     for (const ms of missiles) if (ms.target === player) { ms.target = null; fried++; }
     popText(n ? 'EMP · ' + plural(n, 'bandit', 'bandits') + ' knocked out' : fried ? 'EMP · missiles fried' : 'EMP · nothing in range');
@@ -1804,7 +1865,7 @@ function updateMissiles(dt) {
       for (const e of enemies) {
         if (!e.alive || e.dying) continue;
         const r = e.heavy ? 22 * (e.boss ? 1 : 0.6) + (m.burst ? m.fuse : 0) : m.fuse;
-        if (e.pos.distanceToSquared(m.pos) < r * r) { if (!m.burst && !m.fake) { missileHit = true; e.damage(m.dmg, m.owner); missileHit = false; } done = true; break; }
+        if (e.pos.distanceToSquared(m.pos) < r * r) { if (!m.burst && !m.fake) { missileHit = true; dmgSrc = era.sec.name; e.damage(m.dmg, m.owner); missileHit = false; dmgSrc = ''; } done = true; break; }
       }
       if (!done) done = coopMissileHitsMate(m);
     } else {
@@ -2045,14 +2106,17 @@ const SURV_LIVE = 8; // fighters in the air at once; the rest of the wave joins 
 const SURV_LIVE_MAX = 16; // a hard ceiling, however many pilots are flying
 const SURV_TIERS = ['mig21', 'mig29', 'su27', 'su35', 'su57'];
 const BOSS_EVERY = 10;
-function startSurvival() {
+function startSurvival(danger) {
   initAudio();
   clearCombat();
   // the perks you equipped in the hangar, at the tiers you've bought; they stay put for the whole run
   const perks = {};
   for (const id of equipped()) perks[id] = perkTier(PERK_BY_ID[id]);
   run = { survival: true, wave: 0, hull: 0, perks, up: {}, kills: 0, cleared: 0, bosses: 0, unlocked: [],
-    rerolls: 1, bank: 0, synNote: '', windUsed: false, wingT: 0, huntT: 0, phoenixUsed: 0, hitCount: 0, over: false, seen: {}, deathT: 0, mission: null, coop: !!(net && net.active), downNote: '' };
+    rerolls: 1, bank: 0, synNote: '', windUsed: false, wingT: 0, huntT: 0, phoenixUsed: 0, hitCount: 0, over: false, seen: {}, deathT: 0, mission: null, coop: !!(net && net.active), downNote: '',
+    danger: Object.assign({}, danger || save.danger),
+    st: { dmg: {}, shots: 0, hits: 0, taken: 0, waveTaken: 0, waveSize: 0, t: 0, aces: 0, bossKills: 0, splKills: 0, specials: 0, killT: [], streak: 0, bestStreak: 0, ach: [] } };
+  if (dz('noreroll')) run.rerolls = 0;
   refreshMods();
   run.hull = maxHull();
   run.wave = 0;
@@ -2069,7 +2133,7 @@ function nextWave() {
 // From wave 3 about half of the rest are variants, from whichever kinds have turned up by then; a new kind always shows on its first wave.
 function survivalWave(w, skill) {
   const base = SURV_TIERS.indexOf(era.enemy.model), out = [];
-  const aces = Math.floor((w - 1) / 4), ups = Math.floor(w / 3);
+  const aces = dz('aces') ? (w >= 2 ? Math.ceil(w / 3) : 0) : Math.floor((w - 1) / 4), ups = Math.floor(w / 3);
   for (let i = 0; i < w; i++) {
     if (i < aces) out.push({ model: era.enemy.model, ace: true, skill: Math.min(skill + 0.25, 1) });
     else if (i < aces + ups) {
@@ -2077,10 +2141,10 @@ function survivalWave(w, skill) {
       out.push({ model: SURV_TIERS[Math.min(t, SURV_TIERS.length - 1)], up: true, skill: Math.min(skill + 0.08 * step + (t >= SURV_TIERS.length ? 0.1 : 0), 1) });
     } else out.push({ model: era.enemy.model, skill: skill * rand(0.85, 1.1) });
   }
-  const pool = VARIANT_ORDER.filter(v => VARIANTS[v].from <= w), plain = out.filter(s => !s.ace);
-  const nv = w >= 3 ? Math.min(plain.length, Math.floor((w - 1) / 2)) : 0;
+  const early = dz('early'), pool = VARIANT_ORDER.filter(v => early || VARIANTS[v].from <= w), plain = out.filter(s => !s.ace);
+  const nv = early ? Math.min(plain.length, Math.ceil(w / 2)) : w >= 3 ? Math.min(plain.length, Math.floor((w - 1) / 2)) : 0;
   shuffle(plain);
-  for (let i = 0; i < nv; i++) plain[i].variant = i === 0 && VARIANTS[pool[pool.length - 1]].from === w ? pool[pool.length - 1] : pool[Math.floor(Math.random() * pool.length)];
+  for (let i = 0; i < nv; i++) plain[i].variant = i === 0 && !early && VARIANTS[pool[pool.length - 1]].from === w ? pool[pool.length - 1] : pool[Math.floor(Math.random() * pool.length)];
   // shuffle so the tough ones turn up among the first and later reinforcements alike
   return shuffle(out);
 }
@@ -2181,26 +2245,27 @@ function addUpgrade(id) {
   if (!was && syn(UP_BY_ID[id].tag)) run.synNote = opened.name + ' is online: ' + opened.d + '. ';
   // extra max hull arrives filled
   run.hull = clamp(run.hull + Math.max(0, maxHull() - before), 1, maxHull());
+  achEvent({ kind: 'pick' });
 }
 const upsHeld = () => UPGRADES.filter(u => up(u.id)).map(u => u.name + (u.max > 1 ? ' ×' + up(u.id) : ''));
 const synsHeld = () => Object.keys(SYNERGIES).filter(syn).map(t => SYNERGIES[t].name);
 function offerPerks() {
   // after a boss wave every card is an epic
-  const bossWave = run.wave % BOSS_EVERY === 0;
+  const bossWave = isBossWave(run.wave);
   let picks = upgradeChoices(bossWave);
   const next = run.wave + 1, skipPay = 30 + 10 * run.wave;
   const go = f => () => { run.synNote = ''; f(); run.hull = clamp(run.hull, 1, maxHull()); nextWave(); };
   const render = () => {
     const heal = Math.round(maxHull() * 0.4);
     const cards = picks.map(u => Object.assign(upCard(u), { onPick: go(() => addUpgrade(u.id)) }));
-    if (cards.length < 3) cards.push({ k: 'Supply', t: 'Spare parts', d: 'Repair 25 hull.', onPick: go(() => { run.hull += 25; }) });
-    cards.push({ k: 'Ground crew', t: 'Field repair', d: 'Repair ' + heal + ' hull.', disabled: run.hull >= maxHull(), onPick: go(() => { run.hull += heal; }) });
+    if (cards.length < 3 && !dz('norepair')) cards.push({ k: 'Supply', t: 'Spare parts', d: 'Repair 25 hull.', onPick: go(() => { run.hull += 25; }) });
+    if (!dz('norepair')) cards.push({ k: 'Ground crew', t: 'Field repair', d: 'Repair ' + heal + ' hull.', disabled: run.hull >= maxHull(), onPick: go(() => { run.hull += heal; }) });
     const held = upsHeld(), syns = synsHeld();
     showChoice({
       title: bossWave ? 'Boss down · pick an epic' : 'Wave ' + run.wave + ' cleared',
       sub: run.downNote + (run.synNote || '') + 'Hull ' + Math.round(run.hull) + ' / ' + maxHull() + '. Pick a field upgrade for the rest of the run. Three of one tag open a synergy' +
         (syns.length ? ' (online: ' + syns.join(', ') + ')' : '') + (held.length ? '. So far: ' + held.join(', ') : '') + '.' +
-        ' Wave ' + next + ' brings ' + plural(next, 'fighter', 'fighters') + (next % BOSS_EVERY === 0 ? ' and the ' + era.boss.name.toLowerCase() : '') + '.',
+        ' Wave ' + next + ' brings ' + plural(next, 'fighter', 'fighters') + (isBossWave(next) ? ' and the ' + era.boss.name.toLowerCase() : '') + '.',
       cards,
       buttons: [
         run.rerolls > 0 && { label: 'Reroll (' + run.rerolls + ' left)', onClick: () => { run.rerolls--; picks = upgradeChoices(bossWave); render(); } },
@@ -2211,6 +2276,100 @@ function offerPerks() {
   };
   render();
 }
+// ---- danger: optional modifiers picked before a run. Each point of danger pays 10% more credits and 5% more medals ----
+// In co-op the host's danger applies to everyone.
+const DANGER = [
+  { id: 'thin', name: 'Thin skin', max: 2, pts: 1, d: r => 'You take ' + 15 * r + '% more damage.' },
+  { id: 'swarm', name: 'Swarm', max: 2, pts: 1, d: r => 25 * r + '% more fighters every wave.' },
+  { id: 'armor', name: 'Hardened', max: 2, pts: 1, d: r => 'Fighters and bosses get ' + 20 * r + '% more hull.' },
+  { id: 'aces', name: 'Ace academy', max: 1, pts: 2, d: () => 'Aces from wave 2, one fighter in three.' },
+  { id: 'rails', name: 'Hot rails', max: 1, pts: 1, d: () => 'Every enemy fighter carries one more missile.' },
+  { id: 'early', name: 'Mixed bag', max: 1, pts: 1, d: () => 'Every kind of variant from wave 1.' },
+  { id: 'flares', name: 'Short on flares', max: 1, pts: 1, d: () => 'Half the flares.' },
+  { id: 'norepair', name: 'No ground crew', max: 1, pts: 2, d: () => 'No field repairs or spare parts between waves.' },
+  { id: 'noreroll', name: 'No second chances', max: 1, pts: 1, d: () => 'No rerolls.' },
+  { id: 'rush', name: 'Boss rush', max: 1, pts: 3, d: () => 'A boss every 5 waves instead of every 10.' },
+];
+const DANGER_BY_ID = Object.fromEntries(DANGER.map(d => [d.id, d]));
+const dangerOf = set => DANGER.reduce((a, d) => a + Math.min((set || {})[d.id] || 0, d.max) * d.pts, 0);
+// this run's rank in a danger modifier
+const dz = id => (run && run.danger && run.danger[id]) || 0;
+const bossEvery = () => (dz('rush') ? 5 : BOSS_EVERY);
+const isBossWave = w => w % bossEvery() === 0;
+const dangerPay = h => ({ cr: 1 + 0.1 * h, md: 1 + 0.05 * h });
+
+// ---- run stats: who did the damage, accuracy, kills by kind, for the summary at the end ----
+let dmgSrc = ''; // set around a damage call so the summary knows which weapon did it
+function tallyDmg(target, amount, from) {
+  if (!run || !run.st || target.team !== 1 || !from) return;
+  const k = from.ally ? 'Wingman' : from === player ? dmgSrc || 'Other' : null;
+  if (k) run.st.dmg[k] = (run.st.dmg[k] || 0) + Math.max(0, Math.min(amount, target.hp));
+}
+function withSrc(src, f) { const was = dmgSrc; dmgSrc = src; try { f(); } finally { dmgSrc = was; } }
+
+// ---- achievements: feats that pay out credits or medals, or unlock paint, perks and jets ----
+// test(ev) runs on game events: ev.kind is 'kill', 'wave' (cleared), 'boss', 'multi' (one blast hit several) or 'pick' (a field upgrade)
+const ACH = [
+  { id: 'first', name: 'First blood', d: 'Down your first fighter.', r: { cr: 150 }, test: ev => ev.kind === 'kill' },
+  { id: 'streak5', name: 'Rampage', d: 'Down 5 fighters within 10 seconds.', r: { cr: 400 }, test: ev => ev.kind === 'kill' && run.st.streak >= 5 },
+  { id: 'boss1', name: 'Giant killer', d: 'Down your first boss.', r: { md: 2 }, test: ev => ev.kind === 'boss' },
+  { id: 'aces25', name: 'Ace hunter', d: 'Down 25 aces, over any number of runs.', r: { skin: 'acehunter' }, test: ev => ev.kind === 'kill' && (save.life.aces || 0) >= 25 },
+  { id: 'untouched', name: 'Untouchable', d: 'Clear a wave of 6 or more fighters without taking a hit.', r: { cr: 500 }, test: ev => ev.kind === 'wave' && run.st.waveSize >= 6 && run.st.waveTaken <= 0 },
+  { id: 'close', name: 'Close call', d: 'Clear a wave with less than 10% hull left.', r: { cr: 300 }, test: ev => ev.kind === 'wave' && player && player.alive && player.hp < player.maxHp * 0.1 },
+  { id: 'gunsonly', name: 'Gunfighter', d: 'Clear wave 10 without firing your special once.', r: { perk: 'bounty' }, test: ev => ev.kind === 'wave' && run.wave >= 10 && !run.st.specials },
+  { id: 'fox', name: 'Fox two', d: 'Down 100 fighters with your special, over any number of runs.', r: { perk: 'warhead' }, test: ev => ev.kind === 'kill' && (save.life.spl || 0) >= 100 },
+  { id: 'crowd', name: 'Crowd control', d: 'Hit 4 or more enemies with one flak burst or EMP.', r: { cr: 400 }, test: ev => ev.kind === 'multi' && ev.n >= 4 },
+  { id: 'wave20', name: 'Long haul', d: 'Clear wave 20 at any location.', r: { md: 4 }, test: ev => ev.kind === 'wave' && run.wave >= 20 },
+  { id: 'f5', name: 'Tiger tamer', d: 'Clear wave 15 in the F-5E.', r: { plane: 'f16' }, test: ev => ev.kind === 'wave' && run.wave >= 15 && era.plane.id === 'f5' },
+  { id: 'epics4', name: 'Epic run', d: 'Take 4 epic field upgrades in one run.', r: { cr: 500 }, test: ev => ev.kind === 'pick' && UPGRADES.filter(u => u.rar === 'epic' && up(u.id)).length >= 4 },
+  { id: 'syn3', name: 'Perfect build', d: 'Have 3 synergies online at once.', r: { md: 3 }, test: ev => ev.kind === 'pick' && synsHeld().length >= 3 },
+  { id: 'cursed3', name: 'Hexed', d: 'Fly with 3 cursed picks at once.', r: { skin: 'hex' }, test: ev => ev.kind === 'pick' && UPGRADES.filter(u => u.rar === 'cursed' && up(u.id)).length >= 3 },
+  { id: 'danger5', name: 'Danger close', d: 'Down a boss at danger 5 or higher.', r: { skin: 'hazard' }, test: ev => ev.kind === 'boss' && dangerOf(run.danger) >= 5 },
+  { id: 'danger10', name: 'Into the fire', d: 'Clear wave 10 at danger 10 or higher.', r: { skin: 'inferno', md: 5 }, test: ev => ev.kind === 'wave' && run.wave >= 10 && dangerOf(run.danger) >= 10 },
+  { id: 'coop10', name: 'Squadron', d: 'Clear wave 10 in co-op.', r: { skin: 'squadron' }, test: ev => ev.kind === 'wave' && run.coop && run.wave >= 10 },
+  { id: 'kills1000', name: 'Thousand', d: 'Down 1,000 fighters, over any number of runs.', r: { cr: 2000 }, test: ev => ev.kind === 'kill' && save.totalKills + run.kills >= 1000 },
+  { id: 'explorer', name: 'World tour', d: 'Open every location.', r: { cr: 1000 }, test: ev => ev.kind === 'boss' && LOC_ORDER.every(id => save.locs[id]) },
+];
+const ACH_BY_ID = Object.fromEntries(ACH.map(a => [a.id, a]));
+function rewardText(r) {
+  const out = [];
+  if (r.cr) out.push('+' + r.cr.toLocaleString() + ' credits');
+  if (r.md) out.push('+' + plural(r.md, 'medal', 'medals'));
+  if (r.skin) out.push(A.SKIN_BY_ID[r.skin].name + ' paint');
+  if (r.perk) out.push(PERK_BY_ID[r.perk].name + ' perk');
+  if (r.plane) out.push('the ' + PLANES[r.plane].short + ' for free');
+  return out.join(', ');
+}
+function achEvent(ev) {
+  if (!run || !run.st) return;
+  for (const a of ACH) {
+    if (save.ach[a.id] || !a.test(ev)) continue;
+    save.ach[a.id] = Date.now();
+    const r = a.r;
+    if (r.cr) save.credits += r.cr;
+    if (r.md) save.points += r.md;
+    // a perk you already have, or a jet you already own, pays medals or credits instead
+    if (r.perk) { if (perkOpen(PERK_BY_ID[r.perk])) save.points += 3; else save.perks[r.perk] = 1; }
+    if (r.plane) { if (save.planes[r.plane]) save.credits += PLANES[r.plane].price; else save.planes[r.plane] = true; }
+    run.st.ach.push(a.id);
+    persist();
+    toast('Achievement · ' + a.name, rewardText(r));
+  }
+}
+const toasts = [];
+function toast(title, sub) {
+  toasts.push({ title, sub });
+  beep(1046, 0.09, 0.06); setTimeout(() => beep(1568, 0.14, 0.06), 90);
+  if (toasts.length === 1) showToast();
+}
+function showToast() {
+  const t = toasts[0], el = $('toast');
+  if (!t) { el.classList.remove('show'); return; }
+  el.innerHTML = '<b></b><span></span>'; el.querySelector('b').textContent = t.title; el.querySelector('span').textContent = t.sub;
+  el.classList.add('show');
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => { toasts.shift(); showToast(); }, 350); }, 3200);
+}
+
 function endSurvival(reason) {
   run.over = true;
   coopRunOver(reason);
@@ -2218,8 +2377,9 @@ function endSurvival(reason) {
   const hadSkins = new Set(A.SKINS.filter(skinOwned).map(sk => sk.id));
   // a co-op run pays out like a solo one but doesn't count toward your solo best
   const prev = save.survBest[loc] || 0, record = waves > prev && !run.coop;
-  const medals = waves + 3 * run.bosses;
-  const credits = Math.round((run.kills * 12 + waves * 30 + run.bosses * 250) * (0.8 + 0.2 * era.loc.threat) * run.mods.credMul) + run.bank;
+  const heat = dangerOf(run.danger), pay = dangerPay(heat);
+  const medals = Math.ceil((waves + 3 * run.bosses) * pay.md);
+  const credits = Math.round((run.kills * 12 + waves * 30 + run.bosses * 250) * (0.8 + 0.2 * era.loc.threat) * run.mods.credMul * pay.cr) + run.bank;
   save.points += medals; save.credits += credits; save.runs++; save.totalKills += run.kills;
   if (record) save.survBest[loc] = waves;
   const fresh = A.SKINS.filter(sk => skinOwned(sk) && !hadSkins.has(sk.id));
@@ -2231,9 +2391,36 @@ function endSurvival(reason) {
     (run.bosses ? ' ' + plural(run.bosses, 'boss', 'bosses') + ' downed.' : '') + (run.unlocked.length ? ' You unlocked ' + run.unlocked.map(id => LOCS[id].name).join(' and ') + '.' : '') +
     (fresh.length ? ' New paint: ' + fresh.map(sk => sk.name).join(', ') + '.' : '') + (held.length ? ' Field upgrades: ' + held.join(', ') + '.' : '');
   $('dbStats').innerHTML = [['Waves', waves], ['Kills', run.kills], ['Credits', '+' + credits.toLocaleString()], ['Medals', '+' + medals]].map(([l, v]) => '<div><b>' + v + '</b><span>' + l + '</span></div>').join('');
-  $('dbPts').textContent = 'A medal for every wave and three for every boss. You now have ' + plural(save.points, 'medal', 'medals') + ' to unlock and upgrade perks, and ' + save.credits.toLocaleString() + ' credits.';
+  const sum = runSummary(waves, credits, medals);
+  $('dbSummary').innerHTML = sum.html; lastSummary = sum.text;
+  $('dbPts').textContent = 'A medal for every wave and three for every boss' + (heat ? ', plus ' + Math.round((pay.md - 1) * 100) + '% for danger ' + heat : '') + '. You now have ' + plural(save.points, 'medal', 'medals') + ' to unlock and upgrade perks, and ' + save.credits.toLocaleString() + ' credits.';
   leaveCombat();
   state = 'debrief'; showScreen('debrief');
+}
+// the run summary on the debrief: who did the damage, how well you shot, the build, and a text copy to share
+let lastSummary = '';
+function runSummary(waves, credits, medals) {
+  const st = run.st, heat = dangerOf(run.danger);
+  const dmg = Object.entries(st.dmg).filter(([, v]) => v >= 1).sort((a, b) => b[1] - a[1]), total = dmg.reduce((a, [, v]) => a + v, 0);
+  const mins = Math.floor(st.t / 60), secs = Math.floor(st.t % 60), time = mins + ':' + String(secs).padStart(2, '0');
+  const acc = st.shots ? Math.round(st.hits / st.shots * 100) + '%' : '–';
+  const mods = DANGER.filter(d => run.danger[d.id]).map(d => d.name + (d.max > 1 ? ' ' + ROMAN[run.danger[d.id]] : ''));
+  const ups = UPGRADES.filter(u => up(u.id)), syns = synsHeld();
+  let h = '<div class="sumhead"><span>Run summary</span><span>' + esc(era.plane.short + ' · ' + era.name) + ' · danger ' + heat + '</span></div>';
+  h += '<div class="sumgrid">' + [['Time flown', time], ['Accuracy', acc], ['Damage dealt', Math.round(total).toLocaleString()], ['Damage taken', Math.round(st.taken).toLocaleString()],
+    ['Best streak', st.bestStreak + ' in 10 s'], ['Aces', st.aces], ['Special kills', st.splKills], ['Specials fired', st.specials]].map(([l, v]) => '<div><b>' + v + '</b><span>' + l + '</span></div>').join('') + '</div>';
+  if (dmg.length) h += '<div class="sumlabel">Damage by weapon</div><div class="dmgbars">' + dmg.map(([k, v]) => '<span>' + esc(k) + '</span><i><b style="width:' + (v / dmg[0][1] * 100).toFixed(1) + '%"></b></i><em>' + Math.round(v / total * 100) + '%</em>').join('') + '</div>';
+  if (ups.length || syns.length) h += '<div class="sumlabel">Build</div><div class="items">' + ups.map(u => '<span class="chip r-' + u.rar + '">' + esc(u.name) + (up(u.id) > 1 ? ' <b>×' + up(u.id) + '</b>' : '') + '</span>').join('') + syns.map(n => '<span class="chip syn">' + esc(n) + '</span>').join('') + '</div>';
+  if (mods.length) h += '<div class="sumlabel">Danger</div><div class="items">' + mods.map(m => '<span class="chip r-cursed">' + esc(m) + '</span>').join('') + '</div>';
+  if (st.ach.length) h += '<div class="sumlabel">Achievements</div><div class="items">' + st.ach.map(id => '<span class="chip got">' + esc(ACH_BY_ID[id].name) + ' <b>' + esc(rewardText(ACH_BY_ID[id].r)) + '</b></span>').join('') + '</div>';
+  const text = ['SKYBREAK · ' + era.name + ' · ' + era.plane.short + (run.coop ? ' · co-op' : '') + ' · danger ' + heat,
+    'Waves ' + waves + ' · kills ' + run.kills + ' · bosses ' + run.bosses + ' · ' + time,
+    'Accuracy ' + acc + ' · best streak ' + st.bestStreak + ' · damage dealt ' + Math.round(total) + ', taken ' + Math.round(st.taken),
+    dmg.length ? 'Damage: ' + dmg.map(([k, v]) => k + ' ' + Math.round(v / total * 100) + '%').join(', ') : '',
+    ups.length ? 'Build: ' + upsHeld().join(', ') + (syns.length ? ' · synergies: ' + syns.join(', ') : '') : '',
+    mods.length ? 'Danger: ' + mods.join(', ') : '',
+    '+' + credits + ' credits, +' + medals + ' medals'].filter(Boolean).join('\n');
+  return { html: h, text };
 }
 function endRun(reason) { if (run && !run.over) endSurvival(reason); }
 
@@ -2260,18 +2447,19 @@ function startMission(type, node, opts) {
   // the first wave starts with full charges; later waves keep whatever was left and how far the cooldown had run
   if (run.wave > 1) run.charges = Math.min(run.charges, st.charges);
   else { run.charges = st.charges; run.reloadT = 0; }
-  run.flares = 24 + run.mods.flares; run.flareCd = 0; run.warnT = 0; run.deathT = 0; run.windUsed = false; run.wingT = 0; run.huntT = 0;
+  run.flares = Math.round((24 + run.mods.flares) * (dz('flares') ? 0.5 : 1)); run.flareCd = 0; run.warnT = 0; run.deathT = 0; run.windUsed = false; run.wingT = 0; run.huntT = 0;
   // a wingman who went down last wave is back for this one
   if (run.mods.wingman) spawnAlly(run.mods.wingman);
   const skill = Math.min(0.2 + era.loc.threat * 0.06 + depth * 0.08, 0.97);
   // every tenth wave the location's boss flies in, with half the wave as escorts
-  const boss = run.wave % BOSS_EVERY === 0;
+  const boss = isBossWave(run.wave);
   // co-op: the host flies the enemies and every guest sees copies, so a guest's wave starts empty
   run.mission.queue = coopGuest() ? [] : coopScaleWave(survivalWave(boss ? Math.ceil(run.wave / 2) : run.wave, skill), boss ? Math.ceil(run.wave / 2) : run.wave, skill);
   run.mission.spawnT = 0;
   const tough = run.mission.queue.filter(s => s.ace || s.up).length;
+  run.st.waveTaken = 0; run.st.waveSize = run.mission.queue.length + enemies.length + (boss ? 1 : 0);
   const vnote = coopGuest() ? { line: '', intro: '' } : variantNote(run.mission.queue);
-  if (boss && !coopGuest()) spawnBoss(depth, run.wave / BOSS_EVERY);
+  if (boss && !coopGuest()) spawnBoss(depth, run.wave / bossEvery());
   for (let i = 0; i < survLive() && run.mission.queue.length; i++) spawnSpec(run.mission.queue.shift());
   let sub = (boss ? 'The ' + era.boss.name.toLowerCase() + ' and ' + plural(run.mission.queue.length + enemies.length - 1, 'escort', 'escorts') : plural(run.mission.queue.length + enemies.length, 'fighter', 'fighters')) + ' inbound' + (tough ? ', ' + tough + ' of them tougher than the rest' : '');
   lockTarget = null; locked = false; shake = 0; hurtT = 0; timeScale = 1; slowmoT = 0;
@@ -2300,7 +2488,7 @@ function enemyStats(skill, ace, model, variant) {
   return {
     size: j.size, minSpeed: f.minSpeed, maxSpeed: f.maxSpeed * es.speedMul * (ace ? 1.05 : 1) * (v.speed || 1), corner: f.corner * (v.speed || 1),
     gmax: f.gmax * (ace ? 1 : 0.75 + 0.25 * skill), thrust: f.thrust * (v.thrust || 1), pitch: f.pitch * turn, roll: f.roll * turn, yaw: f.yaw * turn,
-    hp: j.hp * (ace ? 3 : 1) * (v.hp || 1) * (1 + depth * 0.06) * coopHpMul() * run.mods.enemyHp, armor: v.armor || 0,
+    hp: j.hp * (ace ? 3 : 1) * (v.hp || 1) * (1 + depth * 0.06) * coopHpMul() * run.mods.enemyHp * (1 + 0.2 * dz('armor')), armor: v.armor || 0,
   };
 }
 function initPilot(e, skill, kind) {
@@ -2308,6 +2496,7 @@ function initPilot(e, skill, kind) {
   e.jink = new V3(); e.jinkT = 0; e.throttle = 0.85; e.target = null; e.targetT = 0;
   e.mslCd = rand(6, 12); e.missiles = e.ally ? 2 : (e.ace ? 3 : (era.loc.threat >= 2 || Math.random() < 0.5 ? 1 : 0));
   if (e.vdef && e.vdef.missiles != null) { e.missiles = e.vdef.missiles; if (e.missiles) e.mslCd = rand(3, 6); }
+  if (!e.ally && dz('rails')) e.missiles++;
 }
 function spawnEnemy(skill, ace, kind, model, variant) {
   model = model || era.enemy.model;
@@ -2343,7 +2532,7 @@ function spawnAlly(w) {
 // tier: 1 on wave 10, 2 on wave 20, and so on; each tier adds hull and gunners' damage
 function spawnBoss(depth, tier) {
   const b = era.boss;
-  const stats = { size: 2.6, minSpeed: era.minSpeed, maxSpeed: era.maxSpeed, corner: era.corner, gmax: 3, thrust: era.thrust, pitch: 0.3, roll: 0.5, yaw: 0.2, hp: Math.round(b.hp * (0.7 + 0.3 * tier) * coopHpMul() * run.mods.enemyHp) };
+  const stats = { size: 2.6, minSpeed: era.minSpeed, maxSpeed: era.maxSpeed, corner: era.corner, gmax: 3, thrust: era.thrust, pitch: 0.3, roll: 0.5, yaw: 0.2, hp: Math.round(b.hp * (0.7 + 0.3 * tier) * coopHpMul() * run.mods.enemyHp * (1 + 0.2 * dz('armor'))) };
   const e = new Plane(stats, bossMesh(b.kind, b.color, b.accent), 1);
   e.boss = true; e.heavy = true; e.ace = true; e.name = b.name; e.skill = 1; e.throttle = 0.9;
   e.circR = 1700; e.alt = b.alt; e.circW = era.maxSpeed * b.speedFrac / e.circR;
@@ -2395,6 +2584,13 @@ function creditKill(p, msl) {
   run.kills++;
   popText(p.boss ? 'Boss down' : p.ace ? 'Ace down' : 'Splash one');
   hitStop(p.boss ? 0.22 : p.ace ? 0.11 : 0.055);
+  const st = run.st, now = st.t;
+  if (p.ace && !p.boss) { st.aces++; save.life.aces = (save.life.aces || 0) + 1; }
+  if (p.boss) st.bossKills++;
+  if (msl) { st.splKills++; save.life.spl = (save.life.spl || 0) + 1; }
+  st.killT = st.killT.filter(t => now - t < 10); st.killT.push(now);
+  st.streak = st.killT.length; st.bestStreak = Math.max(st.bestStreak, st.streak);
+  achEvent({ kind: 'kill' });
   if (p.pos) killMarks.push({ pos: p.pos.clone(), t: 0, big: !!(p.boss || p.ace) });
   thump(190, 48, 0.32, 0.3); setTimeout(() => beep(1480, 0.07, 0.04), 60);
   if (run.mods.vamp && player.alive && !player.dying) player.hp = Math.min(player.maxHp, player.hp + run.mods.vamp);
@@ -2406,11 +2602,13 @@ function creditKill(p, msl) {
 // a downed boss opens the next location straight away, even if the run ends this wave (in co-op, for every pilot)
 function bossDown() {
   coopBossDown();
-  run.bosses++; run.rerolls++; if (!run.coop) slowmoT = 1.6;
+  run.bosses++; if (!dz('noreroll')) run.rerolls++; if (!run.coop) slowmoT = 1.6;
   const loc = era.loc.id, next = LOC_ORDER[LOC_ORDER.indexOf(loc) + 1];
   save.bosses[loc] = true;
   if (next && !save.locs[next]) { save.locs[next] = true; run.unlocked.push(next); }
+  save.dangerBest[loc] = Math.max(save.dangerBest[loc] || 0, dangerOf(run.danger));
   persist();
+  achEvent({ kind: 'boss' });
   flashMsg('TARGET DESTROYED', era.boss.name + ' is going down' + (run.unlocked.includes(next) ? ' · ' + LOCS[next].name + ' unlocked' : ''), 3);
 }
 
@@ -2528,7 +2726,7 @@ function noseTarget(range, cone) {
   return best;
 }
 function updatePlaying(dt) {
-  const m = run.mission; m.t += dt;
+  const m = run.mission; m.t += dt; run.st.t += dt;
   const live = player.alive && !player.dying;
   const ctl = live ? readControls(dt) : { pitch: 0, roll: 0, yaw: 0, throttle: 0, fire: false };
   const mods = run.mods;
@@ -2589,7 +2787,7 @@ function updatePlaying(dt) {
         if (!locked && lockBeepT <= 0) { lockBeepT = 0.18; beep(880, 0.05, 0.06); }
       }
     } else { lockTarget = null; locked = false; }
-    if (missileRequest && run.charges > 0) { fireSecondary(st); if (mods.twin) setTimeout(() => { if (state === 'playing' && validTarget(player)) fireSecondary(player.s); }, 180); run.charges--; }
+    if (missileRequest && run.charges > 0) { fireSecondary(st); if (mods.twin) setTimeout(() => { if (state === 'playing' && validTarget(player)) fireSecondary(player.s); }, 180); run.charges--; run.st.specials++; }
     else if (missileRequest) { popText(era.sec.short.toLowerCase().replace(/^./, c => c.toUpperCase()) + ' rearming · ' + Math.ceil(st.reload - run.reloadT) + ' s'); beep(330, 0.08, 0.06); }
     missileRequest = false;
     // Squadron leader: a downed wingman is back 15 s later
@@ -2638,7 +2836,7 @@ function updatePlaying(dt) {
       const rr = (e.boss ? 16 : 8) * player.s.size;
       if (e.pos.distanceToSquared(player.pos) < rr * rr) {
         if (e.heavy) player.damage(999, e);
-        else { e.damage(999, player); player.damage(45, e); }
+        else { withSrc('Ramming', () => e.damage(999, player)); player.damage(45, e); }
       }
     }
   } else if (player.dying && player.alive) {
@@ -2696,8 +2894,10 @@ function selectGroup(i) {
 const activeGun = () => (run && run.groups && run.groups[run.grp] ? run.groups[run.grp].g.gun : era.gun);
 function waveCleared() {
   const m = run.mission, next = run.wave + 1;
+  if (coopGuest()) run.st.waveSize = 99; // a guest can't count the host's wave, so any clear without a hit counts
+  achEvent({ kind: 'wave' });
   m.done = true; m.doneT = 2.4; slowmoT = 1.2;
-  flashMsg('WAVE ' + run.wave + ' CLEARED', plural(next, 'fighter', 'fighters') + (next % BOSS_EVERY === 0 ? ' and a boss' : '') + ' next', 2.2);
+  flashMsg('WAVE ' + run.wave + ' CLEARED', plural(next, 'fighter', 'fighters') + (isBossWave(next) ? ' and a boss' : '') + ' next', 2.2);
 }
 function enemyGun(e, depthMul, atMe) {
   const es = era.enemy;
@@ -3081,6 +3281,10 @@ function showChoice(o) {
   setTimeout(() => { const f = list.querySelector('.perk:not(:disabled)'); if (f) f.focus(); }, 50);
 }
 $('dbHangar').addEventListener('click', toHangar);
+$('dbCopy').addEventListener('click', () => {
+  const done = ok => { $('dbCopy').textContent = ok ? 'Copied' : 'Copy failed'; setTimeout(() => { $('dbCopy').textContent = 'Copy summary'; }, 2000); };
+  try { navigator.clipboard.writeText(lastSummary).then(() => done(true), () => done(false)); } catch (e) { done(false); }
+});
 $('dbAgain').addEventListener('click', () => (coopRoom() ? coopLaunch() : startSurvival()));
 
 function toHangar() {
@@ -3113,6 +3317,7 @@ const skinEarned = s => {
   const u = s.unlock; if (!u) return false;
   if (u.kind === 'boss') return !!save.bosses[u.loc];
   if (u.kind === 'kills') return save.totalKills >= u.n;
+  if (u.kind === 'ach') return !!save.ach[u.id];
   return bestWave() >= u.n;
 };
 const bestWave = () => Math.max(0, ...LOC_ORDER.map(id => save.survBest[id] || 0));
@@ -3121,8 +3326,9 @@ const skinFor = pid => { const s = A.SKIN_BY_ID[save.skin[pid]]; return s && ski
 function skinNeed(s) {
   if (s.price) return s.price.toLocaleString() + ' credits';
   const u = s.unlock;
-  if (u.kind === 'boss') return 'Down the ' + LOCS[u.loc].boss.name.toLowerCase() + ' on wave ' + BOSS_EVERY;
+  if (u.kind === 'boss') return 'Down the ' + LOCS[u.loc].boss.name.toLowerCase();
   if (u.kind === 'kills') return save.totalKills + ' / ' + u.n + ' kills';
+  if (u.kind === 'ach') return 'Achievement: ' + ACH_BY_ID[u.id].name;
   return 'Best wave ' + bestWave() + ' / ' + u.n;
 }
 const swatchCache = {};
@@ -3188,7 +3394,7 @@ function setTab(t) {
   if (previewSkin) { previewSkin = null; setupShowcase(); }
   renderHangar();
 }
-const TABS = ['survival', 'hangar', 'loadout', 'perks'];
+const TABS = ['survival', 'hangar', 'loadout', 'perks', 'records'];
 TABS.forEach((t, i, all) => {
   const b = $('tab-' + t);
   b.addEventListener('click', () => setTab(t));
@@ -3213,6 +3419,7 @@ function renderHangar() {
   if (hangarTab === 'survival') renderSurvival();
   else if (hangarTab === 'hangar') renderAircraft();
   else if (hangarTab === 'loadout') renderLoadout();
+  else if (hangarTab === 'records') renderRecords();
   else renderPerks();
   $('keysList').innerHTML = (mouseMode() ? KEYS_MOUSE : KEYS_DIRECT).map(([k, d]) => '<dt>' + k + '</dt><dd>' + d + '</dd>').join('');
   $('optCtlMouse').checked = mouseMode();
@@ -3229,13 +3436,41 @@ function renderSurvival() {
     b.setAttribute('aria-pressed', era.loc.id === id ? 'true' : 'false');
     b.disabled = !open;
     const foot = !open ? '<span class="cost">Down the ' + prev.boss.name.toLowerCase() + ' on wave ' + BOSS_EVERY + ' at ' + prev.name + ' to open</span>'
-      : '<span class="tag">' + (best ? 'Best: wave ' + best : 'Not flown yet') + (save.bosses[id] ? ' · boss down' : '') + '</span>';
+      : '<span class="tag">' + (best ? 'Best: wave ' + best : 'Not flown yet') + (save.bosses[id] ? ' · boss down' + (save.dangerBest[id] ? ' at danger ' + save.dangerBest[id] : '') : '') + '</span>';
     b.innerHTML = '<span class="yr">' + L.name + '</span><span class="nm">Threat ' + L.threat + ' · ' + ENEMY_JETS[L.enemy].name + 's</span><span class="bl">' + L.blurb + '</span>' + foot;
     b.addEventListener('click', () => selectLoc(id));
     el.appendChild(b);
   });
+  renderDanger();
   const eq = equipped().map(id => PERK_BY_ID[id].name + ' ' + ROMAN[perkTier(PERK_BY_ID[id])]);
   $('survNote').textContent = 'You fly the ' + era.plane.name + ' with its ' + era.sec.name.toLowerCase() + (eq.length ? ', and ' + eq.join(', ') : ' and no perks equipped') + '. Pick another jet in the Hangar tab, its guns in Loadout, and your perks in Perks.';
+}
+function renderDanger() {
+  const el = $('dangerList'), guest = coopRoom() && !net.isHost;
+  el.innerHTML = '';
+  DANGER.forEach(d => {
+    const r = Math.min(save.danger[d.id] || 0, d.max), b = document.createElement('button');
+    b.className = 'dz' + (r ? ' on' : ''); b.id = 'dz-' + d.id; b.disabled = guest;
+    b.setAttribute('aria-pressed', r ? 'true' : 'false');
+    b.innerHTML = '<span class="dn"><span></span><em></em></span><span class="dd"></span>';
+    b.querySelector('.dn span').textContent = d.name + (d.max > 1 && r ? ' ' + ROMAN[r] : '');
+    b.querySelector('.dn em').textContent = '+' + (r || 1) * d.pts + (d.max > 1 ? ' · ' + r + '/' + d.max : '');
+    b.querySelector('.dd').textContent = d.d(Math.max(r, 1));
+    b.addEventListener('click', () => {
+      save.danger[d.id] = (r + 1) % (d.max + 1); if (!save.danger[d.id]) delete save.danger[d.id];
+      persist(); beep(r < d.max ? 520 + r * 120 : 330, 0.05, 0.05); renderHangar();
+      const f = $('dz-' + d.id); if (f) f.focus();
+    });
+    el.appendChild(b);
+  });
+  const h = dangerOf(save.danger), pay = dangerPay(h);
+  $('dangerSum').innerHTML = guest ? 'The host sets the danger' : h ? '<span class="dzsum">Danger ' + h + ' · +' + Math.round((pay.cr - 1) * 100) + '% credits, +' + Math.round((pay.md - 1) * 100) + '% medals</span>' : 'Off · click a modifier to raise the stakes';
+}
+function renderRecords() {
+  const n = ACH.filter(a => save.ach[a.id]).length;
+  $('achNote').textContent = n + ' of ' + ACH.length + ' achievements. Lifetime: ' + save.totalKills.toLocaleString() + ' kills, ' + (save.life.aces || 0) + ' aces, ' + (save.life.spl || 0) + ' special kills over ' + plural(save.runs, 'run', 'runs') + '.';
+  $('achList').innerHTML = ACH.map(a => '<div class="ach' + (save.ach[a.id] ? ' done' : '') + '"><b>' + (save.ach[a.id] ? '✓ ' : '') + esc(a.name) + '</b><span>' + esc(a.d) + '</span><small>' + esc(rewardText(a.r)) + '</small></div>').join('');
+  $('dangerRecords').innerHTML = LOC_ORDER.map(id => '<div><b>' + (save.bosses[id] ? save.dangerBest[id] || 0 : '–') + '</b><span>' + esc(LOCS[id].name) + '</span></div>').join('');
 }
 function renderAircraft() {
   // the shop: stats are scaled against the best jet in the hangar
@@ -3735,8 +3970,8 @@ function coopHpMul() { return coopHost() ? 1 + COOP_HP * (coopPilots() - 1) : 1;
 function survLive() { return Math.min(SURV_LIVE_MAX, SURV_LIVE + (coopHost() ? COOP_LIVE * (coopPilots() - 1) : 0)); }
 function coopScaleWave(list, w, skill) {
   const n = coopHost() ? coopPilots() : 1;
-  if (n < 2) return list;
-  const want = list.length + Math.round(w * COOP_COUNT * (n - 1));
+  const want = list.length + Math.round(w * COOP_COUNT * (n - 1)) + Math.round(w * 0.25 * dz('swarm'));
+  if (want <= list.length) return list;
   let out = list.slice();
   while (out.length < want) out = out.concat(survivalWave(w, skill).slice(0, want - out.length));
   return shuffle(out);
@@ -3854,6 +4089,7 @@ function coopPuppetUpdate(e, dt) {
 // a guest's hit on a copy goes to the host, who owns the real thing
 function coopHitEnemy(e, amount, from) {
   if (!e.alive || e.dying) return;
+  tallyDmg(e, amount * (1 - (e.s.armor || 0)), from);
   e.hp = Math.max(1, e.hp - amount * (1 - (e.s.armor || 0))); e.hitAt = performance.now();
   const stun = e.stunT > 0 ? e.stunT : 0; e.stunT = 0; // an EMP sets this just before it hits
   net.send({ t: 'h', id: e.nid, d: amount, m: missileHit ? 1 : 0, s: stun }, 0);
@@ -4146,7 +4382,7 @@ function coopLaunch() {
   if (!coopRoom() || !net.isHost) return;
   coop.members = new Set(net.roster.map(r => r.slot));
   coop.ready.clear(); coop.mates.clear(); coop.ending = false; coop.downBy = -1;
-  net.send({ t: 'start', loc: save.loc, members: [...coop.members] });
+  net.send({ t: 'start', loc: save.loc, members: [...coop.members], danger: save.danger });
   startSurvival();
   coopSyncInfo();
 }
@@ -4156,7 +4392,7 @@ function coopStart(msg) {
   coop.members = new Set(msg.members);
   coop.ready.clear(); coop.mates.clear(); coop.ending = false; coop.downBy = -1;
   if (coopLoc !== msg.loc || era.loc.id !== msg.loc) { coopLoc = msg.loc; composeEra(); buildWorld(); }
-  startSurvival();
+  startSurvival(msg.danger || {});
   coopSyncInfo();
 }
 function coopRender() {
